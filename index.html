@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E6A5B">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>html{color-scheme:light;padding-top:env(safe-area-inset-top,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Pedra Fácil</title>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: app de campo em uma coluna, barra de abas fixa embaixo, editor em tela cheia com resumo de preço sempre visível. */
+:root{
+  --bg:#EDEFEE; --surface:#FFFFFF; --surface2:#E2E6E4; --fg:#15191A; --muted:#5C6664; --line:#CDD3D1;
+  --accent:#0E6A5B; --accent-fg:#FFFFFF; --accent-soft:#D5ECE6;
+  --ok:#1D7A46; --warn:#A8620B; --bad:#B3321F; --slab:#D9DEDB; --slab-line:#8C9794;
+  --font:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111514; --surface:#1A201F; --surface2:#242C2A; --fg:#E8EEEC; --muted:#93A09D; --line:#303A38;
+  --accent:#3DBBA3; --accent-fg:#06201A; --accent-soft:#17332D;
+  --ok:#5BC48B; --warn:#E3A24F; --bad:#EE7C6A; --slab:#2B3432; --slab-line:#5E6C69; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111514; --surface:#1A201F; --surface2:#242C2A; --fg:#E8EEEC; --muted:#93A09D; --line:#303A38;
+  --accent:#3DBBA3; --accent-fg:#06201A; --accent-soft:#17332D;
+  --ok:#5BC48B; --warn:#E3A24F; --bad:#EE7C6A; --slab:#2B3432; --slab-line:#5E6C69; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.4;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
+h1,h2,h3{margin:0;font-weight:700;text-wrap:balance}
+h1{font-size:22px;letter-spacing:-.01em} h2{font-size:17px} h3{font-size:14px}
+.mono,.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)} .small{font-size:12.5px} .lbl{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+#app{max-width:640px;margin:0 auto;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;align-items:center;gap:10px;padding:12px 0 10px;border-bottom:1px solid var(--line)}
+.top h1{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stack{display:flex;flex-direction:column;gap:12px;padding-top:14px}
+.row{display:flex;gap:10px;align-items:center}.row>*{min-width:0}
+.wrap{flex-wrap:wrap}.grow{flex:1}.between{justify-content:space-between}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
+.card.tap{cursor:pointer}.card.tap:active{background:var(--surface2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+button,.btn{font:inherit;font-weight:600;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:11px 14px;min-height:44px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+button:active{background:var(--surface2)}
+button.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button.pri:active{filter:brightness(.92)}
+button.ghost{border-color:transparent;background:transparent;padding:8px 10px;min-height:40px}
+button.danger{color:var(--bad)} button.sm{min-height:36px;padding:6px 10px;font-size:13px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.card.tap:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--muted);font-weight:600}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 11px;min-height:44px;width:100%;min-width:0}
+input[type=number]{font-family:var(--mono)} textarea{min-height:76px;resize:vertical}
+input[type=file]{display:none}
+.chip{display:inline-flex;align-items:center;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--surface2);color:var(--fg);white-space:nowrap}
+.chip.c-Rascunho{background:var(--surface2)} .chip.c-Enviado{background:var(--accent-soft);color:var(--accent)}
+.chip.c-Negociação{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.chip.c-Fechado{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.chip.c-Perdido{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);display:flex;
+  padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+.tabs button{flex:1;flex-direction:column;gap:2px;border:0;background:none;font-size:11.5px;color:var(--muted);min-height:52px;padding:6px 2px}
+.tabs button[aria-current=page]{color:var(--accent)} .tabs svg{width:22px;height:22px}
+.seg{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}.seg::-webkit-scrollbar{display:none}
+.seg button{flex:none;min-height:38px;padding:7px 12px;font-size:13.5px}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.kpi{display:flex;flex-direction:column;gap:2px}.kpi b{font-family:var(--mono);font-size:19px;font-weight:600;letter-spacing:-.02em}
+.sum{position:sticky;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:15;background:var(--fg);color:var(--bg);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.sum b{font-family:var(--mono);font-size:20px;font-weight:600}.sum small{opacity:.7;font-size:11.5px;display:block}
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.sheet .li{display:flex;gap:10px;align-items:center;padding:11px 14px;border-top:1px solid var(--line)}.sheet .li:first-child{border-top:0}
+.li .num{white-space:nowrap}
+.draw{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px;overflow:hidden}
+.draw svg{display:block;width:100%;height:auto;max-height:340px}
+.draw text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.scroll-x{overflow-x:auto;padding-bottom:8px}
+.board{display:flex;gap:10px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x proximity}
+.col{flex:0 0 78%;max-width:300px;scroll-snap-align:start;display:flex;flex-direction:column;gap:8px}
+.thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;background:var(--surface2);flex:none;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px}
+.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}
+.bar{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
+.note{font-size:12.5px;color:var(--muted);border-left:3px solid var(--line);padding:2px 0 2px 10px}
+.ex{font-size:11px;font-weight:700;color:var(--warn);letter-spacing:.04em}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;z-index:40;max-width:90%;font-size:14px}
+.doc{background:#fff;color:#111;border:1px solid var(--line);border-radius:6px;padding:18px;font-size:13.5px}
+.doc h2{color:#111}.doc table{width:100%;border-collapse:collapse}.doc td,.doc th{padding:6px 4px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}
+.doc td:last-child,.doc th:last-child{text-align:right;white-space:nowrap}
+@media (prefers-reduced-motion:no-preference){.toast{animation:up .18s ease-out}@keyframes up{from{opacity:0;transform:translate(-50%,8px)}}}
+</style>
+<div id="app"></div>
+<nav class="tabs" id="tabs" aria-label="Navegação"></nav>
+<input type="file" id="fileImport" accept="application/json">
+<input type="file" id="filePhoto" accept="image/*" capture="environment">
+<input type="file" id="fileMat" accept="image/*">
+<script src="vendor/jspdf.umd.min.js"></script>
+<script>
+/* ===== Utilidades ===== */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const brl=n=>(+n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const nf=(n,d=2)=>(+n||0).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct=n=>nf((n||0)*100,1)+'%';
+const uid=()=>'i'+Math.random().toString(36).slice(2,9);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
+const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
+const KEY='pedrafacil.v1';
+
+/* ===== Tipos de peça: campos de medida em cm ===== */
+const TYPES={
+  reta:{nome:'Reta',campos:[['A','Comprimento',280],['P','Profundidade',60]]},
+  L:{nome:'Em L',campos:[['A','Lado A (total)',300],['B','Lado B (total)',200],['P','Profundidade',60]]},
+  U:{nome:'Em U',campos:[['A','Fundo (total)',320],['B','Lateral esq. (total)',220],['C','Lateral dir. (total)',220],['P','Profundidade',60]]},
+  ilha:{nome:'Ilha',campos:[['A','Comprimento',240],['B','Largura',100]]},
+  escada:{nome:'Escada',campos:[['A','Largura',100],['N','Degraus',5],['PI','Piso',30],['ES','Espelho',17]]},
+  nicho:{nome:'Nicho',campos:[['A','Largura',80],['H','Altura',60],['P','Profundidade',25]]},
+  lavatorio:{nome:'Lavatório',campos:[['A','Comprimento',120],['P','Profundidade',55]]},
+  livre:{nome:'Livre',campos:[]}
+};
+
+/* Metragem linear padrão para saia e rodabanca (m) */
+function defMl(p,kind){
+  const d=p.d;
+  if(p.type==='reta')return d.A/100;
+  if(p.type==='L')return (d.A+d.B-d.P)/100;
+  if(p.type==='U')return (d.A+d.B+d.C-2*d.P)/100;
+  if(p.type==='ilha')return kind==='saia'?2*(d.A+d.B)/100:0;
+  if(p.type==='lavatorio')return d.A/100;
+  return 0;
+}
+
+/* Gera retângulos de desenho e peças de corte. Tudo em cm. */
+function shape(p){
+  const d=p.d,r=[],parts=[],g=6;
+  const add=(x,y,w,h,l,q=1,kind='main')=>{if(w>0&&h>0){r.push({x,y,w,h,l,kind});parts.push({w,h,l,q})}};
+  if(p.type==='reta')add(0,0,d.A,d.P,'Tampo');
+  else if(p.type==='L'){add(0,0,d.A,d.P,'Trecho A');add(0,d.P,d.P,Math.max(0,d.B-d.P),'Trecho B')}
+  else if(p.type==='U'){add(0,0,d.A,d.P,'Fundo');add(0,d.P,d.P,Math.max(0,d.B-d.P),'Esq.');add(d.A-d.P,d.P,d.P,Math.max(0,d.C-d.P),'Dir.')}
+  else if(p.type==='ilha')add(0,0,d.A,d.B,'Tampo');
+  else if(p.type==='lavatorio')add(0,0,d.A,d.P,'Tampo');
+  else if(p.type==='escada'){let y=0;for(let i=1;i<=Math.max(1,Math.round(d.N));i++){
+    r.push({x:0,y,w:d.A,h:d.PI,l:'Piso '+i,kind:'main'});y+=d.PI;
+    r.push({x:0,y,w:d.A,h:d.ES,l:'Esp. '+i,kind:'riser'});y+=d.ES}
+    const n=Math.max(1,Math.round(d.N));parts.push({w:d.A,h:d.PI,l:'Piso',q:n},{w:d.A,h:d.ES,l:'Espelho',q:n})}
+  else if(p.type==='nicho'){add(0,0,d.A,d.H,'Fundo');add(0,d.H+g,d.A,d.P,'Topo');add(0,d.H+d.P+2*g,d.A,d.P,'Base');
+    r.push({x:d.A+g,y:0,w:d.P,h:d.H,l:'Lat.',kind:'main'},{x:d.A+2*g+d.P,y:0,w:d.P,h:d.H,l:'Lat.',kind:'main'});
+    parts.push({w:d.P,h:d.H,l:'Lateral',q:2})}
+  else if(p.type==='livre'){let x=0,y=0,rowH=0;const W=320;
+    (d.rects||[]).forEach(q=>{const w=q.w,h=q.h;if(!(w>0&&h>0))return;
+      if(x>0&&x+w>W){x=0;y+=rowH+g;rowH=0}
+      r.push({x,y,w,h,l:q.l||'Peça',kind:'main'});parts.push({w,h,l:q.l||'Peça',q:q.q||1});x+=w+g;rowH=Math.max(rowH,h)})}
+  const mainBottom=r.reduce((m,a)=>Math.max(m,a.y+a.h),0);
+  let ey=mainBottom+g*2;
+  [['saia',p.saiaH,'Saia'],['roda',p.rodaH,'Rodabanca']].forEach(([k,h,l])=>{
+    if(h>0){const ml=(k==='saia'?p.saiaMl:p.rodaMl)||defMl(p,k==='saia'?'saia':'roda');const w=ml*100;
+      if(w>0){r.push({x:0,y:ey,w,h,l:l+' '+nf(ml,2)+' m',kind:'extra'});parts.push({w,h,l,q:1});ey+=h+g}}});
+  return {rects:r,parts};
+}
+const partsArea=parts=>parts.reduce((s,a)=>s+a.w*a.h*(a.q||1),0)/1e4;
+
+/* ===== Plano de corte (prateleiras, estimativa) ===== */
+function nestParts(parts,SL,SW){
+  const kerf=0.4;let items=[],emendas=0;
+  parts.forEach(a=>{for(let i=0;i<(a.q||1);i++){
+    const L=Math.max(a.w,a.h),W=Math.min(a.w,a.h);
+    const k=Math.max(1,Math.ceil(L/SL)),m=Math.max(1,Math.ceil(W/SW));
+    emendas+=k*m-1;
+    for(let a1=0;a1<k;a1++)for(let b1=0;b1<m;b1++)items.push({w:L/k,h:W/m,l:a.l})}});
+  items.sort((x,y)=>y.h-x.h||y.w-x.w);
+  const slabs=[];
+  const place=it=>{
+    for(const s of slabs){
+      for(const sh of s.shelves){if(sh.h>=it.h-1e-6&&SL-sh.x>=it.w){s.items.push({x:sh.x,y:sh.y,w:it.w,h:it.h,l:it.l});sh.x+=it.w+kerf;return}}
+      const used=s.shelves.reduce((t,sh)=>t+sh.h+kerf,0);
+      if(SW-used>=it.h){const sh={y:used,h:it.h,x:0};s.shelves.push(sh);s.items.push({x:0,y:sh.y,w:it.w,h:it.h,l:it.l});sh.x=it.w+kerf;return}
+    }
+    const s={items:[],shelves:[]};slabs.push(s);
+    const sh={y:0,h:it.h,x:it.w+kerf};s.shelves.push(sh);s.items.push({x:0,y:0,w:it.w,h:it.h,l:it.l});
+  };
+  items.forEach(place);
+  const used=items.reduce((t,a)=>t+a.w*a.h,0)/1e4;
+  return {slabs,emendas,used};
+}
+
+/* ===== Cálculo do orçamento ===== */
+function matOf(q){return S.materials.find(m=>m.id===q.materialId)}
+function calc(q){
+  const m=matOf(q),SL=m?.slabL||300,SW=m?.slabW||160,P=q.params;
+  const parts=[];q.pieces.forEach(p=>parts.push(...shape(p).parts));
+  const area=partsArea(parts);
+  const nest=nestParts(parts,SL,SW);
+  const nSlabs=nest.slabs.length,slabArea=SL*SW/1e4;
+  const util=nSlabs?nest.used/(nSlabs*slabArea):0;
+  let mat=0;
+  if(m){mat=P.charge==='m2'?area*(1+P.lossPct/100)*(m.priceM2||0):nSlabs*(m.priceSlab||0)}
+  const labor=area*P.moM2;
+  const svc=q.lines.reduce((t,l)=>{const s=S.services.find(x=>x.id===l.svcId);return t+(s?s.price*l.qty:0)},0);
+  const fab=labor+svc;
+  const inst=area*P.instalM2+P.instalFixo;
+  const frete=P.frete;
+  const cost=mat+fab+inst+frete;
+  const den=Math.max(0.05,1-P.margin/100-P.tax/100);
+  const price=Math.round(cost/den*100)/100;
+  const taxV=price*P.tax/100;
+  const profit=price-cost-taxV;
+  return {m,area,nest,nSlabs,slabArea,util,loss:1-util,mat,labor,svc,fab,inst,frete,cost,price,taxV,profit,SL,SW,
+    perM2:area?price/area:0};
+}
+
+/* ===== Dados iniciais (exemplos) ===== */
+function seed(){
+  const mats=[
+    {name:'Preto São Gabriel',cat:'Granito',color:'Preto',thick:2,priceSlab:2900,priceM2:640,slabL:310,slabW:180,supplier:'Pedreira Serra Alta',stock:6},
+    {name:'Branco Prime',cat:'Quartzo',color:'Branco',thick:2,priceSlab:6800,priceM2:1180,slabL:320,slabW:160,supplier:'Quartz Brasil',stock:3},
+    {name:'Taj Mahal',cat:'Quartzito',color:'Bege claro',thick:2,priceSlab:11500,priceM2:2050,slabL:310,slabW:190,supplier:'Importadora Litos',stock:2},
+    {name:'Carrara',cat:'Mármore',color:'Branco veiado',thick:2,priceSlab:7400,priceM2:1480,slabL:300,slabW:180,supplier:'Importadora Litos',stock:1},
+    {name:'Porcelanato Calacatta',cat:'Porcelanato',color:'Branco veiado',thick:1,priceSlab:1650,priceM2:420,slabL:300,slabW:150,supplier:'Cerâmica Norte',stock:8}
+  ].map(x=>({...x,id:uid(),photo:'',ex:true}));
+  const svcs=[
+    ['Furo de torneira','Furos','un',30],['Recorte de cuba de embutir','Recortes','un',140],['Recorte de cooktop','Recortes','un',190],
+    ['Cuba inox instalada','Cubas','un',380],['Pingadeira','Acabamentos','ml',45],['Meia-esquadria','Acabamentos','ml',70],
+    ['Borda reta polida','Acabamentos','ml',35],['Rodabanca colada','Rodabanca','ml',28],['Saia colada','Saia','ml',55]
+  ].map(a=>({id:uid(),name:a[0],cat:a[1],unit:a[2],price:a[3],ex:true}));
+  const cls=[
+    {name:'Marina Alves',phone:'11 98877-1234',email:'marina@exemplo.com',address:'Rua das Acácias, 120 - Moema',notes:'Cozinha nova, prazo até dezembro.'},
+    {name:'Carlos Mendes',phone:'11 97766-4321',email:'carlos@exemplo.com',address:'Av. Paulista, 900, ap 71',notes:'Banheiro social.'}
+  ].map(x=>({...x,id:uid(),ex:true}));
+  const par=()=>({margin:35,tax:6,moM2:180,instalM2:90,instalFixo:0,frete:150,charge:'chapa',lossPct:12});
+  const mk=(c,mi,st,pieces,lines,daysAgo)=>({id:uid(),num:0,clientId:cls[c].id,materialId:mats[mi].id,status:st,pieces,lines,
+    params:par(),photos:[],notes:'',validade:15,createdAt:Date.now()-daysAgo*864e5,closedAt:st==='Fechado'?Date.now()-(daysAgo-2)*864e5:null,ex:true});
+  const pc=(type,name,d,extra={})=>({id:uid(),type,name,d,saiaH:0,rodaH:0,...extra});
+  const sv=n=>S0svc(svcs,n);
+  const quotes=[
+    mk(0,1,'Fechado',[pc('L','Bancada da cozinha',{A:310,B:210,P:62},{rodaH:7})],[{svcId:svcs[1].id,qty:1},{svcId:svcs[2].id,qty:1},{svcId:svcs[0].id,qty:1}],20),
+    mk(1,3,'Enviado',[pc('lavatorio','Lavatório do social',{A:120,P:52},{saiaH:5})],[{svcId:svcs[1].id,qty:1},{svcId:svcs[0].id,qty:1}],5),
+    mk(0,0,'Negociação',[pc('reta','Bancada da área gourmet',{A:260,P:65},{rodaH:7}),pc('ilha','Ilha',{A:200,B:90},{saiaH:6})],[{svcId:svcs[2].id,qty:1}],9)
+  ];
+  quotes[1].params.charge='m2';
+  quotes.forEach((q,i)=>q.num=1001+i);
+  return {materials:mats,services:svcs,clients:cls,quotes,
+    settings:{empresa:'Sua Marmoraria',telefone:'',margin:35,tax:6,moM2:180,instalM2:90,frete:150,validade:15,nextNum:1004,theme:'auto'}};
+}
+function S0svc(){return null}
+
+let S=null;
+function load(){
+  try{const raw=localStorage.getItem(KEY);if(raw){S=JSON.parse(raw);return}}catch(e){}
+  S=seed();
+}
+let saveTimer=0,saveWarned=false;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{
+    try{localStorage.setItem(KEY,JSON.stringify(S))}
+    catch(e){if(!saveWarned){saveWarned=true;toast('Memória do navegador cheia. Exporte um backup e remova fotos.')}}
+  },250);
+}
+/* ===== Desenho SVG (cotas em cm, escala automática) ===== */
+function drawPiece(p){
+  const {rects}=shape(p);
+  if(!rects.length)return '<div class="muted small" style="padding:24px;text-align:center">Adicione medidas para ver o desenho.</div>';
+  const pad=34;
+  const W=Math.max(...rects.map(a=>a.x+a.w)),H=Math.max(...rects.map(a=>a.y+a.h));
+  const sc=Math.min(560/Math.max(W,1),300/Math.max(H,1));
+  const vw=W*sc+pad*2,vh=H*sc+pad*2;
+  let s=`<svg viewBox="0 0 ${vw.toFixed(0)} ${vh.toFixed(0)}" role="img" aria-label="Desenho de ${esc(p.name)}">`;
+  rects.forEach(a=>{
+    const x=pad+a.x*sc,y=pad+a.y*sc,w=a.w*sc,h=a.h*sc;
+    const fill=a.kind==='extra'?'color-mix(in srgb,var(--accent) 22%,var(--surface))':a.kind==='riser'?'var(--surface2)':'var(--accent-soft)';
+    s+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="var(--accent)" stroke-width="1.5"/>`;
+    if(w>46&&h>16)s+=`<text x="${x+w/2}" y="${y+h/2+4}" text-anchor="middle">${esc(a.l)} ${nf(a.w,0)}×${nf(a.h,0)}</text>`;
+  });
+  /* cotas gerais */
+  s+=`<g stroke="var(--muted)" stroke-width="1" fill="none"><path d="M${pad} ${pad-14}H${pad+W*sc}M${pad} ${pad-19}v10M${pad+W*sc} ${pad-19}v10"/>`;
+  s+=`<path d="M${pad-14} ${pad}V${pad+H*sc}M${pad-19} ${pad}h10M${pad-19} ${pad+H*sc}h10"/></g>`;
+  s+=`<text x="${pad+W*sc/2}" y="${pad-20}" text-anchor="middle">${nf(W,0)} cm</text>`;
+  s+=`<text transform="translate(${pad-20} ${pad+H*sc/2}) rotate(-90)" text-anchor="middle">${nf(H,0)} cm</text></svg>`;
+  return s;
+}
+
+/* Plano de corte da chapa */
+function drawSlabs(c){
+  const {SL,SW,nest}=c;
+  if(!nest.slabs.length)return '';
+  const sc=300/SL,gap=14;
+  let out='';
+  nest.slabs.forEach((sl,i)=>{
+    const used=sl.items.reduce((t,a)=>t+a.w*a.h,0)/1e4;
+    out+=`<div class="draw"><div class="row between small" style="padding:2px 4px 6px"><b>Chapa ${i+1}</b><span class="mono muted">${nf(used/c.slabArea*100,0)}% usada</span></div>`;
+    out+=`<svg viewBox="0 0 ${SL*sc+2} ${SW*sc+2}" role="img" aria-label="Chapa ${i+1}"><rect x="1" y="1" width="${SL*sc}" height="${SW*sc}" fill="var(--slab)" stroke="var(--slab-line)" stroke-width="1.5"/>`;
+    sl.items.forEach(a=>{
+      const w=a.w*sc,h=a.h*sc;
+      out+=`<rect x="${1+a.x*sc}" y="${1+a.y*sc}" width="${w}" height="${h}" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1"/>`;
+      if(w>40&&h>12)out+=`<text x="${1+a.x*sc+w/2}" y="${1+a.y*sc+h/2+4}" text-anchor="middle" style="font-size:9px">${nf(a.w,0)}×${nf(a.h,0)}</text>`;
+    });
+    out+='</svg></div>';
+  });
+  return out;
+}
+
+/* Miniatura da peça para listas */
+function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
+/* ===== Navegação e telas principais ===== */
+const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false};
+const IC={
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
+  list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>',
+  box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
+  gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>',
+  back:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 5l-7 7 7 7"/></svg>'
+};
+function goTab(t){nav.tab=t;nav.qid=null;nav.edit=null;render();scrollTo(0,0)}
+function renderTabs(){
+  const T=[['home','Início',IC.home],['quotes','Orçamentos',IC.list],['new','Novo',IC.plus],['cad','Cadastros',IC.box],['cfg','Ajustes',IC.gear]];
+  $('#tabs').innerHTML=T.map(([k,l,i])=>`<button data-act="tab" data-v="${k}" ${nav.tab===k&&!(k!=='new'&&nav.qid&&k==='quotes'&&false)?'aria-current="page"':''}>${i}<span>${l}</span></button>`).join('');
+}
+function render(){
+  renderTabs();
+  const q=nav.qid&&S.quotes.find(x=>x.id===nav.qid);
+  let h='';
+  if(q&&nav.tab!=='cad')h=viewEditor(q);
+  else if(nav.tab==='home')h=viewHome();
+  else if(nav.tab==='quotes')h=viewQuotes();
+  else if(nav.tab==='cad')h=viewCad();
+  else if(nav.tab==='cfg')h=viewCfg();
+  $('#app').innerHTML=h;
+}
+let toastT=0;
+function toast(m){$$('.toast').forEach(e=>e.remove());const e=document.createElement('div');e.className='toast';e.textContent=m;document.body.appendChild(e);clearTimeout(toastT);toastT=setTimeout(()=>e.remove(),2600)}
+
+/* ===== Acesso a dados ===== */
+const clientOf=q=>S.clients.find(c=>c.id===q.clientId);
+function newQuote(clientId){
+  const s=S.settings;
+  const q={id:uid(),num:s.nextNum++,clientId:clientId||'',materialId:S.materials[0]?.id||'',status:'Rascunho',
+    pieces:[{id:uid(),type:'reta',name:'Bancada',d:{A:280,P:60},saiaH:0,rodaH:0}],lines:[],
+    params:{margin:s.margin,tax:s.tax,moM2:s.moM2,instalM2:s.instalM2,instalFixo:0,frete:s.frete,charge:(S.materials[0]?.priceSlab>0?'chapa':'m2'),lossPct:12},
+    photos:[],notes:'',validade:s.validade,createdAt:Date.now(),closedAt:null};
+  S.quotes.unshift(q);save();return q;
+}
+function openQuote(id,sec){nav.tab='quotes';nav.qid=id;nav.sec=sec||'cli';nav.pi=0;nav.showTypes=false;render();scrollTo(0,0)}
+function setStatus(q,st){q.status=st;q.closedAt=st==='Fechado'?Date.now():null;save()}
+
+/* ===== Início / painel ===== */
+function viewHome(){
+  const Q=S.quotes.map(q=>({q,c:calc(q)}));
+  const by=st=>Q.filter(x=>x.q.status===st);
+  const fech=by('Fechado'),aberto=[...by('Enviado'),...by('Negociação')];
+  const fat=fech.reduce((t,x)=>t+x.c.price,0),luc=fech.reduce((t,x)=>t+x.c.profit,0);
+  const enviados=Q.filter(x=>x.q.status!=='Rascunho').length;
+  const conv=enviados?fech.length/enviados:0;
+  const abertoV=aberto.reduce((t,x)=>t+x.c.price,0);
+  /* faturamento por mês: últimos 4 meses */
+  const now=new Date(),meses=[];
+  for(let i=3;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);meses.push({k:d.getFullYear()*12+d.getMonth(),l:d.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''),v:0})}
+  fech.forEach(x=>{const d=new Date(x.q.closedAt||x.q.createdAt),k=d.getFullYear()*12+d.getMonth();const m=meses.find(a=>a.k===k);if(m)m.v+=x.c.price});
+  const mx=Math.max(1,...meses.map(m=>m.v));
+  const ex=S.quotes.some(q=>q.ex);
+  return `<header class="top"><h1>${esc(S.settings.empresa)}</h1><button class="pri" data-act="newq">${IC.plus.replace('<svg','<svg width="18" height="18"')} Novo orçamento</button></header>
+  <div class="stack">
+   ${ex?'<div class="note"><span class="ex">DADOS DE EXEMPLO</span> Os números abaixo vêm de orçamentos fictícios. Remova em Ajustes quando começar a usar.</div>':''}
+   <div class="grid2">
+    <div class="card kpi"><span class="lbl">Faturamento fechado</span><b>${brl(fat)}</b></div>
+    <div class="card kpi"><span class="lbl">Lucro estimado</span><b>${brl(luc)}</b></div>
+    <div class="card kpi"><span class="lbl">Conversão</span><b>${pct(conv)}</b><span class="small muted">${fech.length} de ${enviados} propostas</span></div>
+    <div class="card kpi"><span class="lbl">Em aberto</span><b>${brl(abertoV)}</b><span class="small muted">${aberto.length} orçamentos</span></div>
+   </div>
+   <div class="card"><div class="row between"><h3>Faturamento por mês</h3><span class="small muted">fechados</span></div>
+    <div class="row" style="align-items:flex-end;height:110px;margin-top:10px;gap:12px">
+     ${meses.map(m=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end">
+      <span class="mono small muted">${m.v?nf(m.v/1000,1)+'k':''}</span>
+      <div style="width:100%;height:${Math.max(3,m.v/mx*70)}px;background:var(--accent);border-radius:4px 4px 0 0;opacity:${m.v?1:.25}"></div>
+      <span class="small muted">${m.l}</span></div>`).join('')}
+    </div></div>
+   <div class="card"><h3 style="margin-bottom:10px">Funil de vendas</h3>
+    ${STATUS.map(st=>{const n=by(st).length,v=by(st).reduce((t,x)=>t+x.c.price,0);return `<div style="margin-bottom:10px"><div class="row between small"><span class="chip c-${st}">${st}</span><span class="mono">${n} · ${brl(v)}</span></div><div class="bar" style="margin-top:5px"><i style="width:${Q.length?n/Q.length*100:0}%"></i></div></div>`}).join('')}
+   </div>
+   <div class="row between"><h3>Últimos orçamentos</h3><button class="ghost sm" data-act="tab" data-v="quotes">Ver todos</button></div>
+   ${quoteList(Q.slice(0,3))}
+  </div>`;
+}
+
+function quoteList(Q){
+  if(!Q.length)return '<div class="card muted" style="text-align:center">Nenhum orçamento ainda. Toque em Novo.</div>';
+  return `<div class="sheet">${Q.map(({q,c})=>{const cl=clientOf(q);return `<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="open" data-v="${q.id}">
+   <div class="grow"><div class="row wrap" style="gap:6px"><b>${esc(cl?.name||'Sem cliente')}</b>${q.ex?'<span class="ex">EXEMPLO</span>':''}</div>
+   <div class="small muted">#${q.num} · ${esc(c.m?.name||'sem material')} · ${nf(c.area)} m²</div></div>
+   <div style="text-align:right"><div class="num"><b>${brl(c.price)}</b></div><span class="chip c-${q.status}">${q.status}</span></div></div>`}).join('')}</div>`;
+}
+
+function viewQuotes(){
+  const Q=S.quotes.map(q=>({q,c:calc(q)}));
+  let body='';
+  if(nav.qmode==='list')body=quoteList(Q);
+  else{
+    body=`<div class="board">${STATUS.map((st,i)=>{
+      const col=Q.filter(x=>x.q.status===st);const tot=col.reduce((t,x)=>t+x.c.price,0);
+      return `<div class="col"><div class="row between"><span class="chip c-${st}">${st} · ${col.length}</span><span class="mono small muted">${brl(tot)}</span></div>
+      ${col.map(({q,c})=>{const cl=clientOf(q);return `<div class="card"><div class="tap" tabindex="0" data-act="open" data-v="${q.id}"><b>${esc(cl?.name||'Sem cliente')}</b><div class="small muted">#${q.num} · ${nf(c.area)} m²</div><div class="num"><b>${brl(c.price)}</b></div></div>
+       <div class="row between" style="margin-top:8px">${i>0?`<button class="sm" data-act="move" data-v="${q.id}" data-d="-1" aria-label="Mover para ${STATUS[i-1]}">◀</button>`:'<span></span>'}${i<STATUS.length-1?`<button class="sm" data-act="move" data-v="${q.id}" data-d="1" aria-label="Mover para ${STATUS[i+1]}">▶</button>`:'<span></span>'}</div></div>`}).join('')||'<div class="small muted" style="padding:6px">Vazio</div>'}
+      </div>`}).join('')}</div>`;
+  }
+  return `<header class="top"><h1>Orçamentos</h1><button class="pri" data-act="newq">Novo</button></header>
+  <div class="stack"><div class="seg" role="group" aria-label="Visualização">
+   <button data-act="qmode" data-v="list" aria-pressed="${nav.qmode==='list'}">Lista</button>
+   <button data-act="qmode" data-v="board" aria-pressed="${nav.qmode==='board'}">Pipeline</button></div>${body}</div>`;
+}
+/* ===== Campos ligados ao estado ===== */
+const step=(o,k)=>Array.isArray(o)?(/^\d+$/.test(k)?o[+k]:o.find(x=>x.id===k)):o[k];
+function getPath(path){let o=S;for(const k of path.split('.')){if(o==null)return;o=step(o,k)}return o}
+function setPath(path,val){const ks=path.split('.'),last=ks.pop();let o=S;for(const k of ks){o=step(o,k);if(o==null)return}o[last]=val}
+function fld(label,path,type='t',opt={}){
+  const v=getPath(path);
+  const inp=type==='n'?`<input type="number" inputmode="decimal" step="${opt.step||'any'}" min="${opt.min??0}" value="${v??''}" data-b="${path}" data-t="n">`
+   :type==='area'?`<textarea data-b="${path}" data-t="t">${esc(v)}</textarea>`
+   :`<input type="${opt.kind||'text'}" value="${esc(v)}" data-b="${path}" data-t="t" ${opt.ph?`placeholder="${esc(opt.ph)}"`:''}>`;
+  return `<label class="f">${label}${opt.unit?` <span style="font-weight:500">(${opt.unit})</span>`:''}${inp}</label>`;
+}
+function sel(label,path,options,opt={}){
+  const v=getPath(path)??'';
+  return `<label class="f">${label}<select data-b="${path}" data-t="${opt.n?'n':'t'}" ${opt.full?'data-full="1"':''}>${opt.blank?`<option value="">${opt.blank}</option>`:''}${options.map(([k,l])=>`<option value="${esc(k)}" ${String(k)===String(v)?'selected':''}>${esc(l)}</option>`).join('')}</select></label>`;
+}
+
+/* ===== Editor do orçamento ===== */
+const SECS=[['cli','Cliente'],['med','Medir'],['svc','Serviços'],['cal','Cálculo'],['fot','Fotos e IA'],['orc','Orçamento']];
+function sumBar(q){
+  const c=calc(q);
+  return `<div class="sum" id="sumbar"><div class="grow"><small>Preço final</small><b>${brl(c.price)}</b></div>
+   <div style="text-align:right"><small>${nf(c.area)} m² · ${c.nSlabs} chapa${c.nSlabs===1?'':'s'}</small><small>lucro ${brl(c.profit)}</small></div></div>`;
+}
+function viewEditor(q){
+  const cl=clientOf(q);
+  let body='';
+  if(nav.sec==='cli')body=secCli(q);
+  else if(nav.sec==='med')body=secMed(q);
+  else if(nav.sec==='svc')body=secSvc(q);
+  else if(nav.sec==='cal')body=secCal(q);
+  else if(nav.sec==='fot')body=secFot(q);
+  else body=secOrc(q);
+  return `<header class="top"><button class="ghost" data-act="close" aria-label="Voltar">${IC.back}</button>
+   <h1>#${q.num} ${esc(cl?.name||'Novo orçamento')}</h1><span class="chip c-${q.status}">${q.status}</span></header>
+  <div class="stack">
+   <div class="seg" role="tablist">${SECS.map(([k,l])=>`<button data-act="sec" data-v="${k}" aria-pressed="${nav.sec===k}">${l}</button>`).join('')}</div>
+   <div id="secbody" class="stack" style="padding-top:0">${body}</div>
+   ${sumBar(q)}
+  </div>`;
+}
+
+function secCli(q){
+  const P=`quotes.${q.id}`;
+  const m=matOf(q);
+  return `<div class="card stack" style="padding-top:14px">
+    ${sel('Cliente',P+'.clientId',S.clients.map(c=>[c.id,c.name]),{blank:'Selecione...'})}
+    <button class="sm" data-act="quick-client">+ Novo cliente</button></div>
+   <div class="card stack" style="padding-top:14px">
+    ${sel('Material',P+'.materialId',S.materials.map(x=>[x.id,`${x.name} (${x.cat})`]),{blank:'Selecione...'})}
+    ${m?`<div class="row">${m.photo?`<img class="thumb" src="${m.photo}" alt="">`:`<div class="thumb">sem foto</div>`}
+     <div class="small"><div><b>${esc(m.cat)}</b> · ${esc(m.color)} · ${nf(m.thick,0)} cm</div>
+     <div class="mono muted">${nf(m.slabL,0)}×${nf(m.slabW,0)} cm · ${brl(m.priceSlab)}/chapa · ${brl(m.priceM2)}/m²</div>
+     <div class="muted">${esc(m.supplier)} · estoque ${m.stock}</div></div></div>`:''}</div>
+   <div class="card stack" style="padding-top:14px">
+    ${sel('Etapa do funil',P+'.status',STATUS.map(s=>[s,s]))}
+    ${fld('Validade da proposta','quotes.'+q.id+'.validade','n',{unit:'dias'})}
+    ${fld('Observações do orçamento',P+'.notes','area')}</div>
+   <button class="danger" data-act="del-quote" data-v="${q.id}">Excluir orçamento</button>`;
+}
+
+function secMed(q){
+  if(nav.pi>=q.pieces.length)nav.pi=Math.max(0,q.pieces.length-1);
+  const p=q.pieces[nav.pi];
+  const types=`<div class="seg">${Object.entries(TYPES).map(([k,t])=>`<button data-act="addpiece" data-v="${k}">${t.nome}</button>`).join('')}</div>`;
+  let h=`<div class="seg" role="tablist">${q.pieces.map((x,i)=>`<button data-act="piece" data-v="${i}" aria-pressed="${i===nav.pi}">${esc(x.name||TYPES[x.type].nome)}</button>`).join('')}
+    <button data-act="showtypes" aria-pressed="${nav.showTypes}">+ Peça</button></div>`;
+  if(nav.showTypes)h+=`<div class="card"><div class="lbl" style="margin-bottom:8px">Escolha o formato</div>${types}</div>`;
+  if(!p)return h+'<div class="card muted">Adicione uma peça para começar a medir.</div>';
+  const PP=`quotes.${q.id}.pieces.${p.id}`;
+  const sh=shape(p),area=partsArea(sh.parts);
+  h+=`<div class="draw" id="pdraw">${drawPiece(p)}</div>
+   <div class="row between"><span class="small muted">${TYPES[p.type].nome} · área da peça</span><b class="num" id="parea">${nf(area)} m²</b></div>
+   <div class="card stack" style="padding-top:14px">
+    ${fld('Nome da peça',PP+'.name')}
+    <div class="grid2">${TYPES[p.type].campos.map(([k,l])=>fld(l,PP+'.d.'+k,'n',{unit:k==='N'?'un':'cm'})).join('')}</div>
+    ${p.type==='livre'?livreEd(q,p):''}
+    <div class="lbl">Acabamentos em material</div>
+    <div class="grid2">${fld('Saia (altura)',PP+'.saiaH','n',{unit:'cm'})}${fld('Rodabanca (altura)',PP+'.rodaH','n',{unit:'cm'})}
+     ${p.saiaH>0?fld('Saia (metros)',PP+'.saiaMl','n',{unit:'m',ph:'auto'}):''}${p.rodaH>0?fld('Rodabanca (metros)',PP+'.rodaMl','n',{unit:'m'}):''}</div>
+    ${(p.saiaH>0||p.rodaH>0)?`<div class="small muted">Metros em branco usam o cálculo automático (${nf(defMl(p,'saia'),2)} m saia · ${nf(defMl(p,'roda'),2)} m rodabanca).</div>`:''}
+   </div>
+   <div class="row"><button class="grow" data-act="dup-piece" data-v="${p.id}">Duplicar peça</button><button class="danger" data-act="del-piece" data-v="${p.id}">Remover</button></div>`;
+  return h;
+}
+function livreEd(q,p){
+  const PP=`quotes.${q.id}.pieces.${p.id}`;
+  p.d.rects=p.d.rects||[];
+  return `<div class="lbl">Medidas livres</div>${p.d.rects.map((r,i)=>`<div class="row" style="align-items:flex-end">
+     <label class="f grow">Larg. (cm)<input type="number" inputmode="decimal" value="${r.w||''}" data-b="${PP}.d.rects.${i}.w" data-t="n"></label>
+     <label class="f grow">Alt. (cm)<input type="number" inputmode="decimal" value="${r.h||''}" data-b="${PP}.d.rects.${i}.h" data-t="n"></label>
+     <label class="f" style="width:64px">Qtd<input type="number" inputmode="numeric" value="${r.q||1}" data-b="${PP}.d.rects.${i}.q" data-t="n"></label>
+     <button class="danger sm" data-act="del-rect" data-v="${i}" aria-label="Remover medida">✕</button></div>`).join('')}
+   <button class="sm" data-act="add-rect">+ Adicionar medida</button>`;
+}
+function secSvc(q){
+  const P=`quotes.${q.id}`;
+  const rows=q.lines.map((l,i)=>{const s=S.services.find(x=>x.id===l.svcId);if(!s)return '';
+    return `<div class="li"><div class="grow"><b>${esc(s.name)}</b><div class="small muted mono">${brl(s.price)} / ${s.unit}</div></div>
+     <label class="f" style="width:78px">Qtd<input type="number" inputmode="decimal" min="0" value="${l.qty}" data-b="${P}.lines.${i}.qty" data-t="n"></label>
+     <div class="num" style="width:84px;text-align:right" id="ls${i}">${brl(s.price*l.qty)}</div>
+     <button class="ghost danger" data-act="del-line" data-v="${i}" aria-label="Remover">✕</button></div>`}).join('');
+  const c=calc(q);
+  return `<div class="card stack" style="padding-top:14px"><label class="f">Adicionar serviço
+    <select id="addSvc"><option value="">Escolha...</option>${S.services.map(s=>`<option value="${s.id}">${esc(s.cat)} · ${esc(s.name)} (${brl(s.price)}/${s.unit})</option>`).join('')}</select></label></div>
+   ${rows?`<div class="sheet">${rows}</div>`:'<div class="card muted" style="text-align:center">Nenhum serviço ainda. Inclua furos, recortes, cubas e acabamentos.</div>'}
+   <div class="row between card"><span>Subtotal de serviços</span><b class="num" id="svcsub">${brl(c.svc)}</b></div>
+   <div class="note">Mão de obra por m², instalação e frete ficam na aba Cálculo.</div>`;
+}
+
+function secCal(q){
+  const c=calc(q),P=`quotes.${q.id}.params`,p=q.params;
+  const row=(l,v,b)=>`<div class="li"><span class="grow ${b?'':'muted'}">${l}</span><span class="num">${b?`<b>${v}</b>`:v}</span></div>`;
+  return `<div class="sheet" id="calcbox">
+    ${row('Área total',nf(c.area)+' m²')}
+    ${row('Material ('+(c.m?esc(c.m.name):'—')+')',brl(c.mat))}
+    ${row('Fabricação (mão de obra + serviços)',brl(c.fab))}
+    ${row('Instalação',brl(c.inst))}
+    ${row('Frete',brl(c.frete))}
+    ${row('Custo total',brl(c.cost),1)}
+    ${row('Impostos ('+nf(p.tax,1)+'% sobre a venda)',brl(c.taxV))}
+    ${row('Lucro estimado ('+nf(c.price?c.profit/c.price*100:0,1)+'%)',brl(c.profit))}
+    ${row('Preço final',brl(c.price),1)}
+    ${row('Preço por m²',brl(c.perM2))}
+   </div>
+   <div class="card" id="aprov"><h3>Aproveitamento da chapa</h3>
+    <div class="grid3" style="margin-top:10px">
+     <div class="kpi"><span class="lbl">Chapas</span><b>${c.nSlabs}</b></div>
+     <div class="kpi"><span class="lbl">Uso</span><b>${nf(c.util*100,0)}%</b></div>
+     <div class="kpi"><span class="lbl">Perda</span><b>${nf(c.loss*100,0)}%</b></div></div>
+    <div class="bar" style="margin-top:10px"><i style="width:${c.util*100}%"></i></div>
+    <div class="small muted" style="margin-top:8px">Chapa de ${nf(c.SL,0)}×${nf(c.SW,0)} cm (${nf(c.slabArea)} m²). ${c.nest.emendas?`Peças maiores que a chapa geram ${c.nest.emendas} emenda${c.nest.emendas>1?'s':''}. `:''}O encaixe é uma estimativa por faixas; confira o veio antes de cortar.</div></div>
+   <div class="card stack" style="padding-top:14px"><h3>Parâmetros de preço</h3>
+    <div class="grid2">
+     ${fld('Margem de lucro',P+'.margin','n',{unit:'%'})}${fld('Impostos',P+'.tax','n',{unit:'%'})}
+     ${fld('Mão de obra',P+'.moM2','n',{unit:'R$/m²'})}${fld('Instalação',P+'.instalM2','n',{unit:'R$/m²'})}
+     ${fld('Instalação fixa',P+'.instalFixo','n',{unit:'R$'})}${fld('Frete',P+'.frete','n',{unit:'R$'})}
+     ${sel('Cobrar material por',P+'.charge',[['chapa','Chapa inteira'],['m2','Metro quadrado']])}
+     ${p.charge==='m2'?fld('Perda cobrada',P+'.lossPct','n',{unit:'%'}):''}</div>
+    <div class="note">Margem e impostos incidem sobre o preço de venda: preço = custo ÷ (1 − margem − impostos).</div></div>
+   <h3>Plano de corte</h3><div id="plano" class="stack" style="padding-top:0">${drawSlabs(c)||'<div class="muted small">Adicione peças para ver o plano.</div>'}</div>`;
+}
+
+function secFot(q){
+  const hasAi=q.ai;
+  return `<div class="card stack" style="padding-top:14px"><div class="row between"><h3>Fotos do ambiente</h3><button class="pri sm" data-act="addphoto">Tirar ou escolher foto</button></div>
+   ${q.photos.length?`<div class="photos">${q.photos.map((f,i)=>`<div style="position:relative"><img src="${f}" alt="Foto ${i+1} do ambiente"><button class="sm danger" style="position:absolute;right:4px;top:4px;min-height:30px;padding:2px 8px" data-act="del-photo" data-v="${i}" aria-label="Remover foto">✕</button></div>`).join('')}</div>`
+    :'<div class="muted small">As fotos ficam vinculadas a este orçamento e vão no PDF.</div>'}</div>
+   <div class="card stack" style="padding-top:14px"><h3>Leitura com IA</h3>
+    <div class="small muted">A IA olha as fotos e sugere medidas, materiais e a complexidade do trabalho. São estimativas: confirme com a trena antes de fechar.</div>
+    <button class="pri" data-act="ai" id="aiBtn" ${q.photos.length?'':'disabled'}>Analisar fotos</button>
+    <div id="aiOut">${hasAi?aiHtml(q.ai):''}</div></div>`;
+}
+function aiHtml(a){
+  if(!a)return '';
+  if(a.erro)return `<div class="note" style="border-color:var(--bad)">${esc(a.erro)}</div>`;
+  return `<div class="stack" style="padding-top:4px">
+   <div><span class="lbl">Resumo</span><div>${esc(a.resumo)}</div></div>
+   <div><span class="lbl">Complexidade</span><div><b>${esc(a.complexidade?.nivel||'—')}</b> — ${esc(a.complexidade?.motivo||'')}</div></div>
+   <div><span class="lbl">Medidas sugeridas</span>${(a.medidas||[]).map(m=>`<div class="row between small" style="padding:4px 0"><span>${esc(m.peca)}</span><span class="mono">${nf(m.comprimento_cm,0)} × ${nf(m.profundidade_cm,0)} cm</span></div>`).join('')||'<div class="small muted">Nenhuma medida identificada.</div>'}</div>
+   <div><span class="lbl">Materiais sugeridos</span><div class="small">${(a.materiais||[]).map(esc).join(' · ')||'—'}</div></div>
+   ${(a.medidas||[]).length?'<button class="sm" data-act="ai-apply">Usar medidas sugeridas como peças</button>':''}</div>`;
+}
+
+/* ===== Orçamento: visualização, PDF e WhatsApp ===== */
+function dateBR(t){return new Date(t).toLocaleDateString('pt-BR')}
+function descPiece(p){const d=p.d,t=TYPES[p.type];
+  if(p.type==='livre')return (d.rects||[]).map(r=>`${nf(r.w,0)}×${nf(r.h,0)}${r.q>1?' ('+r.q+'x)':''}`).join(', ');
+  return t.campos.map(([k,l])=>`${l.split(' (')[0]} ${nf(d[k],0)}${k==='N'?'':' cm'}`).join(' · ')}
+function quoteData(q){
+  const c=calc(q),cl=clientOf(q)||{};
+  const items=q.pieces.map(p=>({nome:p.name||TYPES[p.type].nome,tipo:TYPES[p.type].nome,desc:descPiece(p),area:partsArea(shape(p).parts),
+    extra:[p.saiaH>0?`saia ${nf(p.saiaH,0)} cm`:'',p.rodaH>0?`rodabanca ${nf(p.rodaH,0)} cm`:''].filter(Boolean).join(', ')}));
+  const svcs=q.lines.map(l=>{const s=S.services.find(x=>x.id===l.svcId);return s?{nome:s.name,qtd:l.qty,un:s.unit}:null}).filter(Boolean);
+  return {c,cl,items,svcs};
+}
+function secOrc(q){
+  const {c,cl,items,svcs}=quoteData(q),s=S.settings;
+  return `<div class="doc">
+   <div class="row between" style="align-items:flex-start"><div><h2>${esc(s.empresa)}</h2><div style="color:#555">${esc(s.telefone)}</div></div>
+    <div style="text-align:right"><b>Orçamento #${q.num}</b><div style="color:#555">${dateBR(q.createdAt)}</div><div style="color:#555">Válido por ${q.validade} dias</div></div></div>
+   <hr style="border:0;border-top:1px solid #ddd;margin:12px 0">
+   <div><b>${esc(cl.name||'Cliente não informado')}</b><div style="color:#555">${esc(cl.phone||'')} ${esc(cl.address?'· '+cl.address:'')}</div></div>
+   <div style="margin-top:12px"><b>Material:</b> ${esc(c.m?`${c.m.name} (${c.m.cat}, ${nf(c.m.thick,0)} cm)`:'a definir')}</div>
+   <table style="margin-top:10px"><thead><tr><th>Item</th><th>Área</th></tr></thead><tbody>
+    ${items.map(i=>`<tr><td><b>${esc(i.nome)}</b><div style="color:#555;font-size:12px">${esc(i.desc)}${i.extra?' · '+esc(i.extra):''}</div></td><td>${nf(i.area)} m²</td></tr>`).join('')}
+    ${svcs.map(i=>`<tr><td>${esc(i.nome)}</td><td>${nf(i.qtd,i.qtd%1?1:0)} ${i.un}</td></tr>`).join('')}
+    <tr><td>Instalação${c.frete?' e frete':''}</td><td>incluso</td></tr></tbody></table>
+   <div class="row between" style="margin-top:14px;padding-top:12px;border-top:2px solid #111"><b>Total</b><b style="font-size:22px;font-family:var(--mono)">${brl(c.price)}</b></div>
+   ${q.notes?`<div style="margin-top:10px;color:#444">${esc(q.notes)}</div>`:''}
+   ${q.photos.length?`<div class="photos" style="margin-top:12px">${q.photos.slice(0,3).map(f=>`<img src="${f}" alt="">`).join('')}</div>`:''}
+  </div>
+  <div class="grid2"><button class="pri" data-act="pdf">Baixar PDF</button><a class="btn" target="_blank" rel="noopener" href="${waUrl(q)}">Enviar no WhatsApp</a></div>
+  ${q.status==='Rascunho'?'<button data-act="mark-sent">Marcar como enviado</button>':''}
+  <div class="note">O WhatsApp abre com o resumo do orçamento. Anexe o PDF baixado na conversa.</div>`;
+}
+/* ===== Cadastros ===== */
+const CATS=['Granito','Mármore','Quartzo','Quartzito','Porcelanato','Outra'];
+const SVC_CATS=['Acabamentos','Furos','Recortes','Instalação','Frete','Cubas','Saia','Rodabanca','Pingadeira'];
+function viewCad(){
+  if(nav.edit)return viewCadEdit();
+  const k=nav.cad;
+  const seg=`<div class="seg"><button data-act="cad" data-v="mat" aria-pressed="${k==='mat'}">Materiais</button>
+    <button data-act="cad" data-v="svc" aria-pressed="${k==='svc'}">Serviços</button>
+    <button data-act="cad" data-v="cli" aria-pressed="${k==='cli'}">Clientes</button></div>`;
+  let list='';
+  const ex=o=>o.ex?' <span class="ex">EXEMPLO</span>':'';
+  if(k==='mat')list=S.materials.map(m=>`<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="edit" data-k="materials" data-v="${m.id}">
+    ${m.photo?`<img class="thumb" src="${m.photo}" alt="">`:`<div class="thumb">sem foto</div>`}
+    <div class="grow"><b>${esc(m.name)}</b>${ex(m)}<div class="small muted">${esc(m.cat)} · ${esc(m.color)} · ${nf(m.thick,0)} cm</div></div>
+    <div style="text-align:right"><div class="num"><b>${brl(m.priceSlab)}</b></div><div class="small muted">${m.stock} em estoque</div></div></div>`).join('');
+  if(k==='svc')list=S.services.map(s=>`<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="edit" data-k="services" data-v="${s.id}">
+    <div class="grow"><b>${esc(s.name)}</b>${ex(s)}<div class="small muted">${esc(s.cat)}</div></div><div class="num"><b>${brl(s.price)}</b><span class="small muted"> /${s.unit}</span></div></div>`).join('');
+  if(k==='cli')list=S.clients.map(c=>`<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="edit" data-k="clients" data-v="${c.id}">
+    <div class="grow"><b>${esc(c.name)}</b>${ex(c)}<div class="small muted">${esc(c.phone)} ${c.address?'· '+esc(c.address):''}</div></div></div>`).join('');
+  return `<header class="top"><h1>Cadastros</h1><button class="pri" data-act="add-cad">Novo</button></header>
+   <div class="stack">${seg}${list?`<div class="sheet">${list}</div>`:'<div class="card muted" style="text-align:center">Nada cadastrado.</div>'}</div>`;
+}
+function viewCadEdit(){
+  const {kind,id}=nav.edit,o=S[kind].find(x=>x.id===id);
+  if(!o){nav.edit=null;return viewCad()}
+  const P=`${kind}.${id}`;
+  let f='';
+  if(kind==='materials')f=`${fld('Nome da pedra',P+'.name')}
+    <div class="grid2">${sel('Categoria',P+'.cat',CATS.map(c=>[c,c]))}${fld('Cor',P+'.color')}
+    ${fld('Espessura',P+'.thick','n',{unit:'cm'})}${fld('Estoque',P+'.stock','n',{unit:'chapas'})}
+    ${fld('Preço por chapa',P+'.priceSlab','n',{unit:'R$'})}${fld('Preço por m²',P+'.priceM2','n',{unit:'R$'})}
+    ${fld('Chapa: comprimento',P+'.slabL','n',{unit:'cm'})}${fld('Chapa: largura',P+'.slabW','n',{unit:'cm'})}</div>
+    ${fld('Fornecedor',P+'.supplier')}
+    <div class="row">${o.photo?`<img class="thumb" style="width:84px;height:84px" src="${o.photo}" alt="">`:'<div class="thumb" style="width:84px;height:84px">sem foto</div>'}
+     <button data-act="mat-photo" data-v="${id}">Foto do material</button>${o.photo?`<button class="ghost danger" data-act="mat-photo-del" data-v="${id}">Remover</button>`:''}</div>`;
+  if(kind==='services')f=`${fld('Nome do serviço',P+'.name')}
+    <div class="grid2">${sel('Categoria',P+'.cat',SVC_CATS.map(c=>[c,c]))}${sel('Unidade',P+'.unit',[['un','Unidade'],['ml','Metro linear'],['m²','Metro quadrado']])}</div>
+    ${fld('Preço',P+'.price','n',{unit:'R$ por unidade'})}`;
+  if(kind==='clients')f=`${fld('Nome',P+'.name')}<div class="grid2">${fld('Telefone',P+'.phone','t',{kind:'tel'})}${fld('E-mail',P+'.email','t',{kind:'email'})}</div>
+    ${fld('Endereço',P+'.address')}${fld('Observações',P+'.notes','area')}`;
+  return `<header class="top"><button class="ghost" data-act="edit-close" aria-label="Voltar">${IC.back}</button><h1>${esc(o.name||'Novo')}</h1></header>
+   <div class="stack"><div class="card stack" style="padding-top:14px">${f}</div>
+   <button class="danger" data-act="del-cad">Excluir</button></div>`;
+}
+
+/* ===== Ajustes ===== */
+function applyTheme(){const t=S.settings.theme;const r=document.documentElement;if(t==='dark'||t==='light')r.dataset.theme=t;else delete r.dataset.theme}
+function viewCfg(){
+  const s='settings';
+  const ex=[...S.materials,...S.services,...S.clients,...S.quotes].some(x=>x.ex);
+  return `<header class="top"><h1>Ajustes</h1></header><div class="stack">
+   <div class="card stack" style="padding-top:14px"><h3>Sua marmoraria</h3>${fld('Nome',s+'.empresa')}${fld('Telefone / WhatsApp',s+'.telefone','t',{kind:'tel'})}</div>
+   <div class="card stack" style="padding-top:14px"><h3>Valores padrão de novos orçamentos</h3>
+    <div class="grid2">${fld('Margem',s+'.margin','n',{unit:'%'})}${fld('Impostos',s+'.tax','n',{unit:'%'})}
+    ${fld('Mão de obra',s+'.moM2','n',{unit:'R$/m²'})}${fld('Instalação',s+'.instalM2','n',{unit:'R$/m²'})}
+    ${fld('Frete',s+'.frete','n',{unit:'R$'})}${fld('Validade',s+'.validade','n',{unit:'dias'})}</div></div>
+   <div class="card stack" style="padding-top:14px"><h3>Aparência</h3>
+    <div class="seg">${[['auto','Automático'],['light','Claro'],['dark','Escuro']].map(([k,l])=>`<button data-act="theme" data-v="${k}" aria-pressed="${(S.settings.theme||'auto')===k}">${l}</button>`).join('')}</div></div>
+   <div class="card stack" style="padding-top:14px"><h3>Backup</h3>
+    <div class="small muted">Os dados ficam neste navegador. Baixe um arquivo de backup para guardar ou levar para outro aparelho.</div>
+    <div class="grid2"><button data-act="export">Baixar backup</button><button data-act="import">Restaurar backup</button></div></div>
+   ${ex?'<button data-act="clear-ex">Remover dados de exemplo</button>':''}
+   <button class="danger" data-act="reset">Apagar tudo e recomeçar</button>
+  </div>`;
+}
+/* ===== Utilitários de arquivo e foto ===== */
+function readImg(file,max=1000){
+  return new Promise((ok,no)=>{
+    const fr=new FileReader();
+    fr.onerror=no;
+    fr.onload=()=>{const im=new Image();im.onerror=no;im.onload=()=>{
+      const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');
+      c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+      ok(c.toDataURL('image/jpeg',0.72))};im.src=fr.result};
+    fr.readAsDataURL(file);
+  });
+}
+function dataUrlBlob(u){const [h,b]=u.split(',');const bin=atob(b),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return new Blob([a],{type:h.match(/:(.*?);/)[1]})}
+async function saveFile(filename,data){
+  const dl=await (window.claude?.use?window.claude.use('downloads'):null);
+  if(!dl){const bl=data instanceof Blob?data:new Blob([data]);const u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);toast('Arquivo baixado.');return}
+  try{await dl.save({filename,data});toast('Arquivo pronto.')}catch(e){if(e&&e.code!=='declined')toast('Não foi possível salvar o arquivo.')}
+}
+
+/* ===== PDF ===== */
+function buildPdf(q){
+  const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'});
+  const {c,cl,items,svcs}=quoteData(q),s=S.settings,W=210,M=16;let y=18;
+  const need=h=>{if(y+h>285){doc.addPage();y=18}};
+  doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text(s.empresa||'Marmoraria',M,y);
+  doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(90);
+  if(s.telefone)doc.text(s.telefone,M,y+6);
+  doc.setTextColor(0);doc.setFont('helvetica','bold');doc.text('Orçamento #'+q.num,W-M,y,{align:'right'});
+  doc.setFont('helvetica','normal');doc.setTextColor(90);
+  doc.text(dateBR(q.createdAt)+'  |  válido por '+q.validade+' dias',W-M,y+6,{align:'right'});doc.setTextColor(0);
+  y+=16;doc.setDrawColor(200);doc.line(M,y,W-M,y);y+=8;
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text(cl.name||'Cliente não informado',M,y);y+=5.5;
+  doc.setFont('helvetica','normal');doc.setFontSize(10);
+  [cl.phone,cl.email,cl.address].filter(Boolean).forEach(t=>{doc.text(t,M,y);y+=5});
+  y+=3;doc.setFont('helvetica','bold');doc.text('Material',M,y);doc.setFont('helvetica','normal');
+  doc.text(c.m?`${c.m.name} (${c.m.cat}, ${nf(c.m.thick,0)} cm)`:'a definir',M+22,y);y+=9;
+  doc.setFillColor(238,240,239);doc.rect(M,y-5,W-2*M,7,'F');doc.setFont('helvetica','bold');
+  doc.text('Item',M+2,y);doc.text('Área',W-M-2,y,{align:'right'});y+=7;doc.setFont('helvetica','normal');
+  items.forEach(i=>{
+    const t=doc.splitTextToSize(i.desc+(i.extra?' - '+i.extra:''),W-2*M-40);need(8+t.length*4.5);
+    doc.setFont('helvetica','bold');doc.text(i.nome,M+2,y);doc.setFont('helvetica','normal');doc.text(nf(i.area)+' m²',W-M-2,y,{align:'right'});
+    y+=4.8;doc.setTextColor(90);doc.setFontSize(9);doc.text(t,M+2,y);y+=t.length*4.2+2.5;doc.setTextColor(0);doc.setFontSize(10)});
+  svcs.forEach(i=>{need(7);doc.text(i.nome,M+2,y);doc.text(nf(i.qtd,i.qtd%1?1:0)+' '+i.un,W-M-2,y,{align:'right'});y+=6});
+  need(7);doc.text('Instalação'+(c.frete?' e frete':''),M+2,y);doc.text('incluso',W-M-2,y,{align:'right'});y+=8;
+  need(20);doc.setDrawColor(20);doc.setLineWidth(0.6);doc.line(M,y,W-M,y);y+=8;
+  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('Total',M+2,y);doc.setFontSize(16);doc.text(brl(c.price),W-M-2,y,{align:'right'});y+=10;
+  if(q.notes){doc.setFont('helvetica','normal');doc.setFontSize(10);const t=doc.splitTextToSize(q.notes,W-2*M);need(t.length*5);doc.text(t,M,y);y+=t.length*5+4}
+  const ph=q.photos.slice(0,3);
+  if(ph.length){need(52);ph.forEach((f,i)=>{try{doc.addImage(f,'JPEG',M+i*58,y,54,40)}catch(e){}});y+=46}
+  doc.setFontSize(8);doc.setTextColor(120);doc.text('Valores sujeitos a conferência das medidas no local.',M,288);
+  return doc.output('blob');
+}
+
+/* ===== WhatsApp ===== */
+function waUrl(q){
+  const {c,cl,items}=quoteData(q),s=S.settings;
+  let t=`Olá${cl.name?', '+cl.name.split(' ')[0]:''}! Segue o orçamento #${q.num} da ${s.empresa}.\n\n`;
+  t+=`Material: ${c.m?c.m.name:'a definir'}\n`;
+  items.forEach(i=>{t+=`• ${i.nome}: ${nf(i.area)} m²\n`});
+  t+=`\nTotal: ${brl(c.price)}\nValidade: ${q.validade} dias.`;
+  let d=(cl.phone||'').replace(/\D/g,'');if(d.length===10||d.length===11)d='55'+d;
+  return `https://wa.me/${d}?text=${encodeURIComponent(t)}`;
+}
+
+/* ===== IA: leitura das fotos ===== */
+async function runAI(q){
+  const btn=$('#aiBtn'),out=$('#aiOut');
+  const sample=await (window.claude?.use?window.claude.use('sample'):null);
+  const lim=sample?await sample.limits().catch(()=>null):null;
+  if(!sample||!lim?.images){out.innerHTML=aiHtml({erro:'A leitura de fotos por IA não está disponível nesta visualização.'});return}
+  btn.disabled=true;btn.textContent='Analisando...';
+  const blobs=q.photos.slice(0,3).map(dataUrlBlob);
+  const prompt=`Você é um orçador experiente de marmoraria. As imagens são fotos do ambiente onde será instalada uma peça de pedra (bancada, lavatório, escada, nicho ou similar).
+Use referências de escala visíveis (portas ~210 cm de altura, bancadas ~90 cm de altura e 55-65 cm de profundidade, azulejos, eletrodomésticos) para estimar medidas. Se não houver referência, diga isso no resumo e dê faixas conservadoras.
+Materiais disponíveis na loja: ${S.materials.map(m=>m.name+' ('+m.cat+')').join('; ')||'nenhum cadastrado'}.
+Responda somente com JSON neste formato, em português do Brasil:
+{"resumo":"2 frases sobre o ambiente","medidas":[{"peca":"nome","comprimento_cm":0,"profundidade_cm":0}],"materiais":["até 3 nomes, priorizando os da loja"],"complexidade":{"nivel":"Baixa|Média|Alta","motivo":"1 frase"}}`;
+  try{
+    const r=await sample.json(prompt,{images:blobs,cache:false});
+    q.ai={resumo:String(r.resumo||''),medidas:Array.isArray(r.medidas)?r.medidas.slice(0,6):[],materiais:Array.isArray(r.materiais)?r.materiais:[],complexidade:r.complexidade||{}};
+    save();
+  }catch(e){q.ai={erro:e?.code==='not_granted'?'A permissão para usar IA foi negada.':e?.code==='rate_limited'?'Muitas análises seguidas. Tente de novo em instantes.':'Não foi possível analisar as fotos agora.'}}
+  render();
+}
+
+/* ===== Eventos ===== */
+const curQ=()=>nav.qid&&S.quotes.find(x=>x.id===nav.qid);
+function confirmTap(btn,fn){
+  if(btn.dataset.armed){fn();return}
+  btn.dataset.armed='1';btn.dataset.txt=btn.textContent;btn.textContent='Toque de novo para confirmar';
+  setTimeout(()=>{if(btn.isConnected){delete btn.dataset.armed;btn.textContent=btn.dataset.txt}},3000);
+}
+let pendingMat=null;
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,v=b.dataset.v,q=curQ();
+  switch(a){
+    case 'tab':if(v==='new'){const n=newQuote();openQuote(n.id,'cli')}else goTab(v);break;
+    case 'newq':{const n=newQuote();openQuote(n.id,'cli');break}
+    case 'open':openQuote(v);break;
+    case 'close':nav.qid=null;render();break;
+    case 'sec':nav.sec=v;render();break;
+    case 'qmode':nav.qmode=v;render();break;
+    case 'move':{const x=S.quotes.find(o=>o.id===v);const i=STATUS.indexOf(x.status)+(+b.dataset.d);if(STATUS[i]){setStatus(x,STATUS[i]);render()}break}
+    case 'piece':nav.pi=+v;nav.showTypes=false;render();break;
+    case 'showtypes':nav.showTypes=!nav.showTypes;render();break;
+    case 'addpiece':{const t=TYPES[v],d={};t.campos.forEach(([k,,def])=>d[k]=def);if(v==='livre')d.rects=[{w:100,h:50,q:1,l:'Peça'}];
+      q.pieces.push({id:uid(),type:v,name:t.nome,d,saiaH:0,rodaH:0});nav.pi=q.pieces.length-1;nav.showTypes=false;save();render();break}
+    case 'dup-piece':{const p=q.pieces.find(x=>x.id===v),n=JSON.parse(JSON.stringify(p));n.id=uid();n.name=(p.name||'Peça')+' (cópia)';q.pieces.push(n);nav.pi=q.pieces.length-1;save();render();break}
+    case 'del-piece':confirmTap(b,()=>{q.pieces=q.pieces.filter(x=>x.id!==v);nav.pi=0;save();render()});break;
+    case 'add-rect':{const p=q.pieces[nav.pi];(p.d.rects=p.d.rects||[]).push({w:100,h:50,q:1,l:'Peça'});save();render();break}
+    case 'del-rect':{q.pieces[nav.pi].d.rects.splice(+v,1);save();render();break}
+    case 'del-line':q.lines.splice(+v,1);save();render();break;
+    case 'quick-client':{const c={id:uid(),name:'Novo cliente',phone:'',email:'',address:'',notes:''};S.clients.unshift(c);q.clientId=c.id;save();nav.tab='cad';nav.cad='cli';nav.edit={kind:'clients',id:c.id};nav.qid=null;render();break}
+    case 'del-quote':confirmTap(b,()=>{S.quotes=S.quotes.filter(x=>x.id!==v);nav.qid=null;save();render()});break;
+    case 'addphoto':$('#filePhoto').click();break;
+    case 'del-photo':q.photos.splice(+v,1);save();render();break;
+    case 'ai':runAI(q);break;
+    case 'ai-apply':{(q.ai.medidas||[]).forEach(m=>{const A=num(m.comprimento_cm),P=num(m.profundidade_cm);if(A>0&&P>0)q.pieces.push({id:uid(),type:'reta',name:String(m.peca||'Peça sugerida'),d:{A,P},saiaH:0,rodaH:0})});nav.sec='med';save();render();toast('Peças adicionadas. Confirme com a trena.');break}
+    case 'pdf':try{await saveFile(`orcamento-${q.num}.pdf`,buildPdf(q))}catch(err){toast('Não foi possível gerar o PDF.')}break;
+    case 'mark-sent':setStatus(q,'Enviado');render();toast('Marcado como enviado.');break;
+    case 'cad':nav.cad=v;render();break;
+    case 'add-cad':{const k=nav.cad;let o;
+      if(k==='mat'){o={id:uid(),name:'Nova pedra',cat:'Granito',color:'',thick:2,priceSlab:0,priceM2:0,slabL:300,slabW:160,supplier:'',stock:0,photo:''};S.materials.unshift(o);nav.edit={kind:'materials',id:o.id}}
+      else if(k==='svc'){o={id:uid(),name:'Novo serviço',cat:'Acabamentos',unit:'un',price:0};S.services.unshift(o);nav.edit={kind:'services',id:o.id}}
+      else{o={id:uid(),name:'Novo cliente',phone:'',email:'',address:'',notes:''};S.clients.unshift(o);nav.edit={kind:'clients',id:o.id}}
+      save();render();scrollTo(0,0);break}
+    case 'edit':nav.edit={kind:b.dataset.k,id:v};render();scrollTo(0,0);break;
+    case 'edit-close':nav.edit=null;render();break;
+    case 'del-cad':confirmTap(b,()=>{const {kind,id}=nav.edit;S[kind]=S[kind].filter(x=>x.id!==id);nav.edit=null;save();render()});break;
+    case 'mat-photo':pendingMat=v;$('#fileMat').click();break;
+    case 'mat-photo-del':S.materials.find(x=>x.id===v).photo='';save();render();break;
+    case 'theme':S.settings.theme=v;applyTheme();save();render();break;
+    case 'export':saveFile(`pedra-facil-backup-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(S));break;
+    case 'import':$('#fileImport').click();break;
+    case 'clear-ex':confirmTap(b,()=>{['materials','services','clients','quotes'].forEach(k=>S[k]=S[k].filter(x=>!x.ex));save();render();toast('Exemplos removidos.')});break;
+    case 'reset':confirmTap(b,()=>{S={materials:[],services:[],clients:[],quotes:[],settings:{...S.settings,nextNum:1001}};save();nav.qid=null;nav.edit=null;render();toast('Tudo apagado.')});break;
+  }
+});
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.card.tap')){e.preventDefault();e.target.click()}});
+
+/* Atualização ao vivo: não recria os campos para não perder o foco */
+function live(){
+  const q=curQ();if(!q)return;
+  const sb=$('#sumbar');if(sb)sb.outerHTML=sumBar(q);
+  if(nav.sec==='med'){const p=q.pieces[nav.pi];if(p&&$('#pdraw')){$('#pdraw').innerHTML=drawPiece(p);$('#parea').textContent=nf(partsArea(shape(p).parts))+' m²'}}
+  if(nav.sec==='svc'){q.lines.forEach((l,i)=>{const s=S.services.find(x=>x.id===l.svcId),el=$('#ls'+i);if(el&&s)el.textContent=brl(s.price*l.qty)});const c=calc(q);$('#svcsub').textContent=brl(c.svc)}
+  if(nav.sec==='cal'){const t=document.createElement('template');t.innerHTML=secCal(q);
+    ['#calcbox','#aprov','#plano'].forEach(id=>{const n=t.content.querySelector(id),o=$(id);if(n&&o)o.innerHTML=n.innerHTML})}
+}
+document.addEventListener('input',e=>{
+  const el=e.target.closest('[data-b]');if(!el||el.tagName==='SELECT')return;
+  const old=getPath(el.dataset.b);
+  const val=el.dataset.t==='n'?num(el.value):el.value;
+  setPath(el.dataset.b,val);save();
+  const cond=/\.(saiaH|rodaH)$/.test(el.dataset.b)&&((old>0)!==(val>0));
+  if(cond){const path=el.dataset.b;render();const n=$(`[data-b="${path}"]`);if(n){n.focus();const L=n.value.length;try{n.setSelectionRange(L,L)}catch(x){}}}
+  else live();
+});
+document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.id==='addSvc'){const q=curQ();if(el.value){const f=q.lines.find(l=>l.svcId===el.value);if(f)f.qty+=1;else q.lines.push({svcId:el.value,qty:1});save();render()}return}
+  if(el.matches('select[data-b]')){setPath(el.dataset.b,el.dataset.t==='n'?num(el.value):el.value);
+    const q=curQ();if(q&&/\.materialId$/.test(el.dataset.b)){const m=matOf(q);if(m)q.params.charge=m.priceSlab>0?'chapa':'m2'}
+    if(el.dataset.b.endsWith('.status')){const q2=curQ();if(q2)setStatus(q2,q2.status)}
+    save();render();return}
+  if(el.id==='filePhoto'&&el.files[0]){const q=curQ();readImg(el.files[0]).then(u=>{q.photos.push(u);save();render();toast('Foto salva no orçamento.')}).catch(()=>toast('Não foi possível ler a foto.'));el.value='';return}
+  if(el.id==='fileMat'&&el.files[0]&&pendingMat){const m=S.materials.find(x=>x.id===pendingMat);readImg(el.files[0],600).then(u=>{m.photo=u;save();render()}).catch(()=>toast('Não foi possível ler a foto.'));el.value='';return}
+  if(el.id==='fileImport'&&el.files[0]){
+    el.files[0].text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.quotes)||!Array.isArray(d.materials))throw 0;S=d;save();applyTheme();nav.qid=null;nav.edit=null;render();toast('Backup restaurado.')}catch(x){toast('Arquivo de backup inválido.')}});el.value='';
+  }
+});
+
+/* ===== Início ===== */
+load();applyTheme();render();
+
+if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+</script>
+</body></html>
