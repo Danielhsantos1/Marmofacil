@@ -1,0 +1,1246 @@
+{
+ "nota": "Gerado com o codigo original do index.html (v. marmofacil-v2) antes da refatoracao 1A.",
+ "materials": [
+  {
+   "name": "Preto São Gabriel",
+   "cat": "Granito",
+   "color": "Preto",
+   "thick": 2,
+   "priceSlab": 2900,
+   "priceM2": 640,
+   "slabL": 310,
+   "slabW": 180,
+   "supplier": "Pedreira Serra Alta",
+   "stock": 6,
+   "id": "iby3xqyz",
+   "photo": "",
+   "ex": true
+  },
+  {
+   "name": "Branco Prime",
+   "cat": "Quartzo",
+   "color": "Branco",
+   "thick": 2,
+   "priceSlab": 6800,
+   "priceM2": 1180,
+   "slabL": 320,
+   "slabW": 160,
+   "supplier": "Quartz Brasil",
+   "stock": 3,
+   "id": "ivw9ml6e",
+   "photo": "",
+   "ex": true
+  },
+  {
+   "name": "Taj Mahal",
+   "cat": "Quartzito",
+   "color": "Bege claro",
+   "thick": 2,
+   "priceSlab": 11500,
+   "priceM2": 2050,
+   "slabL": 310,
+   "slabW": 190,
+   "supplier": "Importadora Litos",
+   "stock": 2,
+   "id": "iw4a68h0",
+   "photo": "",
+   "ex": true
+  },
+  {
+   "name": "Carrara",
+   "cat": "Mármore",
+   "color": "Branco veiado",
+   "thick": 2,
+   "priceSlab": 7400,
+   "priceM2": 1480,
+   "slabL": 300,
+   "slabW": 180,
+   "supplier": "Importadora Litos",
+   "stock": 1,
+   "id": "i6482jk2",
+   "photo": "",
+   "ex": true
+  },
+  {
+   "name": "Porcelanato Calacatta",
+   "cat": "Porcelanato",
+   "color": "Branco veiado",
+   "thick": 1,
+   "priceSlab": 1650,
+   "priceM2": 420,
+   "slabL": 300,
+   "slabW": 150,
+   "supplier": "Cerâmica Norte",
+   "stock": 8,
+   "id": "iybxe8jg",
+   "photo": "",
+   "ex": true
+  },
+  {
+   "id": "t1",
+   "name": "Teste",
+   "cat": "Granito",
+   "thick": 2,
+   "priceSlab": 2900,
+   "priceM2": 640,
+   "slabL": 310,
+   "slabW": 180
+  }
+ ],
+ "services": [
+  {
+   "id": "imdyg524",
+   "name": "Furo de torneira",
+   "cat": "Furos",
+   "unit": "un",
+   "price": 30,
+   "ex": true
+  },
+  {
+   "id": "i56fms0z",
+   "name": "Recorte de cuba de embutir",
+   "cat": "Recortes",
+   "unit": "un",
+   "price": 140,
+   "ex": true
+  },
+  {
+   "id": "ikwszflx",
+   "name": "Recorte de cooktop",
+   "cat": "Recortes",
+   "unit": "un",
+   "price": 190,
+   "ex": true
+  },
+  {
+   "id": "i0717tih",
+   "name": "Cuba inox instalada",
+   "cat": "Cubas",
+   "unit": "un",
+   "price": 380,
+   "ex": true
+  },
+  {
+   "id": "i2ou2up2",
+   "name": "Pingadeira",
+   "cat": "Acabamentos",
+   "unit": "ml",
+   "price": 45,
+   "ex": true
+  },
+  {
+   "id": "i0iprdcx",
+   "name": "Meia-esquadria",
+   "cat": "Acabamentos",
+   "unit": "ml",
+   "price": 70,
+   "ex": true
+  },
+  {
+   "id": "i23r8rcd",
+   "name": "Borda reta polida",
+   "cat": "Acabamentos",
+   "unit": "ml",
+   "price": 35,
+   "ex": true
+  },
+  {
+   "id": "ibewni8n",
+   "name": "Rodabanca colada",
+   "cat": "Rodabanca",
+   "unit": "ml",
+   "price": 28,
+   "ex": true
+  },
+  {
+   "id": "isgjvc0f",
+   "name": "Saia colada",
+   "cat": "Saia",
+   "unit": "ml",
+   "price": 55,
+   "ex": true
+  }
+ ],
+ "cases": [
+  {
+   "nome": "exemplo 1 (Fechado)",
+   "quote": {
+    "id": "iczgh1ki",
+    "num": 1001,
+    "clientId": "i8mbf4ng",
+    "materialId": "ivw9ml6e",
+    "status": "Fechado",
+    "pieces": [
+     {
+      "id": "is3xyrcw",
+      "type": "L",
+      "name": "Bancada da cozinha",
+      "d": {
+       "A": 310,
+       "B": 210,
+       "P": 62
+      },
+      "saiaH": 0,
+      "rodaH": 7
+     }
+    ],
+    "lines": [
+     {
+      "svcId": "i56fms0z",
+      "qty": 1
+     },
+     {
+      "svcId": "ikwszflx",
+      "qty": 1
+     },
+     {
+      "svcId": "imdyg524",
+      "qty": 1
+     }
+    ],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    },
+    "photos": [],
+    "notes": "",
+    "validade": 15,
+    "createdAt": 1790738142628,
+    "closedAt": 1790910942628,
+    "ex": true
+   },
+   "esperado": {
+    "area": 3.1602,
+    "nSlabs": 1,
+    "emendas": 1,
+    "util": 0.617227,
+    "mat": 6800,
+    "labor": 568.836,
+    "svc": 360,
+    "fab": 928.836,
+    "inst": 284.418,
+    "frete": 150,
+    "cost": 8163.254,
+    "price": 13836.02,
+    "taxV": 830.1612,
+    "profit": 4842.6048,
+    "perM2": 4378.21024
+   }
+  },
+  {
+   "nome": "exemplo 2 (Enviado)",
+   "quote": {
+    "id": "ioajtsii",
+    "num": 1002,
+    "clientId": "i5j4tn4w",
+    "materialId": "i6482jk2",
+    "status": "Enviado",
+    "pieces": [
+     {
+      "id": "iv8dfzdz",
+      "type": "lavatorio",
+      "name": "Lavatório do social",
+      "d": {
+       "A": 120,
+       "P": 52
+      },
+      "saiaH": 5,
+      "rodaH": 0
+     }
+    ],
+    "lines": [
+     {
+      "svcId": "i56fms0z",
+      "qty": 1
+     },
+     {
+      "svcId": "imdyg524",
+      "qty": 1
+     }
+    ],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "m2",
+     "lossPct": 12
+    },
+    "photos": [],
+    "notes": "",
+    "validade": 15,
+    "createdAt": 1792034142628,
+    "closedAt": null,
+    "ex": true
+   },
+   "esperado": {
+    "area": 0.684,
+    "nSlabs": 1,
+    "emendas": 0,
+    "util": 0.126667,
+    "mat": 1133.7984,
+    "labor": 123.12,
+    "svc": 170,
+    "fab": 293.12,
+    "inst": 61.56,
+    "frete": 150,
+    "cost": 1638.4784,
+    "price": 2777.08,
+    "taxV": 166.6248,
+    "profit": 971.9768,
+    "perM2": 4060.05848
+   }
+  },
+  {
+   "nome": "exemplo 3 (Negociação)",
+   "quote": {
+    "id": "igmife4v",
+    "num": 1003,
+    "clientId": "i8mbf4ng",
+    "materialId": "iby3xqyz",
+    "status": "Negociação",
+    "pieces": [
+     {
+      "id": "i8xc1rj1",
+      "type": "reta",
+      "name": "Bancada da área gourmet",
+      "d": {
+       "A": 260,
+       "P": 65
+      },
+      "saiaH": 0,
+      "rodaH": 7
+     },
+     {
+      "id": "ixi2q94b",
+      "type": "ilha",
+      "name": "Ilha",
+      "d": {
+       "A": 200,
+       "B": 90
+      },
+      "saiaH": 6,
+      "rodaH": 0
+     }
+    ],
+    "lines": [
+     {
+      "svcId": "ikwszflx",
+      "qty": 1
+     }
+    ],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    },
+    "photos": [],
+    "notes": "",
+    "validade": 15,
+    "createdAt": 1791688542628,
+    "closedAt": null,
+    "ex": true
+   },
+   "esperado": {
+    "area": 4.02,
+    "nSlabs": 1,
+    "emendas": 1,
+    "util": 0.72043,
+    "mat": 2900,
+    "labor": 723.6,
+    "svc": 190,
+    "fab": 913.6,
+    "inst": 361.8,
+    "frete": 150,
+    "cost": 4325.4,
+    "price": 7331.19,
+    "taxV": 439.8714,
+    "profit": 2565.9186,
+    "perM2": 1823.679104
+   }
+  },
+  {
+   "nome": "reta 280x60",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.8839895102585966",
+      "type": "reta",
+      "name": "reta",
+      "d": {
+       "A": 280,
+       "P": 60
+      },
+      "saiaH": 0,
+      "rodaH": 0
+     }
+    ],
+    "lines": [],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 1.68,
+    "nSlabs": 1,
+    "emendas": 0,
+    "util": 0.301075,
+    "mat": 2900,
+    "labor": 302.4,
+    "svc": 0,
+    "fab": 302.4,
+    "inst": 151.2,
+    "frete": 150,
+    "cost": 3503.6,
+    "price": 5938.31,
+    "taxV": 356.2986,
+    "profit": 2078.4114,
+    "perM2": 3534.708333
+   }
+  },
+  {
+   "nome": "L 310x210x62 com rodabanca 7",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.0528660537615091",
+      "type": "L",
+      "name": "L",
+      "d": {
+       "A": 310,
+       "B": 210,
+       "P": 62
+      },
+      "saiaH": 0,
+      "rodaH": 7
+     }
+    ],
+    "lines": [],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 3.1602,
+    "nSlabs": 1,
+    "emendas": 1,
+    "util": 0.566344,
+    "mat": 2900,
+    "labor": 568.836,
+    "svc": 0,
+    "fab": 568.836,
+    "inst": 284.418,
+    "frete": 150,
+    "cost": 3903.254,
+    "price": 6615.68,
+    "taxV": 396.9408,
+    "profit": 2315.4852,
+    "perM2": 2093.437124
+   }
+  },
+  {
+   "nome": "U 320x220x220x60",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.855746651460793",
+      "type": "U",
+      "name": "U",
+      "d": {
+       "A": 320,
+       "B": 220,
+       "C": 220,
+       "P": 60
+      },
+      "saiaH": 0,
+      "rodaH": 0
+     }
+    ],
+    "lines": [],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 3.84,
+    "nSlabs": 2,
+    "emendas": 1,
+    "util": 0.344086,
+    "mat": 5800,
+    "labor": 691.2,
+    "svc": 0,
+    "fab": 691.2,
+    "inst": 345.6,
+    "frete": 150,
+    "cost": 6986.8,
+    "price": 11842.03,
+    "taxV": 710.5218,
+    "profit": 4144.7082,
+    "perM2": 3083.861979
+   }
+  },
+  {
+   "nome": "ilha 240x100 com saia 6",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.9973681167638833",
+      "type": "ilha",
+      "name": "ilha",
+      "d": {
+       "A": 240,
+       "B": 100
+      },
+      "saiaH": 6,
+      "rodaH": 0
+     }
+    ],
+    "lines": [],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 2.808,
+    "nSlabs": 1,
+    "emendas": 2,
+    "util": 0.503226,
+    "mat": 2900,
+    "labor": 505.44,
+    "svc": 0,
+    "fab": 505.44,
+    "inst": 252.72,
+    "frete": 150,
+    "cost": 3808.16,
+    "price": 6454.51,
+    "taxV": 387.2706,
+    "profit": 2259.0794,
+    "perM2": 2298.614672
+   }
+  },
+  {
+   "nome": "escada 100x5 degraus",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.7901022350515914",
+      "type": "escada",
+      "name": "escada",
+      "d": {
+       "A": 100,
+       "N": 5,
+       "PI": 30,
+       "ES": 17
+      },
+      "saiaH": 0,
+      "rodaH": 0
+     }
+    ],
+    "lines": [],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 2.35,
+    "nSlabs": 1,
+    "emendas": 0,
+    "util": 0.421147,
+    "mat": 2900,
+    "labor": 423,
+    "svc": 0,
+    "fab": 423,
+    "inst": 211.5,
+    "frete": 150,
+    "cost": 3684.5,
+    "price": 6244.92,
+    "taxV": 374.6952,
+    "profit": 2185.7248,
+    "perM2": 2657.412766
+   }
+  },
+  {
+   "nome": "nicho 80x60x25",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.5501489312176933",
+      "type": "nicho",
+      "name": "nicho",
+      "d": {
+       "A": 80,
+       "H": 60,
+       "P": 25
+      },
+      "saiaH": 0,
+      "rodaH": 0
+     }
+    ],
+    "lines": [],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 1.18,
+    "nSlabs": 1,
+    "emendas": 0,
+    "util": 0.21147,
+    "mat": 2900,
+    "labor": 212.4,
+    "svc": 0,
+    "fab": 212.4,
+    "inst": 106.2,
+    "frete": 150,
+    "cost": 3368.6,
+    "price": 5709.49,
+    "taxV": 342.5694,
+    "profit": 1998.3206,
+    "perM2": 4838.550847
+   }
+  },
+  {
+   "nome": "lavatorio 120x55 com saia 5",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.19531434242265644",
+      "type": "lavatorio",
+      "name": "lavatorio",
+      "d": {
+       "A": 120,
+       "P": 55
+      },
+      "saiaH": 5,
+      "rodaH": 0
+     }
+    ],
+    "lines": [],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 0.72,
+    "nSlabs": 1,
+    "emendas": 0,
+    "util": 0.129032,
+    "mat": 2900,
+    "labor": 129.6,
+    "svc": 0,
+    "fab": 129.6,
+    "inst": 64.8,
+    "frete": 150,
+    "cost": 3244.4,
+    "price": 5498.98,
+    "taxV": 329.9388,
+    "profit": 1924.6412,
+    "perM2": 7637.472222
+   }
+  },
+  {
+   "nome": "livre 3 retangulos",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.1958971679862307",
+      "type": "livre",
+      "name": "livre",
+      "d": {
+       "rects": [
+        {
+         "w": 120,
+         "h": 50,
+         "q": 1
+        },
+        {
+         "w": 60,
+         "h": 40,
+         "q": 2
+        },
+        {
+         "w": 200,
+         "h": 30,
+         "q": 1
+        }
+       ]
+      },
+      "saiaH": 0,
+      "rodaH": 0
+     }
+    ],
+    "lines": [],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 1.68,
+    "nSlabs": 1,
+    "emendas": 0,
+    "util": 0.301075,
+    "mat": 2900,
+    "labor": 302.4,
+    "svc": 0,
+    "fab": 302.4,
+    "inst": 151.2,
+    "frete": 150,
+    "cost": 3503.6,
+    "price": 5938.31,
+    "taxV": 356.2986,
+    "profit": 2078.4114,
+    "perM2": 3534.708333
+   }
+  },
+  {
+   "nome": "reta maior que a chapa 400x65",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.43550401151059637",
+      "type": "reta",
+      "name": "reta",
+      "d": {
+       "A": 400,
+       "P": 65
+      },
+      "saiaH": 0,
+      "rodaH": 0
+     }
+    ],
+    "lines": [],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 2.6,
+    "nSlabs": 1,
+    "emendas": 1,
+    "util": 0.46595,
+    "mat": 2900,
+    "labor": 468,
+    "svc": 0,
+    "fab": 468,
+    "inst": 234,
+    "frete": 150,
+    "cost": 3752,
+    "price": 6359.32,
+    "taxV": 381.5592,
+    "profit": 2225.7608,
+    "perM2": 2445.892308
+   }
+  },
+  {
+   "nome": "reta maior que a chapa nos dois lados 700x200",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.6542943688775331",
+      "type": "reta",
+      "name": "reta",
+      "d": {
+       "A": 700,
+       "P": 200
+      },
+      "saiaH": 0,
+      "rodaH": 0
+     }
+    ],
+    "lines": [],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 14,
+    "nSlabs": 6,
+    "emendas": 5,
+    "util": 0.41816,
+    "mat": 17400,
+    "labor": 2520,
+    "svc": 0,
+    "fab": 2520,
+    "inst": 1260,
+    "frete": 150,
+    "cost": 21330,
+    "price": 36152.54,
+    "taxV": 2169.1524,
+    "profit": 12653.3876,
+    "perM2": 2582.324286
+   }
+  },
+  {
+   "nome": "saia e rodabanca com metros manuais",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.5009287932159592",
+      "type": "reta",
+      "name": "reta",
+      "d": {
+       "A": 300,
+       "P": 60
+      },
+      "saiaH": 5,
+      "rodaH": 7,
+      "saiaMl": 2,
+      "rodaMl": 3.5
+     }
+    ],
+    "lines": [],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 2.145,
+    "nSlabs": 1,
+    "emendas": 1,
+    "util": 0.384409,
+    "mat": 2900,
+    "labor": 386.1,
+    "svc": 0,
+    "fab": 386.1,
+    "inst": 193.05,
+    "frete": 150,
+    "cost": 3629.15,
+    "price": 6151.1,
+    "taxV": 369.066,
+    "profit": 2152.884,
+    "perM2": 2867.645688
+   }
+  },
+  {
+   "nome": "varias pecas (2 chapas)",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.5077437938751335",
+      "type": "reta",
+      "name": "reta",
+      "d": {
+       "A": 300,
+       "P": 62
+      },
+      "saiaH": 0,
+      "rodaH": 0
+     },
+     {
+      "id": "p0.7008162376861298",
+      "type": "reta",
+      "name": "reta",
+      "d": {
+       "A": 300,
+       "P": 62
+      },
+      "saiaH": 0,
+      "rodaH": 0
+     },
+     {
+      "id": "p0.7821067546828055",
+      "type": "ilha",
+      "name": "ilha",
+      "d": {
+       "A": 240,
+       "B": 120
+      },
+      "saiaH": 0,
+      "rodaH": 0
+     }
+    ],
+    "lines": [],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 6.6,
+    "nSlabs": 2,
+    "emendas": 0,
+    "util": 0.591398,
+    "mat": 5800,
+    "labor": 1188,
+    "svc": 0,
+    "fab": 1188,
+    "inst": 594,
+    "frete": 150,
+    "cost": 7732,
+    "price": 13105.08,
+    "taxV": 786.3048,
+    "profit": 4586.7752,
+    "perM2": 1985.618182
+   }
+  },
+  {
+   "nome": "cobranca por m2 com perda 12%",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.5414894753187476",
+      "type": "reta",
+      "name": "reta",
+      "d": {
+       "A": 280,
+       "P": 60
+      },
+      "saiaH": 0,
+      "rodaH": 0
+     }
+    ],
+    "lines": [],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "m2",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 1.68,
+    "nSlabs": 1,
+    "emendas": 0,
+    "util": 0.301075,
+    "mat": 1204.224,
+    "labor": 302.4,
+    "svc": 0,
+    "fab": 302.4,
+    "inst": 151.2,
+    "frete": 150,
+    "cost": 1807.824,
+    "price": 3064.11,
+    "taxV": 183.8466,
+    "profit": 1072.4394,
+    "perM2": 1823.875
+   }
+  },
+  {
+   "nome": "com servicos",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.9797806406676135",
+      "type": "reta",
+      "name": "reta",
+      "d": {
+       "A": 280,
+       "P": 60
+      },
+      "saiaH": 0,
+      "rodaH": 0
+     }
+    ],
+    "lines": [
+     {
+      "svcId": "i56fms0z",
+      "qty": 1
+     },
+     {
+      "svcId": "isgjvc0f",
+      "qty": 2.5
+     }
+    ],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 1.68,
+    "nSlabs": 1,
+    "emendas": 0,
+    "util": 0.301075,
+    "mat": 2900,
+    "labor": 302.4,
+    "svc": 277.5,
+    "fab": 579.9,
+    "inst": 151.2,
+    "frete": 150,
+    "cost": 3781.1,
+    "price": 6408.64,
+    "taxV": 384.5184,
+    "profit": 2243.0216,
+    "perM2": 3814.666667
+   }
+  },
+  {
+   "nome": "instalacao fixa e frete zero",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.3461440991690441",
+      "type": "reta",
+      "name": "reta",
+      "d": {
+       "A": 280,
+       "P": 60
+      },
+      "saiaH": 0,
+      "rodaH": 0
+     }
+    ],
+    "lines": [],
+    "params": {
+     "margin": 35,
+     "tax": 6,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 200,
+     "frete": 0,
+     "charge": "chapa",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 1.68,
+    "nSlabs": 1,
+    "emendas": 0,
+    "util": 0.301075,
+    "mat": 2900,
+    "labor": 302.4,
+    "svc": 0,
+    "fab": 302.4,
+    "inst": 351.2,
+    "frete": 0,
+    "cost": 3553.6,
+    "price": 6023.05,
+    "taxV": 361.383,
+    "profit": 2108.067,
+    "perM2": 3585.14881
+   }
+  },
+  {
+   "nome": "margem 0 imposto 0",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.6304026856892198",
+      "type": "reta",
+      "name": "reta",
+      "d": {
+       "A": 280,
+       "P": 60
+      },
+      "saiaH": 0,
+      "rodaH": 0
+     }
+    ],
+    "lines": [],
+    "params": {
+     "margin": 0,
+     "tax": 0,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 1.68,
+    "nSlabs": 1,
+    "emendas": 0,
+    "util": 0.301075,
+    "mat": 2900,
+    "labor": 302.4,
+    "svc": 0,
+    "fab": 302.4,
+    "inst": 151.2,
+    "frete": 150,
+    "cost": 3503.6,
+    "price": 3503.6,
+    "taxV": 0,
+    "profit": 0,
+    "perM2": 2085.47619
+   }
+  },
+  {
+   "nome": "margem 70 + imposto 30 (invalido)",
+   "quote": {
+    "id": "q",
+    "materialId": "t1",
+    "pieces": [
+     {
+      "id": "p0.8882997159836683",
+      "type": "reta",
+      "name": "reta",
+      "d": {
+       "A": 280,
+       "P": 60
+      },
+      "saiaH": 0,
+      "rodaH": 0
+     }
+    ],
+    "lines": [],
+    "params": {
+     "margin": 70,
+     "tax": 30,
+     "moM2": 180,
+     "instalM2": 90,
+     "instalFixo": 0,
+     "frete": 150,
+     "charge": "chapa",
+     "lossPct": 12
+    }
+   },
+   "esperado": {
+    "area": 1.68,
+    "nSlabs": 1,
+    "emendas": 0,
+    "util": 0.301075,
+    "mat": 2900,
+    "labor": 302.4,
+    "svc": 0,
+    "fab": 302.4,
+    "inst": 151.2,
+    "frete": 150,
+    "cost": 3503.6,
+    "price": 70072,
+    "taxV": 21021.6,
+    "profit": 45546.8,
+    "perM2": 41709.52381
+   }
+  }
+ ]
+}
