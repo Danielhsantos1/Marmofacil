@@ -88,6 +88,9 @@ input[type=file]{display:none}
 .note{font-size:12.5px;color:var(--muted);border-left:3px solid var(--line);padding:2px 0 2px 10px}
 .ex{font-size:11px;font-weight:700;color:var(--warn);letter-spacing:.04em}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;z-index:40;max-width:90%;font-size:14px}
+.upd{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:50;width:min(92%,420px);background:var(--fg);color:var(--bg);border-radius:12px;padding:8px 8px 8px 14px;display:flex;align-items:center;gap:10px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.upd span{flex:1}
+.lock{border-left:4px solid var(--ok)}
 .doc{background:#fff;color:#111;border:1px solid var(--line);border-radius:6px;padding:18px;font-size:13.5px}
 .doc h2{color:#111}.doc table{width:100%;border-collapse:collapse}.doc td,.doc th{padding:6px 4px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}
 .doc td:last-child,.doc th:last-child{text-align:right;white-space:nowrap}
@@ -129,7 +132,8 @@ const TYPES={
 /* Geometria, plano de corte e preço vivem em calc.js (funções puras, com testes em tests/). */
 /* ===== Cálculo do orçamento ===== */
 function matOf(q){return S.materials.find(m=>m.id===q.materialId)}
-function calc(q){return calcQuote(q,S.materials,S.services)}
+function calc(q){return aplicarSnapshot(calcQuote(q,S.materials,S.services),q.snap)}
+const fechado=q=>!!q&&q.status==='Fechado'&&!!q.snap;
 
 /* ===== Dados iniciais (exemplos) ===== */
 function seed(){
@@ -249,7 +253,21 @@ function render(){
   else if(nav.tab==='cad')h=viewCad();
   else if(nav.tab==='cfg')h=viewCfg();
   $('#app').innerHTML=h;
+  if(q&&nav.tab!=='cad')aplicarTrava(q);
   if(nav.show3d&&nav.sec==='med'&&q&&nav.tab!=='cad')montar3d();
+  if(nav.tab==='cfg'&&!q)mostrarVersao();
+}
+/* Orçamento fechado é só para ver: campos e botões de edição ficam desligados (o 3D e o PDF continuam). */
+function aplicarTrava(q){
+  if(!fechado(q)||nav.sec==='orc')return;
+  $$('#secbody input,#secbody select,#secbody textarea,#secbody button').forEach(el=>{
+    if(!el.matches('[data-act="toggle3d"],[data-act="view3d"],[data-act="piece"]'))el.disabled=true;
+  });
+}
+async function mostrarVersao(){
+  const el=$('#ver');if(!el)return;
+  try{const k=(await caches.keys()).filter(x=>x.startsWith('marmofacil-'));el.textContent=k.length?'Versão instalada: '+k.sort().pop():'Versão: sem cache (aberto direto do site)'}
+  catch(e){el.textContent=''}
 }
 let toastT=0;
 function toast(m){$$('.toast').forEach(e=>e.remove());const e=document.createElement('div');e.className='toast';e.textContent=m;document.body.appendChild(e);clearTimeout(toastT);toastT=setTimeout(()=>e.remove(),2600)}
@@ -265,7 +283,24 @@ function newQuote(clientId){
   S.quotes.unshift(q);save();return q;
 }
 function openQuote(id,sec){nav.tab='quotes';nav.qid=id;nav.sec=sec||'cli';nav.pi=0;nav.showTypes=false;nav.show3d=false;render();scrollTo(0,0)}
-function setStatus(q,st){q.status=st;q.closedAt=st==='Fechado'?Date.now():null;save()}
+/* Fechar congela os valores (q.snap); qualquer outra etapa descongela. Devolve false se não puder fechar. */
+function setStatus(q,st){
+  if(st==='Fechado'){
+    if(q.status!=='Fechado'||!q.snap){
+      const c=calcQuote(q,S.materials,S.services);
+      if(c.erro){toast(c.erro);return false}
+      q.snap=snapshotOf(c,Date.now());
+    }
+    if(q.status!=='Fechado')q.closedAt=Date.now();
+  }else{delete q.snap;q.closedAt=null}
+  q.status=st;save();return true;
+}
+/* Orçamentos fechados antes desta versão (ou de backups antigos) ganham o snapshot com os valores de hoje. */
+function garantirSnapshots(){
+  let mudou=false;
+  S.quotes.forEach(q=>{if(q.status==='Fechado'&&!q.snap){q.snap=snapshotOf(calcQuote(q,S.materials,S.services),Date.now());q.snap.migrado=true;mudou=true}});
+  if(mudou)save();
+}
 
 /* ===== Início / painel ===== */
 function viewHome(){
@@ -367,6 +402,8 @@ function viewEditor(q){
    <h1>#${q.num} ${esc(cl?.name||'Novo orçamento')}</h1><span class="chip c-${q.status}">${q.status}</span></header>
   <div class="stack">
    <div class="seg" role="tablist">${SECS.map(([k,l])=>`<button data-act="sec" data-v="${k}" aria-pressed="${nav.sec===k}">${l}</button>`).join('')}</div>
+   ${fechado(q)?`<div class="card lock" role="status"><b>Orçamento fechado.</b> Valores congelados em ${dateBR(q.snap.em)}${q.snap.migrado?' (guardados na primeira abertura desta versão)':''}. Mudar preços no cadastro não altera este orçamento.
+    <button class="sm" style="margin-top:8px" data-act="reopen">Reabrir para editar</button></div>`:''}
    <div id="secbody" class="stack" style="padding-top:0">${body}</div>
    ${sumBar(q)}
   </div>`;
@@ -594,6 +631,7 @@ function viewCfg(){
     <div class="grid2"><button data-act="export">Baixar backup</button><button data-act="import">Restaurar backup</button></div></div>
    ${ex?'<button data-act="clear-ex">Remover dados de exemplo</button>':''}
    <button class="danger" data-act="reset">Apagar tudo e recomeçar</button>
+   <div class="small muted" id="ver" style="text-align:center"></div>
   </div>`;
 }
 /* ===== Utilitários de arquivo e foto ===== */
@@ -718,10 +756,14 @@ function confirmTap(btn,fn){
   setTimeout(()=>{if(btn.isConnected){delete btn.dataset.armed;btn.textContent=btn.dataset.txt}},3000);
 }
 let pendingMat=null;
+const EDITA=new Set(['addpiece','dup-piece','del-piece','add-rect','del-rect','del-line','quick-client','del-quote','addphoto','del-photo','ai','ai-apply','mark-sent']);
 document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
   const a=b.dataset.act,v=b.dataset.v,q=curQ();
+  if(fechado(q)&&EDITA.has(a)){toast('Orçamento fechado. Toque em Reabrir para editar.');return}
   switch(a){
+    case 'reopen':confirmTap(b,()=>{setStatus(q,'Negociação');render();toast('Reaberto. O preço agora usa os valores atuais do cadastro.')});break;
+    case 'atualizar':location.reload();break;
     case 'tab':if(v==='new'){const n=newQuote();openQuote(n.id,'cli')}else goTab(v);break;
     case 'newq':{const n=newQuote();openQuote(n.id,'cli');break}
     case 'open':openQuote(v);break;
@@ -779,6 +821,7 @@ function live(){
 }
 document.addEventListener('input',e=>{
   const el=e.target.closest('[data-b]');if(!el||el.tagName==='SELECT')return;
+  if(fechado(curQ())&&el.closest('#secbody'))return;
   const old=getPath(el.dataset.b);
   const val=el.dataset.t==='n'?num(el.value):el.value;
   setPath(el.dataset.b,val);save();
@@ -788,21 +831,35 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',e=>{
   const el=e.target;
+  if(fechado(curQ())&&el.closest('#secbody'))return;
   if(el.id==='addSvc'){const q=curQ();if(el.value){const f=q.lines.find(l=>l.svcId===el.value);if(f)f.qty+=1;else q.lines.push({svcId:el.value,qty:1});save();render()}return}
+  if(el.matches('select[data-b]')&&el.dataset.b.endsWith('.status')){const q2=curQ();if(q2)setStatus(q2,el.value);render();return}
   if(el.matches('select[data-b]')){setPath(el.dataset.b,el.dataset.t==='n'?num(el.value):el.value);
     const q=curQ();if(q&&/\.materialId$/.test(el.dataset.b)){const m=matOf(q);if(m)q.params.charge=m.priceSlab>0?'chapa':'m2'}
-    if(el.dataset.b.endsWith('.status')){const q2=curQ();if(q2)setStatus(q2,q2.status)}
     save();render();return}
   if(el.id==='filePhoto'&&el.files[0]){const q=curQ();readImg(el.files[0]).then(u=>{q.photos.push(u);save();render();toast('Foto salva no orçamento.')}).catch(()=>toast('Não foi possível ler a foto.'));el.value='';return}
   if(el.id==='fileMat'&&el.files[0]&&pendingMat){const m=S.materials.find(x=>x.id===pendingMat);readImg(el.files[0],600).then(u=>{m.photo=u;save();render()}).catch(()=>toast('Não foi possível ler a foto.'));el.value='';return}
   if(el.id==='fileImport'&&el.files[0]){
-    el.files[0].text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.quotes)||!Array.isArray(d.materials))throw 0;S=d;save();applyTheme();nav.qid=null;nav.edit=null;render();toast('Backup restaurado.')}catch(x){toast('Arquivo de backup inválido.')}});el.value='';
+    el.files[0].text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.quotes)||!Array.isArray(d.materials))throw 0;S=d;garantirSnapshots();save();applyTheme();nav.qid=null;nav.edit=null;render();toast('Backup restaurado.')}catch(x){toast('Arquivo de backup inválido.')}});el.value='';
   }
 });
 
 /* ===== Início ===== */
-load();applyTheme();render();
+load();garantirSnapshots();applyTheme();render();
 
-if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+/* Aviso de nova versão: o app abre da cópia guardada; quando uma versão nova assume, oferece recarregar. */
+function avisoAtualizar(){
+  if($('#upd'))return;
+  const e=document.createElement('div');e.id='upd';e.className='upd';e.setAttribute('role','status');
+  e.innerHTML='<span>Nova versão disponível.</span><button class="pri" data-act="atualizar">Atualizar</button>';
+  document.body.appendChild(e);
+}
+if('serviceWorker' in navigator){
+  const tinhaControle=!!navigator.serviceWorker.controller;           // primeira instalação não avisa
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(tinhaControle)avisoAtualizar()});
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(reg=>{
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)reg.update().catch(()=>{})});
+  }).catch(()=>{}));
+}
 </script>
 </body></html>
