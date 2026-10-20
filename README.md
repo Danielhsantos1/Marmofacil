@@ -33,4 +33,11 @@ node --test
 Settings → Pages → Source: *Deploy from a branch* → Branch: `main` / `(root)`.
 
 ## Atualizar o app instalado
-Ao mudar arquivos, aumente o número de `V` em `sw.js` (ex.: `marmofacil-v6`) para o celular baixar a nova versão.
+Ao mudar **qualquer** arquivo do app, suba o número da versão nos 3 lugares (o teste `tests/versao.test.js` falha se algum ficar diferente):
+1. `const V='marmofacil-vN'` e a lista `CORE` em `sw.js` (os `?v=N`);
+2. `const APP_V=N` em `index.html`;
+3. os `?v=N` dos scripts em `index.html` (`calc.js`, `model3d.js` e o `import` do `viewer3d.js`).
+
+Os scripts levam a versão no endereço (`calc.js?v=6`) para o celular nunca misturar arquivos de versões diferentes. O app abre sempre pela rede quando há sinal (versão nova na hora) e usa a cópia guardada sem sinal ou com sinal lento (mais de 3 s).
+
+**Rede de segurança:** se o app não conseguir abrir, ele limpa só o cache do app e tenta de novo uma vez; se ainda falhar, mostra a tela "O app não conseguiu abrir" com **Tentar de novo** e **Baixar cópia dos meus dados**. Nada disso apaga os dados salvos.

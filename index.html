@@ -101,9 +101,53 @@ input[type=file]{display:none}
 <input type="file" id="fileImport" accept="application/json">
 <input type="file" id="filePhoto" accept="image/*" capture="environment">
 <input type="file" id="fileMat" accept="image/*">
+<script>
+/* Rede de segurança de abertura. Se o app não conseguir abrir (por exemplo, arquivos de versões diferentes
+   no cache do celular), limpa SÓ o cache do app e tenta de novo uma vez; se ainda falhar, mostra uma tela
+   com saída. Nunca apaga nem altera os dados salvos (localStorage). */
+(function(){
+  const FLAG='pf-cura';let mostrou=false;
+  const aberto=()=>!!document.querySelector('#tabs button');
+  const jaTentou=()=>{try{return sessionStorage.getItem(FLAG)==='1'}catch(e){return window.name===FLAG}};
+  const marcar=()=>{try{sessionStorage.setItem(FLAG,'1')}catch(e){window.name=FLAG}};
+  window.pfAbriu=()=>{try{sessionStorage.removeItem(FLAG)}catch(e){}if(window.name===FLAG)window.name=''};
+  async function curar(){
+    try{const k=await caches.keys();await Promise.all(k.filter(x=>/^(marmofacil|pedra-facil)-/.test(x)).map(x=>caches.delete(x)))}catch(e){}
+    try{const r=await navigator.serviceWorker.getRegistrations();await Promise.all(r.map(x=>x.unregister()))}catch(e){}
+    try{await Promise.all([location.href,...[...document.scripts].map(x=>x.src).filter(Boolean)].map(u=>fetch(u,{cache:'reload'})))}catch(e){}   // baixa de novo, ignorando o cache do navegador
+    location.reload();
+  }
+  function baixarDados(){
+    let t='';try{t=localStorage.getItem('pedrafacil.v1')||''}catch(e){}
+    if(!t){alert('Não há dados salvos neste endereço.');return}
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'application/json'}));
+    a.download='marmofacil-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();
+  }
+  function tela(msg){
+    if(mostrou)return;const d=document.getElementById('app');if(!d)return;mostrou=true;
+    d.innerHTML='<div class="stack" style="padding-top:24px"><h1>O app não conseguiu abrir</h1>'+
+      '<div class="card stack"><div>Seus dados continuam guardados neste aparelho. Toque em <b>Tentar de novo</b>. Se não resolver, baixe uma cópia dos dados antes de qualquer outra coisa.</div>'+
+      '<button class="pri" id="pfTentar">Tentar de novo</button><button id="pfBaixar">Baixar cópia dos meus dados</button></div>'+
+      '<div class="small muted">Detalhe técnico para suporte:</div><pre class="small" id="pfMsg" style="white-space:pre-wrap;word-break:break-word"></pre></div>';
+    document.getElementById('pfMsg').textContent=msg;
+    document.getElementById('pfTentar').onclick=curar;document.getElementById('pfBaixar').onclick=baixarDados;
+  }
+  function falhou(msg){
+    setTimeout(()=>{
+      if(aberto())return;
+      if(!jaTentou()){marcar();curar();return}
+      tela(msg);
+    },50);
+  }
+  addEventListener('error',e=>{
+    const t=e.target;if(t&&t!==window&&t.tagName!=='SCRIPT')return;            // fontes e imagens não contam
+    falhou((e.message||('Não carregou '+(t&&t.src)))+(e.filename?' ('+e.filename.split('/').pop()+':'+e.lineno+')':''));
+  },true);
+})();
+</script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js"></script>
-<script src="model3d.js"></script>
+<script src="calc.js?v=6"></script>
+<script src="model3d.js?v=6"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -116,6 +160,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
+const APP_V=6;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -264,10 +309,13 @@ function aplicarTrava(q){
     if(!el.matches('[data-act="toggle3d"],[data-act="view3d"],[data-act="piece"]'))el.disabled=true;
   });
 }
+async function versoesEmCache(){
+  return (await caches.keys()).map(x=>/^marmofacil-v(\d+)$/.exec(x)).filter(Boolean).map(m=>+m[1]).sort((a,b)=>a-b);
+}
 async function mostrarVersao(){
   const el=$('#ver');if(!el)return;
-  try{const k=(await caches.keys()).filter(x=>x.startsWith('marmofacil-'));el.textContent=k.length?'Versão instalada: '+k.sort().pop():'Versão: sem cache (aberto direto do site)'}
-  catch(e){el.textContent=''}
+  try{const k=await versoesEmCache();el.textContent=k.length?'Versão instalada: marmofacil-v'+k[k.length-1]:'Versão '+APP_V+' (sem cache: aberto direto do site)'}
+  catch(e){el.textContent='Versão '+APP_V}
 }
 let toastT=0;
 function toast(m){$$('.toast').forEach(e=>e.remove());const e=document.createElement('div');e.className='toast';e.textContent=m;document.body.appendChild(e);clearTimeout(toastT);toastT=setTimeout(()=>e.remove(),2600)}
@@ -723,7 +771,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js');
+    const m=await import('./viewer3d.js?v=6');
     if(!m.webglDisponivel())throw new Error('webgl');
     v3=m.criarVisualizador();
     v3.aoPerderContexto(()=>{nav.show3d=false;render();toast('O aparelho interrompeu o 3D. Toque em Ver em 3D para abrir de novo.')});
@@ -846,6 +894,7 @@ document.addEventListener('change',e=>{
 
 /* ===== Início ===== */
 load();garantirSnapshots();applyTheme();render();
+if(window.pfAbriu)window.pfAbriu();
 
 /* Aviso de nova versão: o app abre da cópia guardada; quando uma versão nova assume, oferece recarregar. */
 function avisoAtualizar(){
@@ -856,8 +905,9 @@ function avisoAtualizar(){
 }
 if('serviceWorker' in navigator){
   const tinhaControle=!!navigator.serviceWorker.controller;           // primeira instalação não avisa
-  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(tinhaControle)avisoAtualizar()});
+  navigator.serviceWorker.addEventListener('controllerchange',async()=>{if(!tinhaControle)return;try{const k=await versoesEmCache();if(k.length&&k[k.length-1]>APP_V)avisoAtualizar()}catch(e){avisoAtualizar()}});
   addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(reg=>{
+    reg.update().catch(()=>{});                                       // procura versão nova a cada abertura
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)reg.update().catch(()=>{})});
   }).catch(()=>{}));
 }
