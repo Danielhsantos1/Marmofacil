@@ -100,4 +100,22 @@ function calcQuote(q,materials,services){
     perM2:area?price/area:0,erro};
 }
 
-if(typeof module!=='undefined')module.exports={defMl,shape,partsArea,nestParts,calcQuote};
+/* ===== Snapshot de preço (orçamento fechado) =====
+   Ao fechar, guardamos os valores calculados. Depois disso, mudar o preço de um material ou
+   serviço no cadastro não altera mais o orçamento fechado nem o faturamento do painel. */
+const SNAP_CAMPOS=['price','cost','profit','taxV','mat','labor','svc','fab','inst','frete','perM2','area','nSlabs','util'];
+function snapshotOf(c,quando){
+  const s={versao:1,em:quando};
+  SNAP_CAMPOS.forEach(k=>{s[k]=c[k]});
+  return s;
+}
+/* Devolve o cálculo com os valores do snapshot por cima (sem snapshot, devolve o mesmo cálculo). */
+function aplicarSnapshot(c,s){
+  if(!s)return c;
+  const r={...c};
+  SNAP_CAMPOS.forEach(k=>{if(typeof s[k]==='number'&&isFinite(s[k]))r[k]=s[k]});
+  r.loss=1-r.util;r.erro='';r.congelado=true;r.snapEm=s.em;
+  return r;
+}
+
+if(typeof module!=='undefined')module.exports={defMl,shape,partsArea,nestParts,calcQuote,snapshotOf,aplicarSnapshot,SNAP_CAMPOS};

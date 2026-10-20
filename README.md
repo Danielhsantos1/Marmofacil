@@ -8,6 +8,12 @@ Protótipo de app para marmorarias: medir, desenhar a bancada, calcular chapas e
 - Não há login, nuvem nem permissões nesta versão.
 - A leitura de fotos por IA só existe dentro do Claude; fora dele o botão avisa que está indisponível.
 
+## Orçamento fechado
+Ao mudar a etapa para **Fechado**, o app guarda os valores do orçamento (`q.snap`). Depois disso, mudar o preço de um material ou serviço no cadastro **não altera** o orçamento fechado nem o faturamento e o lucro do painel. O orçamento fica só para ver (o PDF e o 3D continuam); para editar, toque em **Reabrir para editar**, que descongela e volta a usar os preços atuais do cadastro. Não deixa fechar com margem + impostos acima de 95%. Orçamentos que já estavam fechados ganham o snapshot, com os valores de hoje, na primeira abertura.
+
+## Nova versão do app
+Quando uma versão nova é baixada, aparece a barra **Nova versão disponível · Atualizar**. Em **Ajustes** aparece a versão instalada.
+
 ## Visualizador 3D (Medir → Ver em 3D)
 Mostra a peça em 3D com a espessura do material, saia e rodabanca. Gira com um dedo e aproxima com dois. É **ilustrativo**: não mostra emendas, recortes, cubas nem veio da pedra, e não muda nenhum cálculo (usa os mesmos dados do corte e do preço).
 - `model3d.js`: monta as peças em 3D a partir dos dados da peça (função pura, testada).
@@ -27,4 +33,4 @@ node --test
 Settings → Pages → Source: *Deploy from a branch* → Branch: `main` / `(root)`.
 
 ## Atualizar o app instalado
-Ao mudar arquivos, aumente o número de `V` em `sw.js` (ex.: `marmofacil-v5`) para o celular baixar a nova versão.
+Ao mudar arquivos, aumente o número de `V` em `sw.js` (ex.: `marmofacil-v6`) para o celular baixar a nova versão.
