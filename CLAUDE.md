@@ -1,4 +1,4 @@
-# Pedra Fácil
+# Marmofácil
 
 SaaS para marmorarias. O vendedor usa só o celular na visita ao cliente para medir, desenhar a bancada, calcular chapas e custo, precificar e gerar orçamento (PDF + WhatsApp). Alvo comercial: vender para várias marmorarias, cada uma com seus próprios dados.
 
@@ -9,7 +9,7 @@ SaaS para marmorarias. O vendedor usa só o celular na visita ao cliente para me
 
 ## Estado atual
 Protótipo funcional em **um único arquivo** (`index.html`, ~64 KB, JS puro, sem build). Já é PWA (`manifest.webmanifest`, `sw.js`, ícones, `vendor/jspdf.umd.min.js`).
-- Dados só em `localStorage` (chave `pedrafacil.v1`). Sem login, nuvem ou permissões.
+- Dados só em `localStorage` (chave `pedrafacil.v1`, nome antigo mantido de propósito para não perder dados já salvos). Sem login, nuvem ou permissões.
 - Fora do Claude, a leitura de fotos por IA não existe (o botão avisa). O PDF baixa por link comum.
 - GitHub Pages ainda **não está funcionando** neste repositório (deploy nunca rodou). Não era problema do código.
 

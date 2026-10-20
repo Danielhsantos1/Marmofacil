@@ -1,4 +1,4 @@
-# Pedra Fácil
+# Marmofácil
 
 Protótipo de app para marmorarias: medir, desenhar a bancada, calcular chapas e custo, e gerar orçamento em PDF com envio por WhatsApp. Funciona como PWA (instalável no celular e utilizável offline).
 
@@ -12,4 +12,4 @@ Protótipo de app para marmorarias: medir, desenhar a bancada, calcular chapas e
 Settings → Pages → Source: *Deploy from a branch* → Branch: `main` / `(root)`.
 
 ## Atualizar o app instalado
-Ao mudar arquivos, aumente o número de `V` em `sw.js` (ex.: `pedra-facil-v2`) para o celular baixar a nova versão.
+Ao mudar arquivos, aumente o número de `V` em `sw.js` (ex.: `marmofacil-v3`) para o celular baixar a nova versão.
