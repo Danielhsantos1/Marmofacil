@@ -100,6 +100,7 @@ input[type=file]{display:none}
 <input type="file" id="fileMat" accept="image/*">
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="calc.js"></script>
+<script src="model3d.js"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -224,7 +225,7 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false};
+const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false};
 const IC={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
@@ -248,6 +249,7 @@ function render(){
   else if(nav.tab==='cad')h=viewCad();
   else if(nav.tab==='cfg')h=viewCfg();
   $('#app').innerHTML=h;
+  if(nav.show3d&&nav.sec==='med'&&q&&nav.tab!=='cad')montar3d();
 }
 let toastT=0;
 function toast(m){$$('.toast').forEach(e=>e.remove());const e=document.createElement('div');e.className='toast';e.textContent=m;document.body.appendChild(e);clearTimeout(toastT);toastT=setTimeout(()=>e.remove(),2600)}
@@ -262,7 +264,7 @@ function newQuote(clientId){
     photos:[],notes:'',validade:s.validade,createdAt:Date.now(),closedAt:null};
   S.quotes.unshift(q);save();return q;
 }
-function openQuote(id,sec){nav.tab='quotes';nav.qid=id;nav.sec=sec||'cli';nav.pi=0;nav.showTypes=false;render();scrollTo(0,0)}
+function openQuote(id,sec){nav.tab='quotes';nav.qid=id;nav.sec=sec||'cli';nav.pi=0;nav.showTypes=false;nav.show3d=false;render();scrollTo(0,0)}
 function setStatus(q,st){q.status=st;q.closedAt=st==='Fechado'?Date.now():null;save()}
 
 /* ===== Início / painel ===== */
@@ -401,6 +403,10 @@ function secMed(q){
   const sh=shape(p),area=partsArea(sh.parts);
   h+=`<div class="draw" id="pdraw">${drawPiece(p)}</div>
    <div class="row between"><span class="small muted">${TYPES[p.type].nome} · área da peça</span><b class="num" id="parea">${nf(area)} m²</b></div>
+   <button data-act="toggle3d" aria-pressed="${nav.show3d}">${nav.show3d?'Esconder o 3D':'Ver em 3D'}</button>
+   ${nav.show3d?`<div class="draw" id="v3dbox" style="padding:0;height:min(64vw,320px);min-height:240px;position:relative"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
+   <div class="seg" role="group" aria-label="Vista do 3D"><button data-act="view3d" data-v="persp">Perspectiva</button><button data-act="view3d" data-v="topo">De cima</button><button data-act="view3d" data-v="frente">De frente</button></div>
+   <div class="note">Modelo ilustrativo com a espessura do material (${nf(matOf(q)?.thick>0?matOf(q).thick:Model3D.ESP_PADRAO,0)} cm). Arraste para girar e use dois dedos para aproximar. Não mostra emendas, recortes nem veio da pedra.</div>`:''}
    <div class="card stack" style="padding-top:14px">
     ${fld('Nome da peça',PP+'.name')}
     <div class="grid2">${TYPES[p.type].campos.map(([k,l])=>fld(l,PP+'.d.'+k,'n',{unit:k==='N'?'un':'cm'})).join('')}</div>
@@ -675,6 +681,35 @@ Responda somente com JSON neste formato, em português do Brasil:
   render();
 }
 
+/* ===== 3D (carregado só quando o usuário abre) ===== */
+let v3=null,v3Promise=null,v3Falha='',v3Peca='';
+function carregar3d(){
+  if(!v3Promise)v3Promise=(async()=>{
+    const m=await import('./viewer3d.js');
+    if(!m.webglDisponivel())throw new Error('webgl');
+    v3=m.criarVisualizador();
+    v3.aoPerderContexto(()=>{nav.show3d=false;render();toast('O aparelho interrompeu o 3D. Toque em Ver em 3D para abrir de novo.')});
+    return v3;
+  })().catch(e=>{
+    v3Falha=e&&e.message==='webgl'?'Este aparelho não conseguiu iniciar o 3D. O desenho em 2D continua funcionando.':'Não foi possível carregar o 3D. Confira a conexão e tente de novo.';
+    v3Promise=null;throw e;
+  });
+  return v3Promise;
+}
+async function montar3d(){
+  const q=curQ();if(!q||!$('#v3dbox'))return;
+  try{await carregar3d()}catch(e){const m=$('#v3dmsg');if(m)m.textContent=v3Falha;return}
+  const box=$('#v3dbox');if(!nav.show3d||!box||curQ()!==q)return;      // a tela mudou enquanto carregava
+  v3.anexar(box);const m=$('#v3dmsg');if(m)m.remove();
+  atualizar3d();
+}
+function atualizar3d(){
+  if(!v3||!nav.show3d||!$('#v3dbox'))return;
+  const q=curQ(),p=q&&q.pieces[nav.pi];if(!p)return;
+  const mantem=v3Peca===p.id;v3Peca=p.id;                              // mesma peça: não reenquadra a câmera
+  v3.definirModelo(Model3D.buildModel(p,matOf(q)?.thick),mantem);
+}
+
 /* ===== Eventos ===== */
 const curQ=()=>nav.qid&&S.quotes.find(x=>x.id===nav.qid);
 function confirmTap(btn,fn){
@@ -696,6 +731,8 @@ document.addEventListener('click',async e=>{
     case 'move':{const x=S.quotes.find(o=>o.id===v);const i=STATUS.indexOf(x.status)+(+b.dataset.d);if(STATUS[i]){setStatus(x,STATUS[i]);render()}break}
     case 'piece':nav.pi=+v;nav.showTypes=false;render();break;
     case 'showtypes':nav.showTypes=!nav.showTypes;render();break;
+    case 'toggle3d':nav.show3d=!nav.show3d;render();break;
+    case 'view3d':if(v3)v3.vista(v);break;
     case 'addpiece':{const t=TYPES[v],d={};t.campos.forEach(([k,,def])=>d[k]=def);if(v==='livre')d.rects=[{w:100,h:50,q:1,l:'Peça'}];
       q.pieces.push({id:uid(),type:v,name:t.nome,d,saiaH:0,rodaH:0});nav.pi=q.pieces.length-1;nav.showTypes=false;save();render();break}
     case 'dup-piece':{const p=q.pieces.find(x=>x.id===v),n=JSON.parse(JSON.stringify(p));n.id=uid();n.name=(p.name||'Peça')+' (cópia)';q.pieces.push(n);nav.pi=q.pieces.length-1;save();render();break}
@@ -735,7 +772,7 @@ document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.tar
 function live(){
   const q=curQ();if(!q)return;
   const sb=$('#sumbar');if(sb)sb.outerHTML=sumBar(q);
-  if(nav.sec==='med'){const p=q.pieces[nav.pi];if(p&&$('#pdraw')){$('#pdraw').innerHTML=drawPiece(p);$('#parea').textContent=nf(partsArea(shape(p).parts))+' m²'}}
+  if(nav.sec==='med'){const p=q.pieces[nav.pi];if(p&&$('#pdraw')){$('#pdraw').innerHTML=drawPiece(p);$('#parea').textContent=nf(partsArea(shape(p).parts))+' m²'}atualizar3d()}
   if(nav.sec==='svc'){q.lines.forEach((l,i)=>{const s=S.services.find(x=>x.id===l.svcId),el=$('#ls'+i);if(el&&s)el.textContent=brl(s.price*l.qty)});const c=calc(q);$('#svcsub').textContent=brl(c.svc)}
   if(nav.sec==='cal'){const t=document.createElement('template');t.innerHTML=secCal(q);
     ['#calcbox','#aprov','#plano'].forEach(id=>{const n=t.content.querySelector(id),o=$(id);if(n&&o)o.innerHTML=n.innerHTML})}
