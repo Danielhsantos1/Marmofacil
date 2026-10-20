@@ -8,8 +8,17 @@ Protótipo de app para marmorarias: medir, desenhar a bancada, calcular chapas e
 - Não há login, nuvem nem permissões nesta versão.
 - A leitura de fotos por IA só existe dentro do Claude; fora dele o botão avisa que está indisponível.
 
+## Testes do cálculo
+A geometria, o plano de corte e o preço ficam em `calc.js` (funções puras, sem tela). Os testes ficam em `tests/` e precisam só do Node 18 ou mais novo, sem instalar nada:
+
+```
+node --test
+```
+
+(ou `npm test`). Qualquer mudança em `calc.js` deve manter os testes verdes; `tests/golden.json` guarda os preços do app antes da refatoração para provar que nada mudou.
+
 ## Publicar no GitHub Pages
 Settings → Pages → Source: *Deploy from a branch* → Branch: `main` / `(root)`.
 
 ## Atualizar o app instalado
-Ao mudar arquivos, aumente o número de `V` em `sw.js` (ex.: `marmofacil-v3`) para o celular baixar a nova versão.
+Ao mudar arquivos, aumente o número de `V` em `sw.js` (ex.: `marmofacil-v4`) para o celular baixar a nova versão.
