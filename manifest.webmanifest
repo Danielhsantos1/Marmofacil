@@ -1,6 +1,6 @@
 {
-  "name": "Pedra Fácil",
-  "short_name": "Pedra Fácil",
+  "name": "Marmofácil",
+  "short_name": "Marmofácil",
   "description": "Medir, calcular e orçar projetos de pedra no celular.",
   "start_url": "./",
   "scope": "./",

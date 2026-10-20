@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <style>html{color-scheme:light;padding-top:env(safe-area-inset-top,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>Pedra Fácil</title>
+<title>Marmofácil</title>
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
@@ -805,7 +805,7 @@ document.addEventListener('click',async e=>{
     case 'mat-photo':pendingMat=v;$('#fileMat').click();break;
     case 'mat-photo-del':S.materials.find(x=>x.id===v).photo='';save();render();break;
     case 'theme':S.settings.theme=v;applyTheme();save();render();break;
-    case 'export':saveFile(`pedra-facil-backup-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(S));break;
+    case 'export':saveFile(`marmofacil-backup-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(S));break;
     case 'import':$('#fileImport').click();break;
     case 'clear-ex':confirmTap(b,()=>{['materials','services','clients','quotes'].forEach(k=>S[k]=S[k].filter(x=>!x.ex));save();render();toast('Exemplos removidos.')});break;
     case 'reset':confirmTap(b,()=>{S={materials:[],services:[],clients:[],quotes:[],settings:{...S.settings,nextNum:1001}};save();nav.qid=null;nav.edit=null;render();toast('Tudo apagado.')});break;
