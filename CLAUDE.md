@@ -20,7 +20,7 @@ Protótipo funcional, JS puro, **sem build**, instalável como PWA (`manifest.we
 - Orçamento **Fechado** congela os valores (`q.snap`, inclusive chapa e espessura para o 3D) e fica só para ver até ser reaberto.
 - Fora do Claude, a leitura de fotos por IA não existe (o botão avisa). O PDF baixa por link comum.
 - GitHub Pages: https://danielhsantos1.github.io/Marmofacil/ (o endereço github.io é compartilhado com outros projetos do mesmo usuário: o service worker só apaga caches do Marmofácil).
-- Visualizador 3D: ver `README.md`. É conferência visual, não desenho de fabricação; recortes só existem se `p.recortes` vier com dados (a interface ainda não os cria).
+- Visualizador 3D: ver `README.md`. É conferência visual, não desenho de fabricação; recortes (`p.recortes`, com `origem` medido/estimado) são digitados em Medir, nascem vazios e não mudam preço nem área.
 
 ## O que o protótipo faz (comportamento a preservar)
 - Peças: reta, L, U, ilha, escada, nicho, lavatório, medidas livres. Tudo em **cm**; área em m².

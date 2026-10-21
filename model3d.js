@@ -161,7 +161,7 @@
       }
       const ocupa=(hospedeira.furos||[]).some(f=>Math.min(f.x+f.w,r.x+r.w)>Math.max(f.x,r.x)&&Math.min(f.z+f.d,r.z+r.d)>Math.max(f.z,r.z));
       if(ocupa){avisos.push('Recorte "'+nome+'" sobrepõe outro: não desenhado.');return}
-      const f={tipo:nome,x:r.x,z:r.z,w:r.w,d:r.d,solidId:hospedeira.id};
+      const f={tipo:nome,x:r.x,z:r.z,w:r.w,d:r.d,origem:r.origem==='estimado'?'estimado':'medido',solidId:hospedeira.id};   // origem: medido (digitado) ou estimado (ex.: vindo de foto, a confirmar)
       (hospedeira.furos=hospedeira.furos||[]).push(f);recortes.push(f);
     });
 
@@ -306,7 +306,7 @@
     });
 
     /* recortes: rótulo no centro da abertura, com as medidas dadas */
-    m.recortes.forEach(r=>rotulo(r.tipo+' '+fmt(r.w)+'×'+fmt(r.d)+' cm',[r.x+r.w/2,t,r.z+r.d/2],2));
+    m.recortes.forEach(r=>rotulo(r.tipo+' '+fmt(r.w)+'×'+fmt(r.d)+' cm'+(r.origem==='estimado'?' (estimado)':''),[r.x+r.w/2,t,r.z+r.d/2],2));
     return out;
   }
 
