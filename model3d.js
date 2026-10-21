@@ -332,6 +332,76 @@
     return out;
   }
 
-  const api={buildModel,cotas,ESP_PADRAO,fmt};
+  /* ===== Cena com várias peças =====
+     Cada peça do orçamento continua independente (própria medida, recortes, preço e plano de corte). A posição na
+     cena (`p.pos` = canto de trás à esquerda da pedra, em cm) é só de desenho: não entra em área, preço nem corte. */
+  const GAP_PECAS=40;
+  /* deslocamento [dx,dz] de cada peça. Com posição guardada, a peça vai para lá; sem posição, fica à direita de tudo
+     que já foi colocado (a primeira, sem nada antes, fica onde nasceu). itens: [{bp:{min,max}, pos:{x,z}|null}] */
+  function arranjar(itens){
+    const off=itens.map(()=>null);let dir=null;
+    const ok=v=>typeof v==='number'&&isFinite(v);
+    itens.forEach((it,i)=>{
+      if(it.pos&&ok(it.pos.x)&&ok(it.pos.z)){off[i]=[it.pos.x-it.bp.min[0],it.pos.z-it.bp.min[2]];dir=Math.max(dir==null?-Infinity:dir,it.bp.max[0]+off[i][0])}
+    });
+    itens.forEach((it,i)=>{
+      if(off[i])return;
+      const dx=dir==null?0:dir+GAP_PECAS-it.bp.min[0];
+      off[i]=[dx,0];dir=Math.max(dir==null?-Infinity:dir,it.bp.max[0]+dx);
+    });
+    return off;
+  }
+  /* há duas peças se sobrepondo na planta? (encostar não conta) rects: [{x,z,w,d}] */
+  function sobrepoePecas(rects){
+    for(let i=0;i<rects.length;i++)for(let j=i+1;j<rects.length;j++){
+      const a=rects[i],b=rects[j];
+      if(Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x)>0.5&&Math.min(a.z+a.d,b.z+b.d)-Math.max(a.z,b.z)>0.5)return true;
+    }
+    return false;
+  }
+  /* cópia do modelo com tudo deslocado em (dx, dz): não altera o original */
+  function mover(m,dx,dz){
+    const c=JSON.parse(JSON.stringify({solids:m.solids,emendas:m.emendas,recortes:m.recortes,equipamentos:m.equipamentos,bbox:m.bbox,bboxPeca:m.bboxPeca}));
+    const mv=o=>{if(typeof o.x==='number')o.x+=dx;if(typeof o.z==='number')o.z+=dz};
+    c.solids.forEach(x=>{mv(x);(x.furos||[]).forEach(mv)});
+    c.recortes.forEach(mv);
+    c.emendas.forEach(e=>e.pts.forEach(p=>{p[0]+=dx;p[2]+=dz}));
+    c.equipamentos.forEach(e=>{mv(e);(e.queimadores||[]).forEach(mv);e.caixa.min[0]+=dx;e.caixa.max[0]+=dx;e.caixa.min[2]+=dz;e.caixa.max[2]+=dz});
+    [c.bbox,c.bboxPeca].forEach(b=>{b.min[0]+=dx;b.max[0]+=dx;b.min[2]+=dz;b.max[2]+=dz});
+    return c;
+  }
+  const moverCotas=(lista,dx,dz)=>lista.map(c=>{
+    const n=Object.assign({},c);
+    ['p1','p2','pos'].forEach(k=>{if(c[k])n[k]=[c[k][0]+dx,c[k][1],c[k][2]+dz]});
+    return n;
+  });
+  /* junta as peças numa cena para o visualizador. itens: [{modelo, off:[dx,dz], nome}], sel = índice da peça em edição.
+     Cotas, recortes (alças) e avisos são só da peça selecionada; sólidos, emendas e equipamentos são de todas. */
+  function comporCena(itens,sel){
+    const solids=[],emendas=[],equipamentos=[],pecas=[];let emendasPlano=0,area=0;
+    const bb={min:[Infinity,Infinity,Infinity],max:[-Infinity,-Infinity,-Infinity]};
+    let selecionada=null;
+    itens.forEach((it,i)=>{
+      const m=mover(it.modelo,it.off[0],it.off[1]);
+      m.solids.forEach(x=>{x.id=i+':'+x.id;x.peca=i;solids.push(x)});
+      m.emendas.forEach(e=>emendas.push(e));m.equipamentos.forEach(e=>equipamentos.push(e));
+      emendasPlano+=it.modelo.emendasPlano;area+=it.modelo.area;
+      if(!it.modelo.vazio)for(let k=0;k<3;k++){bb.min[k]=Math.min(bb.min[k],m.bbox.min[k]);bb.max[k]=Math.max(bb.max[k],m.bbox.max[k])}
+      pecas.push({indice:i,nome:it.nome,sel:i===sel,vazio:!!it.modelo.vazio,bp:m.bboxPeca,
+        pos:[(m.bboxPeca.min[0]+m.bboxPeca.max[0])/2,it.modelo.espessura,m.bboxPeca.min[2]]});
+      if(i===sel)selecionada={it,m};
+    });
+    const vazio=!solids.length;
+    const so=selecionada&&selecionada.it.modelo,sm=selecionada&&selecionada.m,off=selecionada?selecionada.it.off:[0,0];
+    const bp=sm?sm.bboxPeca:{min:[0,0,0],max:[0,0,0]};
+    return {solids,espessura:so?so.espessura:ESP_PADRAO,espessuraOrigem:so?so.espessuraOrigem:'padrao',vazio,
+      bbox:vazio?{min:[0,0,0],max:[0,0,0]}:bb,bboxPeca:bp,area,emendas,emendasPlano,
+      recortes:sm?sm.recortes:[],statusRecortes:so?so.statusRecortes:[],equipamentos,avisos:so?so.avisos:[],
+      peca:so?so.peca:{type:'livre',d:{},saiaH:0,rodaH:0},
+      pecas,off,alcaPeca:so&&!so.vazio?{x:bp.min[0],z:bp.min[2],w:bp.max[0]-bp.min[0],d:bp.max[2]-bp.min[2]}:null,
+      cotasDe:lado=>so?moverCotas(cotas(so,lado),off[0],off[1]):[]};
+  }
+
+  const api={buildModel,cotas,ESP_PADRAO,fmt,arranjar,sobrepoe:sobrepoePecas,mover,comporCena};
   if(typeof module!=='undefined')module.exports=api;else root.Model3D=api;
 })(typeof window!=='undefined'?window:globalThis);

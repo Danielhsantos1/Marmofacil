@@ -67,3 +67,6 @@ Em Medir, "Abrir editor 3D (tela cheia)". Celular: 3D em cima e menu embaixo (to
 
 ### Alças no 3D (versão 12)
 No editor 3D, as bolinhas verdes nas pontas das cotas mudam a medida ao arrastar (a peça, o preço e o plano de corte recalculam na hora; a gravação é feita ao soltar). Em recortes, ✥ move e o quadrado no canto muda largura e profundidade; um recorte arrastado para fora da bancada ou por cima de outro para no último lugar válido. Limites: 5 a 1000 cm (1 a 1000 cm em saia, rodabanca e espelho). O botão "Alças" liga e desliga; orçamento fechado não mostra alças. As alças somem quando o eixo aponta para o olho (ex.: comprimento na vista de cima de um L visto de frente).
+
+### Várias peças na mesma cena (versão 13)
+O 3D mostra todas as peças do orçamento juntas. Cada peça continua independente (medidas, recortes, preço e plano de corte). Peças novas entram à direita das outras (40 cm de vão). Com as Alças ligadas: o nome de cada peça aparece na cena (tocar seleciona), e o ✥ escuro, perto do canto de trás à esquerda da peça selecionada, move a peça. Uma peça não pode ser arrastada por cima de outra. A posição (`p.pos`, canto de trás à esquerda, em cm) é só de desenho: não entra em área, preço nem plano de corte, e é opcional (orçamentos antigos funcionam sem ela). Ainda não há rotação de peça nem união entre peças.
