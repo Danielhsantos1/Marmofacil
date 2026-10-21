@@ -505,3 +505,59 @@ test('equipamentos: a caixa de cada um é finita e a peça recebida não é alte
   for(const e of m.equipamentos)for(const k of ['min','max'])for(const v of e.caixa[k])assert.ok(Number.isFinite(v));
   assert.equal(JSON.stringify(p),antes);
 });
+
+/* ===== Cena com várias peças ===== */
+const {arranjar,sobrepoe,mover,comporCena}=require('../model3d.js');
+const modeloDe=(p)=>buildModel(p,{SL:310,SW:180,espessura:2});
+test('cena: peças sem posição ficam lado a lado (40 cm entre elas) e a primeira não sai do lugar',()=>{
+  const a=modeloDe(pc('reta',{A:200,P:60})),b=modeloDe(pc('L',{A:300,B:200,P:60}));
+  const off=arranjar([{bp:a.bboxPeca,pos:null},{bp:b.bboxPeca,pos:null}]);
+  assert.deepEqual(off[0],[0,0]);
+  near(b.bboxPeca.min[0]+off[1][0],a.bboxPeca.max[0]+40,'segunda à direita da primeira + 40');
+  assert.equal(off[1][1],0);
+});
+test('cena: peça com posição guardada vai para lá; a sem posição fica à direita de todas',()=>{
+  const a=modeloDe(pc('reta',{A:200,P:60})),b=modeloDe(pc('reta',{A:100,P:50}));
+  const off=arranjar([{bp:a.bboxPeca,pos:{x:500,z:30}},{bp:b.bboxPeca,pos:null}]);
+  assert.deepEqual(off[0],[500-a.bboxPeca.min[0],30-a.bboxPeca.min[2]]);
+  near(b.bboxPeca.min[0]+off[1][0],700+40,'à direita da peça posicionada');
+});
+test('cena: posição inválida (NaN) é ignorada, não quebra',()=>{
+  const a=modeloDe(pc('reta',{A:200,P:60}));
+  const off=arranjar([{bp:a.bboxPeca,pos:{x:NaN,z:1}}]);
+  assert.deepEqual(off[0],[0,0]);
+});
+test('sobreposição: encostar vale, invadir não',()=>{
+  assert.equal(sobrepoe([{x:0,z:0,w:100,d:50},{x:100,z:0,w:100,d:50}]),false);
+  assert.equal(sobrepoe([{x:0,z:0,w:100,d:50},{x:90,z:10,w:100,d:50}]),true);
+  assert.equal(sobrepoe([{x:0,z:0,w:100,d:50},{x:0,z:60,w:100,d:50}]),false);
+});
+test('mover: desloca tudo (sólidos, furos, emendas, equipamentos) sem alterar o original',()=>{
+  const m=modeloDe(pc('reta',{A:400,P:65},{recortes:[{id:'r',tipo:'cuba',x:100,z:10,w:80,d:40,origem:'medido'}],saiaH:5,rodaH:7}));
+  const antes=JSON.stringify(m.solids)+JSON.stringify(m.equipamentos);
+  const c=mover(m,250,30);
+  assert.equal(JSON.stringify(m.solids)+JSON.stringify(m.equipamentos),antes,'original intacto');
+  assert.equal(c.solids.length,m.solids.length);
+  m.solids.forEach((s,i)=>{near(c.solids[i].x,s.x+250,'x do sólido');near(c.solids[i].z,s.z+30,'z do sólido');near(c.solids[i].sx,s.sx,'tamanho igual')});
+  const furo=m.solids.find(s=>s.furos&&s.furos.length),cf=c.solids.find(s=>s.furos&&s.furos.length);
+  near(cf.furos[0].x,furo.furos[0].x+250,'furo acompanha');near(c.recortes[0].x,m.recortes[0].x+250,'recorte acompanha');
+  near(c.equipamentos[0].caixa.min[0],m.equipamentos[0].caixa.min[0]+250,'equipamento acompanha');
+  assert.ok(m.emendas.length>0);near(c.emendas[0].pts[0][0],m.emendas[0].pts[0][0]+250,'emenda acompanha');
+});
+test('cena: soma as peças sem mudar a área de nenhuma, e as cotas são só da selecionada (deslocadas)',()=>{
+  const A=pc('reta',{A:200,P:60}),B=pc('L',{A:300,B:200,P:60},{saiaH:5});
+  const ms=[modeloDe(A),modeloDe(B)],off=arranjar(ms.map(m=>({bp:m.bboxPeca,pos:null})));
+  const cena=comporCena(ms.map((m,i)=>({modelo:m,off:off[i],nome:'P'+i})),1);
+  near(cena.area,ms[0].area+ms[1].area,'área da cena = soma');
+  assert.equal(cena.solids.length,ms[0].solids.length+ms[1].solids.length);
+  assert.equal(new Set(cena.solids.map(s=>s.id)).size,cena.solids.length,'ids únicos');
+  const cs=cena.cotasDe({x:'esq',z:'frente'}),orig=cotas(ms[1],{x:'esq',z:'frente'});
+  assert.equal(cs.length,orig.length);
+  cs.forEach((c,i)=>{near(c.valor,orig[i].valor,'valor igual');near(c.p1[0],orig[i].p1[0]+off[1][0],'p1 deslocado');
+    near(Math.hypot(c.p2[0]-c.p1[0],c.p2[1]-c.p1[1],c.p2[2]-c.p1[2]),c.valor,'|p2-p1| continua = valor')});
+  assert.equal(cena.pecas.length,2);assert.equal(cena.pecas[1].sel,true);assert.equal(cena.pecas[0].sel,false);
+  near(cena.alcaPeca.x,ms[1].bboxPeca.min[0]+off[1][0],'alça da peça no canto dela');
+  assert.ok(cena.bbox.max[0]>=ms[1].bbox.max[0]+off[1][0]-1e-9,'caixa da cena cobre todas');
+  const so1=comporCena([{modelo:ms[0],off:[0,0],nome:'A'}],0);
+  near(so1.area,ms[0].area,'uma peça: igual ao modelo');
+});

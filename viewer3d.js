@@ -191,14 +191,20 @@ export function criarVisualizador(deps={}){
   const alcas=new Map();
   const tela=p=>{const v=p.clone().project(camera);return [(v.x*0.5+0.5)*canvas.clientWidth,(-v.y*0.5+0.5)*canvas.clientHeight,v.z]};
   function criarAlca(a){
-    const el=document.createElement('div'),mover=a.tipo==='mover',cota=a.tipo==='cota';
+    const el=document.createElement('div'),mover=a.tipo==='mover'||a.tipo==='peca',cota=a.tipo==='cota';
+    if(a.tipo==='chip'){                                              // nome da peça na cena: tocar seleciona
+      el.style.cssText='position:absolute;left:0;top:0;display:none;pointer-events:auto;cursor:pointer;z-index:4;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis;padding:6px 10px;border-radius:99px;border:1px solid var(--line,#ccd);font:700 12px/1.1 var(--font,sans-serif);box-shadow:0 1px 4px rgba(0,0,0,.2)';
+      el.setAttribute('role','button');
+      el.addEventListener('click',()=>{const h=alcas.get(a.chave);if(h&&!h.a.sel&&edicao.fn)edicao.fn({tipo:'selecionar',indice:h.a.indice})});
+      camadaEdit.appendChild(el);return {a,el};
+    }
     el.style.cssText='position:absolute;left:0;top:0;width:44px;height:44px;display:none;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;cursor:grab;z-index:4';
-    const d=document.createElement('span'),bg=cota?'var(--accent,#0e6a5b)':'var(--warn,#a8620b)';
+    const d=document.createElement('span'),bg=cota?'var(--accent,#0e6a5b)':a.tipo==='peca'?'var(--fg,#15191a)':'var(--warn,#a8620b)';
     d.style.cssText='display:flex;align-items:center;justify-content:center;color:#fff;font:700 15px/1 sans-serif;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45);background:'+bg+';'+
       (cota?'width:22px;height:22px;border-radius:50%':mover?'width:30px;height:30px;border-radius:50%':'width:22px;height:22px;border-radius:5px');
     if(mover)d.textContent='✥';
     el.appendChild(d);el.setAttribute('role','button');
-    el.setAttribute('aria-label',cota?'Arrastar para mudar '+a.rot:mover?'Arrastar para mover o recorte':'Arrastar para mudar o tamanho do recorte');
+    el.setAttribute('aria-label',cota?'Arrastar para mudar '+a.rot:a.tipo==='peca'?'Arrastar para mover a peça':mover?'Arrastar para mover o recorte':'Arrastar para mudar o tamanho do recorte');
     el.addEventListener('pointerdown',e=>iniciarArrasto(alcas.get(a.chave),e));
     el.addEventListener('pointermove',moverArrasto);
     el.addEventListener('pointerup',fimArrasto);el.addEventListener('pointercancel',fimArrasto);
@@ -216,6 +222,9 @@ export function criarVisualizador(deps={}){
           pos:new THREE.Vector3((c.p2[0]+c.dir[0]*c.off)*CM,(c.p2[1]+c.dir[1]*c.off)*CM,(c.p2[2]+c.dir[2]*c.off)*CM)});
       });
       const t=modelo.espessura;
+      if(modelo.alcaPeca){const r=modelo.alcaPeca;def({chave:'p',tipo:'peca',r:{x:r.x,z:r.z,w:r.w,d:r.d},pos:new THREE.Vector3(r.x*CM,t*CM,r.z*CM)})}      // canto de trás à esquerda (afastado na tela): longe das pontas das cotas e dos recortes
+      const ps=(modelo.pecas||[]).filter(p=>!p.vazio);
+      if(ps.length>1)ps.forEach(p=>def({chave:'n:'+p.indice,tipo:'chip',indice:p.indice,sel:p.sel,nome:p.nome,pos:new THREE.Vector3(p.pos[0]*CM,p.pos[1]*CM,p.pos[2]*CM)}));
       (modelo.recortes||[]).forEach(r=>{
         const base={indice:r.indice,r:{x:r.x,z:r.z,w:r.w,d:r.d}};
         def({...base,chave:'m:'+r.indice,tipo:'mover',pos:new THREE.Vector3((r.x+r.w/2)*CM,t*CM,(r.z+r.d/2)*CM)});
@@ -229,9 +238,9 @@ export function criarVisualizador(deps={}){
     const W=canvas.clientWidth,H=canvas.clientHeight,pos={};
     alcas.forEach(h=>{
       const a=h.a,[x,y,z]=tela(a.pos);let ok=z<=1&&z>=-1&&x>-10&&x<W+10&&y>-10&&y<H+10;
-      if(ok&&a.tipo==='cota'){const q=tela(a.pos.clone().addScaledVector(a.u,10*CM));ok=Math.hypot(q[0]-x,q[1]-y)/10>=0.6}      // eixo apontando para o olho: sem como arrastar
-      if(ok&&a.tipo!=='cota')ok=est.pol<=1.2;                                                                                   // recorte: precisa ver a bancada de cima
-      h.x=x;h.y=y;h.ok=ok;pos[a.chave]=h;
+      if(ok&&a.tipo==='cota'){const q=tela(a.pos.clone().addScaledVector(a.u,10*CM));ok=Math.hypot(q[0]-x,q[1]-y)/10>=0.15}      // eixo apontando para o olho: sem como arrastar
+      if(ok&&a.tipo!=='cota'&&a.tipo!=='chip')ok=est.pol<=1.2;                                                                                   // recorte: precisa ver a bancada de cima
+      h.x=x-(a.tipo==='peca'?26:0);h.y=y-(a.tipo==='peca'?26:0);h.ok=ok;pos[a.chave]=h;
     });
     alcas.forEach(h=>{                                                // 
       if(h.a.tipo==='tamanho'&&h.ok){                                  // canto colado no ✥ (recorte pequeno na tela): o canto se afasta na diagonal para os dois ficarem tocáveis
@@ -239,8 +248,12 @@ export function criarVisualizador(deps={}){
         if(m&&m.ok){let vx=h.x-m.x,vy=h.y-m.y;const n=Math.hypot(vx,vy);if(n<42){if(n<1){vx=1;vy=1}else{vx/=n;vy/=n}h.x=m.x+vx*42;h.y=m.y+vy*42}}
       }
       const vis=h.ok||(arrastando&&arrastando.chave===h.a.chave);
-      h.el.style.display=vis?'flex':'none';
-      if(vis)h.el.style.transform='translate('+(h.x-22).toFixed(1)+'px,'+(h.y-22).toFixed(1)+'px)';
+      h.el.style.display=vis?(h.a.tipo==='chip'?'block':'flex'):'none';
+      if(vis&&h.a.tipo==='chip'){
+        if(h.el.textContent!==h.a.nome)h.el.textContent=h.a.nome;
+        h.el.style.background=h.a.sel?'var(--accent,#0e6a5b)':'var(--surface,#fff)';h.el.style.color=h.a.sel?'var(--accent-fg,#fff)':'var(--fg,#111)';
+        h.el.style.transform='translate('+(h.x-h.el.offsetWidth/2).toFixed(1)+'px,'+(h.y-h.el.offsetHeight-6).toFixed(1)+'px)';
+      }else if(vis)h.el.style.transform='translate('+(h.x-22).toFixed(1)+'px,'+(h.y-22).toFixed(1)+'px)';
     });
   }
   function iniciarArrasto(h,e){
@@ -255,11 +268,13 @@ export function criarVisualizador(deps={}){
   function acaoDoGesto(e){
     const g=arrastando,b=g.base,dx=e.clientX-g.x0,dy=e.clientY-g.y0,lim=(v,mn)=>Math.min(1000,Math.max(mn,Math.round(v)));
     if(g.tipo==='cota'){
-      const n=b.ex[0]*b.ex[0]+b.ex[1]*b.ex[1];if(n<0.36)return null;
+      const n=b.ex[0]*b.ex[0]+b.ex[1]*b.ex[1];if(n<0.0225)return null;
       return {tipo:'campo',campo:g.campo,valor:lim(b.v0+(dx*b.ex[0]+dy*b.ex[1])/n,/^(saia|roda)H$|^ES$/.test(g.campo)?1:5)};
     }
-    const det=b.ex[0]*b.ez[1]-b.ex[1]*b.ez[0];if(Math.abs(det)<0.25)return null;
+    const det=b.ex[0]*b.ez[1]-b.ex[1]*b.ez[0];
+    if(Math.abs(det)<0.2*Math.hypot(b.ex[0],b.ex[1])*Math.hypot(b.ez[0],b.ez[1])||Math.abs(det)<1e-4)return null;   // eixos quase paralelos na tela (vista rasante): sem como resolver
     const mx=(dx*b.ez[1]-dy*b.ez[0])/det,mz=(b.ex[0]*dy-b.ex[1]*dx)/det,r=b.r;       // gesto na tela -> deslocamento em cm no plano da bancada
+    if(g.tipo==='peca')return {tipo:'peca',x:Math.round(b.r.x+mx),z:Math.round(b.r.z+mz)};
     return g.tipo==='mover'?{tipo:'recorte',indice:g.indice,x:Math.round(r.x+mx),z:Math.round(r.z+mz),w:r.w,d:r.d}
       :{tipo:'recorte',indice:g.indice,x:r.x,z:r.z,w:lim(r.w+mx,5),d:lim(r.d+mz,5)};
   }
