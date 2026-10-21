@@ -83,3 +83,6 @@ O 3D agora abre em "Do material": a textura vem da categoria (granito, mármore,
 - A foto do material que a marmoraria subiu em Cadastros tem prioridade sobre a do catálogo.
 - No editor 3D, menu Material: quadradinhos com a foto de cada material (toque para escolher). Em "Aparência: Do material", o 3D usa a foto como textura (repete a cada 1,2 m × 0,7 m com espelhamento; a escala real da chapa não é conhecida e o veio não acompanha o corte). Sem foto, usa o tom da cor.
 - As fotos carregam sob demanda e ficam guardadas para uso sem internet depois de vistas uma vez.
+
+### Rótulo nas faixas soltas (versão 17)
+Faixas de saia ou rodabanca desenhadas deitadas ao lado da peça agora dizem o que são: "sobra de saia/rodabanca N cm" (metragem que passa do contorno da peça ou cantos menores que a espessura) ou "saia/rodabanca solta N cm" (formatos sem contorno definido, como nicho e escada). A medida é a real; a área e o preço não mudam.
