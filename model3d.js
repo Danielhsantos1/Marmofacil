@@ -327,6 +327,11 @@
       add('altura',k==='saia'?'saia':'roda',h,[x,s.y,z],[x,s.y+s.sy,z],[dirX,0,0],1,k==='saia'?'saiaH':'rodaH');
     });
 
+    /* faixas de saia/rodabanca desenhadas deitadas ao lado da peça: dizem o que são, para ninguém achar que é uma peça perdida */
+    m.solids.filter(s=>s.solta&&(s.kind==='saia'||s.kind==='roda')).forEach(s=>{
+      const nome=s.kind==='saia'?'saia':'rodabanca',comp=s.nom!=null?s.nom:s.sx;
+      rotulo((/sem posição/.test(s.label||'')?'sobra de '+nome:nome+' solta')+' '+fmt(comp)+' cm',[s.x+s.sx/2,t,s.z+s.sz/2],2);
+    });
     /* recortes: rótulo no centro da abertura, com as medidas dadas */
     m.recortes.forEach(r=>rotulo(r.tipo+' '+fmt(r.w)+'×'+fmt(r.d)+' cm'+(r.origem==='estimado'?' (estimado)':''),[r.x+r.w/2,t,r.z+r.d/2],2,'recorte'));
     return out;

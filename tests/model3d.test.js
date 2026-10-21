@@ -553,11 +553,22 @@ test('cena: soma as peças sem mudar a área de nenhuma, e as cotas são só da 
   assert.equal(new Set(cena.solids.map(s=>s.id)).size,cena.solids.length,'ids únicos');
   const cs=cena.cotasDe({x:'esq',z:'frente'}),orig=cotas(ms[1],{x:'esq',z:'frente'});
   assert.equal(cs.length,orig.length);
-  cs.forEach((c,i)=>{near(c.valor,orig[i].valor,'valor igual');near(c.p1[0],orig[i].p1[0]+off[1][0],'p1 deslocado');
+  cs.forEach((c,i)=>{if(c.tipo!=='cota'){near(c.pos[0],orig[i].pos[0]+off[1][0],'rótulo deslocado');return}
+    near(c.valor,orig[i].valor,'valor igual');near(c.p1[0],orig[i].p1[0]+off[1][0],'p1 deslocado');
     near(Math.hypot(c.p2[0]-c.p1[0],c.p2[1]-c.p1[1],c.p2[2]-c.p1[2]),c.valor,'|p2-p1| continua = valor')});
   assert.equal(cena.pecas.length,2);assert.equal(cena.pecas[1].sel,true);assert.equal(cena.pecas[0].sel,false);
   near(cena.alcaPeca.x,ms[1].bboxPeca.min[0]+off[1][0],'alça da peça no canto dela');
   assert.ok(cena.bbox.max[0]>=ms[1].bbox.max[0]+off[1][0]-1e-9,'caixa da cena cobre todas');
   const so1=comporCena([{modelo:ms[0],off:[0,0],nome:'A'}],0);
   near(so1.area,ms[0].area,'uma peça: igual ao modelo');
+});
+
+test('faixa solta de saia/rodabanca ganha rótulo que explica o que é (sobra ou solta) com a medida',()=>{
+  const sobra=buildModel(pc('reta',{A:200,P:60},{rodaH:7,rodaMl:6}),{SL:310,SW:180,espessura:2});
+  const r=cotas(sobra).filter(c=>c.tipo==='rotulo'&&/rodabanca/.test(c.texto));
+  assert.equal(r.length,1);assert.match(r[0].texto,/^sobra de rodabanca [\d.,]+ cm$/);
+  const solta=buildModel(pc('nicho',{A:80,H:60,P:25},{saiaH:5,saiaMl:1}),{SL:310,SW:180,espessura:2});
+  assert.ok(cotas(solta).some(c=>c.tipo==='rotulo'&&/^saia solta/.test(c.texto)),'nicho: faixa solta por desenho, não por sobra');
+  const normal=buildModel(pc('reta',{A:280,P:60},{rodaH:7}),{SL:310,SW:180,espessura:2});
+  assert.ok(!cotas(normal).some(c=>/sobra|solta/.test(c.texto)),'sem faixa solta, sem rótulo');
 });
