@@ -47,11 +47,17 @@ function shape(p){
 const partsArea=parts=>parts.reduce((s,a)=>s+a.w*a.h*(a.q||1),0)/1e4;
 
 /* ===== Plano de corte (prateleiras, estimativa) ===== */
+/* Como uma peça w×h é dividida numa chapa SL×SW: k pedaços no lado maior (L) e m no menor (W).
+   Usada pelo plano de corte e pelo 3D (para desenhar as emendas no mesmo lugar que o cálculo conta). */
+function divisoes(w,h,SL,SW){
+  const L=Math.max(w,h),W=Math.min(w,h);
+  const k=Math.max(1,Math.ceil(L/SL)),m=Math.max(1,Math.ceil(W/SW));
+  return {L,W,k,m,emendas:k*m-1};
+}
 function nestParts(parts,SL,SW){
   const kerf=0.4;let items=[],emendas=0;
   parts.forEach(a=>{for(let i=0;i<(a.q||1);i++){
-    const L=Math.max(a.w,a.h),W=Math.min(a.w,a.h);
-    const k=Math.max(1,Math.ceil(L/SL)),m=Math.max(1,Math.ceil(W/SW));
+    const {L,W,k,m}=divisoes(a.w,a.h,SL,SW);
     emendas+=k*m-1;
     for(let a1=0;a1<k;a1++)for(let b1=0;b1<m;b1++)items.push({w:L/k,h:W/m,l:a.l})}});
   items.sort((x,y)=>y.h-x.h||y.w-x.w);
@@ -118,4 +124,4 @@ function aplicarSnapshot(c,s){
   return r;
 }
 
-if(typeof module!=='undefined')module.exports={defMl,shape,partsArea,nestParts,calcQuote,snapshotOf,aplicarSnapshot,SNAP_CAMPOS};
+if(typeof module!=='undefined')module.exports={defMl,shape,partsArea,divisoes,nestParts,calcQuote,snapshotOf,aplicarSnapshot,SNAP_CAMPOS};

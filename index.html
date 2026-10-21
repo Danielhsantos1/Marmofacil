@@ -16,17 +16,17 @@
 :root{
   --bg:#EDEFEE; --surface:#FFFFFF; --surface2:#E2E6E4; --fg:#15191A; --muted:#5C6664; --line:#CDD3D1;
   --accent:#0E6A5B; --accent-fg:#FFFFFF; --accent-soft:#D5ECE6;
-  --ok:#1D7A46; --warn:#A8620B; --bad:#B3321F; --slab:#D9DEDB; --slab-line:#8C9794;
+  --ok:#1D7A46; --warn:#A8620B; --bad:#B3321F; --slab:#D9DEDB; --slab-line:#8C9794; --dim:#1D5FD1; --emenda:#D9480F;
   --font:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#111514; --surface:#1A201F; --surface2:#242C2A; --fg:#E8EEEC; --muted:#93A09D; --line:#303A38;
   --accent:#3DBBA3; --accent-fg:#06201A; --accent-soft:#17332D;
-  --ok:#5BC48B; --warn:#E3A24F; --bad:#EE7C6A; --slab:#2B3432; --slab-line:#5E6C69; color-scheme:dark}}
+  --ok:#5BC48B; --warn:#E3A24F; --bad:#EE7C6A; --slab:#2B3432; --slab-line:#5E6C69; --dim:#8DB8FF; --emenda:#FF9166; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#111514; --surface:#1A201F; --surface2:#242C2A; --fg:#E8EEEC; --muted:#93A09D; --line:#303A38;
   --accent:#3DBBA3; --accent-fg:#06201A; --accent-soft:#17332D;
-  --ok:#5BC48B; --warn:#E3A24F; --bad:#EE7C6A; --slab:#2B3432; --slab-line:#5E6C69; color-scheme:dark}
+  --ok:#5BC48B; --warn:#E3A24F; --bad:#EE7C6A; --slab:#2B3432; --slab-line:#5E6C69; --dim:#8DB8FF; --emenda:#FF9166; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.4;
@@ -88,6 +88,11 @@ input[type=file]{display:none}
 .note{font-size:12.5px;color:var(--muted);border-left:3px solid var(--line);padding:2px 0 2px 10px}
 .ex{font-size:11px;font-weight:700;color:var(--warn);letter-spacing:.04em}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;z-index:40;max-width:90%;font-size:14px}
+.bar3d{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.bar3d button{padding:4px 2px;font-size:12.5px}
+@media (max-width:350px){.bar3d{gap:4px}.bar3d button{padding:2px 1px;font-size:11.5px}}
+.row3d{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
+.k3d[aria-pressed=true]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .upd{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:50;width:min(92%,420px);background:var(--fg);color:var(--bg);border-radius:12px;padding:8px 8px 8px 14px;display:flex;align-items:center;gap:10px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.25)}
 .upd span{flex:1}
 .lock{border-left:4px solid var(--ok)}
@@ -146,8 +151,8 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=6"></script>
-<script src="model3d.js?v=6"></script>
+<script src="calc.js?v=7"></script>
+<script src="model3d.js?v=7"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -160,7 +165,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=6;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=7;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -274,7 +279,7 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false};
+const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'liso'};
 const IC={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
@@ -306,7 +311,7 @@ function render(){
 function aplicarTrava(q){
   if(!fechado(q)||nav.sec==='orc')return;
   $$('#secbody input,#secbody select,#secbody textarea,#secbody button').forEach(el=>{
-    if(!el.matches('[data-act="toggle3d"],[data-act="view3d"],[data-act="piece"]'))el.disabled=true;
+    if(!el.matches('[data-act="toggle3d"],.k3d,[data-act="piece"]'))el.disabled=true;
   });
 }
 async function versoesEmCache(){
@@ -489,9 +494,11 @@ function secMed(q){
   h+=`<div class="draw" id="pdraw">${drawPiece(p)}</div>
    <div class="row between"><span class="small muted">${TYPES[p.type].nome} · área da peça</span><b class="num" id="parea">${nf(area)} m²</b></div>
    <button data-act="toggle3d" aria-pressed="${nav.show3d}">${nav.show3d?'Esconder o 3D':'Ver em 3D'}</button>
-   ${nav.show3d?`<div class="draw" id="v3dbox" style="padding:0;height:min(64vw,320px);min-height:240px;position:relative"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
-   <div class="seg" role="group" aria-label="Vista do 3D"><button data-act="view3d" data-v="persp">Perspectiva</button><button data-act="view3d" data-v="topo">De cima</button><button data-act="view3d" data-v="frente">De frente</button></div>
-   <div class="note">Modelo ilustrativo com a espessura do material (${nf(matOf(q)?.thick>0?matOf(q).thick:Model3D.ESP_PADRAO,0)} cm). Arraste para girar e use dois dedos para aproximar. Não mostra emendas, recortes nem veio da pedra.</div>`:''}
+   ${nav.show3d?`<div class="draw" id="v3dbox" style="padding:0;height:min(68vw,340px);min-height:260px;position:relative"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
+   <div class="bar3d" role="group" aria-label="Vistas do 3D"><button class="k3d" data-act="view3d" data-v="persp">Perspectiva</button><button class="k3d" data-act="view3d" data-v="topo">De cima</button><button class="k3d" data-act="view3d" data-v="frente">De frente</button><button class="k3d" data-act="enquadrar3d">Enquadrar</button></div>
+   <div class="row3d"><button class="k3d" data-act="cotas3d" aria-pressed="${nav.cotas3d}">Cotas: ${nav.cotas3d?'ligadas':'desligadas'}</button>
+    <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['liso','Lisa'],['material','Do material'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label></div>
+   <div class="note" id="n3d">Arraste para girar e use dois dedos para aproximar.</div>`:''}
    <div class="card stack" style="padding-top:14px">
     ${fld('Nome da peça',PP+'.name')}
     <div class="grid2">${TYPES[p.type].campos.map(([k,l])=>fld(l,PP+'.d.'+k,'n',{unit:k==='N'?'un':'cm'})).join('')}</div>
@@ -771,10 +778,10 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=6');
+    const m=await import('./viewer3d.js?v=7');
     if(!m.webglDisponivel())throw new Error('webgl');
     v3=m.criarVisualizador();
-    v3.aoPerderContexto(()=>{nav.show3d=false;render();toast('O aparelho interrompeu o 3D. Toque em Ver em 3D para abrir de novo.')});
+    v3.aoFalharContexto(()=>{nav.show3d=false;render();toast('O aparelho interrompeu o 3D. Toque em Ver em 3D para abrir de novo.')});     // só depois de 4 s sem recuperar
     return v3;
   })().catch(e=>{
     v3Falha=e&&e.message==='webgl'?'Este aparelho não conseguiu iniciar o 3D. O desenho em 2D continua funcionando.':'Não foi possível carregar o 3D. Confira a conexão e tente de novo.';
@@ -789,11 +796,33 @@ async function montar3d(){
   v3.anexar(box);const m=$('#v3dmsg');if(m)m.remove();
   atualizar3d();
 }
+/* Aparência "Do material": granito, mármore e quartzo têm textura; o resto fica liso. Puramente visual. */
+function texDe(q){
+  if(nav.tex3d!=='material')return nav.tex3d;
+  return {'Granito':'granito','Mármore':'marmore','Quartzo':'quartzo'}[matOf(q)?.cat]||'liso';
+}
+function modelo3d(q,p){
+  const c=calc(q);                                                      // chapa usada pelo plano de corte: as emendas saem da mesma conta
+  return Model3D.buildModel(p,{espessura:matOf(q)?.thick,SL:c.SL,SW:c.SW});
+}
+function nota3d(m){
+  const el=$('#n3d');if(!el)return;
+  const partes=['Cotas em cm, com as medidas da peça.',
+    'Espessura '+nf(m.espessura,1)+' cm'+(m.espessuraOrigem==='padrao'?' (padrão: o material não tem espessura cadastrada).':' (do material).')];
+  if(m.emendasPlano>0)partes.push('Emendas do plano de corte em laranja: '+m.emendasPlano+(m.emendas.length!==m.emendasPlano?' (o desenho mostra '+m.emendas.length+' linhas de corte).':'.'));
+  m.avisos.forEach(a=>partes.push(a));
+  if(v3&&v3.gradeCm())partes.push('Grade de '+v3.gradeCm()+' cm.');
+  partes.push('Para conferência visual: não é desenho de fabricação'+(texDe(curQ())!=='liso'?'; a textura é ilustrativa e não mostra o veio da chapa.':'.'));
+  el.textContent=partes.join(' ');
+}
 function atualizar3d(){
   if(!v3||!nav.show3d||!$('#v3dbox'))return;
   const q=curQ(),p=q&&q.pieces[nav.pi];if(!p)return;
   const mantem=v3Peca===p.id;v3Peca=p.id;                              // mesma peça: não reenquadra a câmera
-  v3.definirModelo(Model3D.buildModel(p,matOf(q)?.thick),mantem);
+  const m=modelo3d(q,p);
+  v3.opcoes({cotas:nav.cotas3d,textura:texDe(q)});
+  v3.definirModelo(m,mantem);
+  nota3d(m);
 }
 
 /* ===== Eventos ===== */
@@ -823,6 +852,8 @@ document.addEventListener('click',async e=>{
     case 'showtypes':nav.showTypes=!nav.showTypes;render();break;
     case 'toggle3d':nav.show3d=!nav.show3d;render();break;
     case 'view3d':if(v3)v3.vista(v);break;
+    case 'enquadrar3d':if(v3)v3.enquadrar();break;
+    case 'cotas3d':nav.cotas3d=!nav.cotas3d;b.setAttribute('aria-pressed',nav.cotas3d);b.textContent='Cotas: '+(nav.cotas3d?'ligadas':'desligadas');if(v3)v3.opcoes({cotas:nav.cotas3d});break;
     case 'addpiece':{const t=TYPES[v],d={};t.campos.forEach(([k,,def])=>d[k]=def);if(v==='livre')d.rects=[{w:100,h:50,q:1,l:'Peça'}];
       q.pieces.push({id:uid(),type:v,name:t.nome,d,saiaH:0,rodaH:0});nav.pi=q.pieces.length-1;nav.showTypes=false;save();render();break}
     case 'dup-piece':{const p=q.pieces.find(x=>x.id===v),n=JSON.parse(JSON.stringify(p));n.id=uid();n.name=(p.name||'Peça')+' (cópia)';q.pieces.push(n);nav.pi=q.pieces.length-1;save();render();break}
@@ -879,6 +910,7 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',e=>{
   const el=e.target;
+  if(el.id==='tex3d'){nav.tex3d=el.value;atualizar3d();return}                 // só visual: vale também em orçamento fechado
   if(fechado(curQ())&&el.closest('#secbody'))return;
   if(el.id==='addSvc'){const q=curQ();if(el.value){const f=q.lines.find(l=>l.svcId===el.value);if(f)f.qty+=1;else q.lines.push({svcId:el.value,qty:1});save();render()}return}
   if(el.matches('select[data-b]')&&el.dataset.b.endsWith('.status')){const q2=curQ();if(q2)setStatus(q2,el.value);render();return}

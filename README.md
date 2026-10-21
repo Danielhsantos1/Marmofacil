@@ -14,11 +14,25 @@ Ao mudar a etapa para **Fechado**, o app guarda os valores do orçamento (`q.sna
 ## Nova versão do app
 Quando uma versão nova é baixada, aparece a barra **Nova versão disponível · Atualizar**. Em **Ajustes** aparece a versão instalada.
 
-## Visualizador 3D (Medir → Ver em 3D)
-Mostra a peça em 3D com a espessura do material, saia e rodabanca. Gira com um dedo e aproxima com dois. É **ilustrativo**: não mostra emendas, recortes, cubas nem veio da pedra, e não muda nenhum cálculo (usa os mesmos dados do corte e do preço).
-- `model3d.js`: monta as peças em 3D a partir dos dados da peça (função pura, testada).
-- `viewer3d.js`: desenha com Three.js (`vendor/three.module.min.js`, MIT). Só é carregado quando o usuário toca em "Ver em 3D".
-- Se o aparelho não tiver WebGL, aparece um aviso e o desenho 2D continua funcionando.
+## Visualizador 3D técnico (Medir → Ver em 3D)
+Mostra a peça em 3D para **conferir** as medidas antes do orçamento. Não é desenho de fabricação e não muda nenhum cálculo: usa os mesmos dados da peça que alimentam o plano de corte e o preço.
+
+- **Cotas em cm** (comprimento, profundidade, lados A/B/C do L e do U, degrau, nicho, espessura, altura da saia e da rodabanca), com linhas de extensão e texto sem sobreposição. Cada cota liga dois pontos reais da peça e o valor vem dos dados; nada é fixo ou estimado. Botão **Cotas** liga e desliga.
+- **Espessura** vem do cadastro do material; sem espessura cadastrada usa 2 cm e a cota avisa "(padrão)".
+- **Emendas** (linha laranja): onde o plano de corte divide uma peça maior que a chapa, na mesma conta do cálculo. Detalhe e limites em *Divergências conhecidas*.
+- **Recortes** (cuba, cooktop...): só aparecem como abertura real se a peça tiver `recortes: [{tipo, x, z, w, d}]` (cm, no plano da peça) e couberem inteiros num tampo; o que for inválido é recusado com aviso na tela. A interface atual **ainda não cria** recortes, e o cálculo atual **não desconta** a área deles.
+- **Câmera:** Perspectiva, De cima e De frente (exatas), Enquadrar, giro por toque ou mouse, zoom por pinça ou roda com limites, reenquadra ao redimensionar a tela. Se o aparelho perder o contexto WebGL, tenta recuperar por 4 s antes de voltar ao 2D.
+- **Aparência (só visual):** lisa, do material, granito, mármore ou quartzo. Texturas procedurais pequenas, ilustrativas, que **não** mostram o veio da chapa e não afetam preço, área nem chapas.
+- Saia e rodabanca em escada, nicho e peça livre aparecem **soltas** ao lado da peça: os dados não dizem onde elas ficam.
+
+Arquivos: `model3d.js` (modelo, emendas, recortes e cotas: funções puras, testadas), `viewer3d.js` (Three.js local em `vendor/`, carregado só ao abrir o 3D). Se o aparelho não tiver WebGL, aparece um aviso e o desenho 2D continua.
+
+### Divergências conhecidas (documentadas, não alteradas)
+- O plano de corte **não conta como emenda** a junção entre os trechos de um L ou U (cada trecho é uma peça separada).
+- A saia e a rodabanca são **uma peça só** no plano de corte (comprimento total × altura). O 3D as monta por trechos, mas marca as emendas ao longo do percurso inteiro, onde o plano as divide.
+- Quando uma peça é maior que a chapa nos **dois** lados, o cálculo conta *peças − 1* emendas e o desenho mostra as linhas de corte (menos linhas). A nota do 3D mostra os dois números.
+- Nos cantos, a faixa de saia/rodabanca que encosta na outra é encurtada no desenho (junta de topo); o comprimento do corte e a área não mudam.
+- Um nicho com largura 0 ainda conta as 2 laterais na área (comportamento anterior, mantido).
 
 ## Testes do cálculo
 A geometria, o plano de corte e o preço ficam em `calc.js` (funções puras, sem tela). Os testes ficam em `tests/` e precisam só do Node 18 ou mais novo, sem instalar nada:
