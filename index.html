@@ -153,8 +153,8 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=9"></script>
-<script src="model3d.js?v=9"></script>
+<script src="calc.js?v=10"></script>
+<script src="model3d.js?v=10"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -167,7 +167,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=9;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=10;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -287,7 +287,7 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'liso'};
+const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'liso',equip3d:true};
 const IC={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
@@ -507,7 +507,8 @@ function secMed(q){
    ${nav.show3d?`<div class="draw" id="v3dbox" style="padding:0;height:min(68vw,340px);min-height:260px;position:relative"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
    <div class="bar3d" role="group" aria-label="Vistas do 3D"><button class="k3d" data-act="view3d" data-v="persp" aria-pressed="true">Perspectiva</button><button class="k3d" data-act="view3d" data-v="topo" aria-pressed="false">De cima</button><button class="k3d" data-act="view3d" data-v="frente" aria-pressed="false">De frente</button><button class="k3d" data-act="enquadrar3d">Enquadrar</button></div>
    <div class="row3d"><button class="k3d" data-act="cotas3d" aria-pressed="${nav.cotas3d}">Cotas</button>
-    <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['liso','Lisa'],['material','Do material'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label></div>
+    <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['liso','Lisa'],['material','Do material'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label>
+    ${(p.recortes||[]).length?`<button class="k3d" data-act="equip3d" aria-pressed="${nav.equip3d}" style="grid-column:1/-1">Cuba, torneira e cooktop (ilustrativos)</button>`:''}</div>
    <div class="note" id="n3d">Arraste para girar e use dois dedos para aproximar.</div>`:''}
    <div class="card stack" style="padding-top:14px">
     ${fld('Nome da peça',PP+'.name')}
@@ -820,7 +821,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=9');
+    const m=await import('./viewer3d.js?v=10');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({cotas:Model3D.cotas})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -875,6 +876,7 @@ function nota3d(m){
     'Espessura '+nf(m.espessura,1)+' cm'+(m.espessuraOrigem==='padrao'?' (padrão: o material não tem espessura cadastrada).':' (do material).')];
   const qq=curQ();
   if(fechado(qq))partes.push(typeof qq.snap.thick==='number'&&qq.snap.SL>0?'Orçamento fechado: chapa e espessura do fechamento.':'Orçamento fechado antes desta versão: o 3D usa a chapa e a espessura do cadastro de hoje.');
+  if(m.equipamentos.length&&nav.equip3d)partes.push('Cuba, torneira e cooktop são só ilustração: a forma, a profundidade da cuba e a posição da torneira não vêm de medida. Só o recorte tem medida.');
   if(m.emendasPlano>0)partes.push('Emendas do plano de corte em laranja: '+m.emendasPlano+(m.emendas.length!==m.emendasPlano?' (o desenho mostra '+m.emendas.length+' linhas de corte).':'.'));
   m.avisos.forEach(a=>partes.push(a));
   if(v3&&v3.gradeCm())partes.push('Grade de '+v3.gradeCm()+' cm.');
@@ -887,7 +889,7 @@ function atualizar3d(){
   const q=curQ(),p=q&&q.pieces[nav.pi];if(!p)return;
   const mantem=v3Peca===p.id;v3Peca=p.id;                              // mesma peça: não reenquadra a câmera
   const m=modelo3d(q,p);
-  v3.atualizar(m,mantem,{cotas:nav.cotas3d,textura:texDe(q)});
+  v3.atualizar(m,mantem,{cotas:nav.cotas3d,textura:texDe(q),equip:nav.equip3d});
   nota3d(m);marcarVista();
 }
 
@@ -920,6 +922,7 @@ document.addEventListener('click',async e=>{
     case 'retry3d':v3Promise=null;v3Falha='';render();break;
     case 'view3d':if(v3){v3.vista(v);marcarVista()}break;
     case 'enquadrar3d':if(v3)v3.enquadrar();break;
+    case 'equip3d':nav.equip3d=!nav.equip3d;b.setAttribute('aria-pressed',nav.equip3d);if(v3)v3.opcoes({equip:nav.equip3d});{const q2=curQ(),p2=q2&&q2.pieces[nav.pi];if(p2)nota3d(modelo3d(q2,p2))}break;
     case 'cotas3d':nav.cotas3d=!nav.cotas3d;b.setAttribute('aria-pressed',nav.cotas3d);if(v3)v3.opcoes({cotas:nav.cotas3d});break;
     case 'addpiece':{const t=TYPES[v],d={};t.campos.forEach(([k,,def])=>d[k]=def);if(v==='livre')d.rects=[{w:100,h:50,q:1,l:'Peça'}];
       q.pieces.push({id:uid(),type:v,name:t.nome,d,saiaH:0,rodaH:0});nav.pi=q.pieces.length-1;nav.showTypes=false;save();render();break}

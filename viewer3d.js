@@ -99,7 +99,7 @@ export function criarVisualizador(deps={}){
   let grade=null;
 
   const alvo=new THREE.Vector3(),est={az:-0.6,pol:1.0,dist:3};
-  const opt={cotas:true,textura:'liso'};
+  const opt={cotas:true,textura:'liso',equip:true};
   let modelo=null,quadro=[],raioQ=1,dMin=0.3,dMax=20,zoomManual=false,pedido=0,perdido=false,aoPerder=null,aoFalhar=null,aoRecuperar=null,tRecup=0;
   let ladoCotas={x:'esq',z:'frente'},rotulos=[],listaCotas=[];
   const texturas={};
@@ -249,12 +249,39 @@ export function criarVisualizador(deps={}){
       e.pts.forEach(p=>{const q=p.map((v,i)=>v+Math.sign(v-c[i])*0.03);pts.push(new THREE.Vector3(q[0]*CM,q[1]*CM,q[2]*CM))});
       grupo.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:emenda})));
     });
+    desenharEquipamentos();
     const [a,b]=[modelo.bbox.min,modelo.bbox.max];
     alvo.set((a[0]+b[0])/2*CM,(a[1]+b[1])/2*CM,(a[2]+b[2])/2*CM);
     montarGrade(a,b);
     montarCotas(dimCor);
     montarQuadro(a,b);
     pedir();
+  }
+
+  /* cuba, torneira e cooktop ILUSTRATIVOS (vindos só dos recortes válidos); formas simples, sem textura */
+  function desenharEquipamentos(){
+    if(!opt.equip||!modelo.equipamentos)return;
+    const lamb=c=>new THREE.MeshLambertMaterial({color:c});
+    const caixa=(w,h,d,x,y,z,mat)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w*CM,h*CM,d*CM),mat);o.position.set(x*CM,y*CM,z*CM);grupo.add(o)};
+    const cil=(r1,r2,h,x,y,z,mat,rotX)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(r1*CM,r2*CM,h*CM,18),mat);o.position.set(x*CM,y*CM,z*CM);if(rotX)o.rotation.x=Math.PI/2;grupo.add(o)};
+    const t=modelo.espessura,inox=lamb(0xaeb4ba),fundo=lamb(0x7f868c),cromo=lamb(0x8d949a),vidro=lamb(0x1b1e22),anel=lamb(0x5a6068);
+    modelo.equipamentos.forEach(e=>{
+      if(e.tipo==='cuba'){
+        const topo=t,base=t-e.prof,meio=(topo+base)/2,esp=0.5,cx=e.x+e.w/2,cz=e.z+e.d/2;
+        caixa(e.w,e.prof,esp,cx,meio,e.z+esp/2,inox);caixa(e.w,e.prof,esp,cx,meio,e.z+e.d-esp/2,inox);
+        caixa(esp,e.prof,e.d-2*esp,e.x+esp/2,meio,cz,inox);caixa(esp,e.prof,e.d-2*esp,e.x+e.w-esp/2,meio,cz,inox);
+        caixa(e.w-2*esp,esp,e.d-2*esp,cx,base+esp/2,cz,fundo);
+        cil(2.4,2.4,0.3,cx,base+esp+0.15,cz,lamb(0x30353a));                       // ralo
+      }else if(e.tipo==='torneira'){
+        cil(2.6,2.2,3,e.x,t+1.5,e.z,cromo);                                         // base
+        cil(1.1,1.1,e.altura-6,e.x,t+3+(e.altura-6)/2,e.z,cromo);                   // haste
+        cil(1,1,e.alcance,e.x,t+e.altura-3,e.z+e.alcance/2,cromo,true);             // bico, em direção ao usuário
+        cil(1,1,5,e.x,t+e.altura-5.5,e.z+e.alcance,cromo);                          // ponta voltada para baixo
+      }else if(e.tipo==='cooktop'){
+        caixa(e.w,0.5,e.d,e.x+e.w/2,t+0.25,e.z+e.d/2,vidro);
+        e.queimadores.forEach(q=>{const g=new THREE.TorusGeometry(q.r*CM,0.25*CM,8,28);g.rotateX(Math.PI/2);const o=new THREE.Mesh(g,anel);o.position.set(q.x*CM,(t+0.6)*CM,q.z*CM);grupo.add(o)});
+      }
+    });
   }
 
   /* grade proporcional: espaçamento "redondo" (10/20/50/100/200 cm) com no máximo ~12 divisões na maior dimensão */
@@ -286,7 +313,7 @@ export function criarVisualizador(deps={}){
         [q1,q2].forEach(q=>seg(add(q,t,-tk/n),add(q,t,tk/n)));            // traços oblíquos
         rotulos.push({txt:c.texto,pos:new THREE.Vector3(...V(add(q1,[q2[0]-q1[0],q2[1]-q1[1],q2[2]-q1[2]],0.5))),prio:c.prio,cat:c.categoria,
           a:new THREE.Vector3(...V(q1)),b:new THREE.Vector3(...V(q2))});
-      }else rotulos.push({txt:c.texto,pos:new THREE.Vector3(...V(c.pos)),prio:c.prio,cat:'rotulo'});
+      }else rotulos.push({txt:c.texto,pos:new THREE.Vector3(...V(c.pos)),prio:c.prio,cat:c.categoria==='recorte'?'recorte':'rotulo'});
     });
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
     grupoCotas.add(new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:cor,depthTest:false,transparent:true,opacity:0.95})));
@@ -294,7 +321,7 @@ export function criarVisualizador(deps={}){
     rotulos.forEach(r=>{
       const el=document.createElement('span');el.textContent=r.txt;
       el.style.cssText='position:absolute;left:0;top:0;white-space:nowrap;padding:2px 5px;border-radius:6px;border:1px solid var(--dim,#1d5fd1);color:var(--dim,#1d5fd1);background:color-mix(in srgb,var(--surface,#fff) 88%,transparent)';
-      if(r.cat==='rotulo')el.style.borderStyle='dashed';
+      if(r.cat==='rotulo'||r.cat==='recorte')el.style.borderStyle='dashed';
       camada.appendChild(el);r.el=el;r.w=0;r.h=0;
     });
     camada.style.display=opt.cotas?'block':'none';
@@ -311,6 +338,8 @@ export function criarVisualizador(deps={}){
       if(c.tipo!=='cota')return;
       [c.p1,c.p2].forEach(p=>quadro.push(new THREE.Vector3((p[0]+c.dir[0]*c.off*1.4)*CM,(p[1]+c.dir[1]*c.off*1.4)*CM,(p[2]+c.dir[2]*c.off*1.4)*CM)));
     });
+    if(opt.equip)(modelo.equipamentos||[]).forEach(e=>{const c=e.caixa;
+      [c.min[0],c.max[0]].forEach(x=>[c.min[1],c.max[1]].forEach(y=>[c.min[2],c.max[2]].forEach(z=>quadro.push(new THREE.Vector3(x*CM,y*CM,z*CM)))))});
     raioQ=Math.max(0.25,...quadro.map(p=>p.distanceTo(alvo)));
     dMin=Math.max(0.25,raioQ*0.45);dMax=raioQ*7;
   }
@@ -341,7 +370,7 @@ export function criarVisualizador(deps={}){
     const W=canvas.clientWidth,H=canvas.clientHeight,usados=[],v=new THREE.Vector3(),pa=new THREE.Vector3(),pb=new THREE.Vector3();
     [...rotulos].sort((p,q)=>p.prio-q.prio).forEach(r=>{
       v.copy(r.pos).project(camera);
-      let esconder=v.z>1||v.z<-1;
+      let esconder=v.z>1||v.z<-1||(r.cat==='recorte'&&est.pol>0.8);       // medida do recorte: lê-se na vista de cima e no 2D; nas inclinadas só amontoa
       if(!esconder&&r.a){
         pa.copy(r.a).project(camera);pb.copy(r.b).project(camera);
         const px=Math.hypot((pa.x-pb.x)*W/2,(pa.y-pb.y)*H/2);
@@ -397,17 +426,18 @@ export function criarVisualizador(deps={}){
     },
     /* atualiza modelo e opções numa construção só: o = {cotas, textura} */
     atualizar(m,mantem,o){
-      if(o){if(o.cotas!=null)opt.cotas=!!o.cotas;if(o.textura!=null)opt.textura=o.textura}
+      if(o){if(o.cotas!=null)opt.cotas=!!o.cotas;if(o.textura!=null)opt.textura=o.textura;if(o.equip!=null)opt.equip=!!o.equip}
       const novo=!mantem||!modelo;
       modelo=m;construir();
       if(novo){zoomManual=false;est.dist=distIdeal(est.az,est.pol);posicionar()}else garantirVisivel();
     },
     /* opções visuais: {cotas:boolean, textura:'liso'|'granito'|'marmore'|'quartzo'} */
     opcoes(o){
-      const mudouTx=o.textura!=null&&o.textura!==opt.textura,mudouCotas=o.cotas!=null&&o.cotas!==opt.cotas;
+      const mudouTx=o.textura!=null&&o.textura!==opt.textura,mudouCotas=o.cotas!=null&&o.cotas!==opt.cotas,mudouEq=o.equip!=null&&!!o.equip!==opt.equip;
       if(o.cotas!=null)opt.cotas=!!o.cotas;
+      if(o.equip!=null)opt.equip=!!o.equip;
       if(o.textura!=null)opt.textura=o.textura;
-      if(mudouTx||mudouCotas){construir();garantirVisivel()}
+      if(mudouTx||mudouCotas||mudouEq){construir();garantirVisivel()}
     },
     enquadrar,vista,
     gradeCm:()=>gradeCm,
@@ -417,7 +447,7 @@ export function criarVisualizador(deps={}){
       (modelo?quadro:[]).forEach(p=>{v.copy(p).project(camera);if(Math.abs(v.x)>1.001||Math.abs(v.y)>1.001||v.z>1)fora++});
       return {objetos:grupo.children.length,az:est.az,pol:est.pol,dist:est.dist,dMin,dMax,perdido,zoomManual,ladoCotas:{...ladoCotas},
         rotulos:rotulos.map(r=>({txt:r.txt,visivel:r.el.style.display!=='none'&&opt.cotas})),cotasVisiveis:opt.cotas&&grupoCotas.visible,
-        foraDoQuadro:fora,grade:gradeCm,textura:opt.textura,memoria:{...renderer.info.memory},
+        foraDoQuadro:fora,grade:gradeCm,textura:opt.textura,equip:opt.equip,memoria:{...renderer.info.memory},
         canvas:{w:canvas.clientWidth,h:canvas.clientHeight},reconstrucoesCotas:nReconst};
     },
     perderContextoParaTeste(){const e=extPerda();e&&e.loseContext();return !!e},

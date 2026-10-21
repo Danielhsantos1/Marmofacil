@@ -454,3 +454,54 @@ test('statusRecortes: recorte desenhado que cruza uma emenda vem marcado com avi
 test('statusRecortes: sem recortes a lista é vazia',()=>{
   assert.deepEqual(buildModel(pc('reta',{A:280,P:60}),2).statusRecortes,[]);
 });
+
+/* ================= Equipamentos ILUSTRATIVOS: cuba, torneira, cooktop ================= */
+const COM_REC={recortes:[{tipo:'cuba',x:100,z:10,w:80,d:40},{tipo:'cooktop',x:200,z:10,w:50,d:40}]};
+
+test('equipamentos: sem recorte nada é desenhado (nada inventado), em todos os formatos',()=>{
+  for(const [type,d] of FORMATOS)assert.deepEqual(buildModel(pc(type,d),2).equipamentos,[],type);
+});
+
+test('equipamentos: só nascem de recortes VÁLIDOS; recorte recusado não gera cuba nem torneira',()=>{
+  const ruins=[{tipo:'cuba'},{tipo:'cuba',x:250,z:10,w:80,d:45},{tipo:'cuba',x:0,z:10,w:80,d:45},{tipo:'cooktop',x:100,z:10,w:0,d:40}];
+  for(const r of ruins)assert.deepEqual(buildModel(pc('reta',{A:280,P:60},{recortes:[r]}),2).equipamentos,[],JSON.stringify(r));
+  const outro=buildModel(pc('reta',{A:280,P:60},{recortes:[{tipo:'outro',x:100,z:10,w:30,d:20}]}),2);
+  assert.deepEqual(outro.equipamentos,[],'recorte "outro" não vira equipamento');
+});
+
+test('equipamentos: cuba + torneira por cuba e um cooktop com 4 queimadores, tudo marcado ilustrativo',()=>{
+  const m=buildModel(pc('reta',{A:280,P:60},COM_REC),2);
+  assert.deepEqual(m.equipamentos.map(e=>e.tipo),['cuba','torneira','cooktop']);
+  assert.ok(m.equipamentos.every(e=>e.ilustrativo===true));
+  assert.equal(m.equipamentos[2].queimadores.length,4);
+});
+
+test('equipamentos: a cuba ocupa exatamente o recorte, a torneira fica atrás dela e sobre a pedra, e os queimadores ficam dentro do cooktop',()=>{
+  const m=buildModel(pc('reta',{A:280,P:60},COM_REC),2),[cuba,torneira,cook]=m.equipamentos;
+  assert.deepEqual([cuba.x,cuba.z,cuba.w,cuba.d],[100,10,80,40]);
+  assert.ok(cuba.prof>0&&cuba.prof<=20&&cuba.caixa.max[1]===2,'a cuba desce a partir do topo da pedra');
+  assert.ok(torneira.z<cuba.z&&torneira.z>0,'torneira atrás da cuba, sobre a pedra (recorte a 10 cm do fundo)');
+  assert.ok(torneira.x>cuba.x&&torneira.x<cuba.x+cuba.w,'centralizada na cuba');
+  for(const q of cook.queimadores){
+    assert.ok(q.x-q.r>=cook.x&&q.x+q.r<=cook.x+cook.w&&q.z-q.r>=cook.z&&q.z+q.r<=cook.z+cook.d,'queimador dentro do cooktop');
+  }
+  // sem pedra atrás da cuba (recorte a 5 cm do fundo): a torneira vai para a borda de trás da cuba, nunca para fora da peça
+  const colada=buildModel(pc('reta',{A:280,P:60},{recortes:[{tipo:'cuba',x:100,z:5,w:80,d:40}]}),2).equipamentos[1];
+  assert.ok(colada.z>=5&&colada.z>0);
+});
+
+test('equipamentos: não mudam sólidos, área, emendas, cotas nem preço (são só desenho)',()=>{
+  const sem=buildModel(pc('reta',{A:280,P:60},{recortes:COM_REC.recortes.map(r=>({...r}))}),2);
+  const semEq={...sem,equipamentos:[]};
+  assert.equal(sem.solids.every(s=>!['cuba','torneira','cooktop'].includes(s.kind)),true);
+  near(sem.area,areaCorte(pc('reta',{A:280,P:60})),'área');
+  assert.deepEqual(cotas(sem).filter(c=>c.tipo==='cota').map(c=>c.texto),cotas(buildModel(pc('reta',{A:280,P:60}),2)).filter(c=>c.tipo==='cota').map(c=>c.texto),'sem cota de equipamento');
+  assert.equal(semEq.solids,sem.solids);
+});
+
+test('equipamentos: a caixa de cada um é finita e a peça recebida não é alterada',()=>{
+  const p=pc('L',{A:310,B:210,P:62},{recortes:[{tipo:'cuba',x:100,z:10,w:80,d:40}]}),antes=JSON.stringify(p);
+  const m=buildModel(p,{espessura:2,SL:400,SW:200});
+  for(const e of m.equipamentos)for(const k of ['min','max'])for(const v of e.caixa[k])assert.ok(Number.isFinite(v));
+  assert.equal(JSON.stringify(p),antes);
+});
