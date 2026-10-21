@@ -89,3 +89,6 @@ Faixas de saia ou rodabanca desenhadas deitadas ao lado da peça agora dizem o q
 
 ### Editor 3D com mais tela (versão 18)
 Em tela larga (computador, tablet) e no celular deitado, a faixa de cima some: **Voltar** vai para o menu lateral, o nome do orçamento e da peça vira uma etiqueta sobre o 3D e as ferramentas (perspectiva, de cima, de frente, enquadrar, alças, cotas) viram uma coluna de ícones no canto do 3D (alvos de toque de 40 a 44 px). Tocar no menu ativo recolhe o painel para o 3D ocupar a tela toda; no celular deitado o editor já abre com o painel recolhido. No celular em pé nada muda (faixa de cima e barra de botões com texto).
+
+### Catálogo direto no menu Material do 3D (versão 19)
+No editor 3D, menu Material: "Seus materiais" (cadastrados) e, abaixo, o **catálogo** em quadradinhos com foto, com busca por nome ou cor. Tocar numa pedra do catálogo a adiciona ao cadastro (preço e chapa em branco), usa no orçamento e some da seção do catálogo. Sem preço, o 3D e a barra de preço avisam que o total não inclui o material.

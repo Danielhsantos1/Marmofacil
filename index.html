@@ -211,9 +211,9 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=18"></script>
-<script src="catalogo.js?v=18"></script>
-<script src="model3d.js?v=18"></script>
+<script src="calc.js?v=19"></script>
+<script src="catalogo.js?v=19"></script>
+<script src="model3d.js?v=19"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -226,7 +226,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=18;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=19;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -346,7 +346,7 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
+const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',e3mq:'',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
 const IC={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
@@ -779,6 +779,7 @@ function viewCatalogo(){
   </div>`;
 }
 document.addEventListener('input',e=>{
+  if(e.target.id==='e3matq'){nav.e3mq=e.target.value;const g=$('#e3matgrid'),q=curQ();if(g&&q)g.innerHTML=e3MatGrade(q);return}
   if(e.target.id!=='catq')return;
   nav.catQ=e.target.value;const l=$('#catlista');if(l)l.innerHTML=linhasCatalogo();       // só a lista muda: o campo de busca mantém o foco
 });
@@ -915,7 +916,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=18');
+    const m=await import('./viewer3d.js?v=19');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1021,7 +1022,22 @@ function e3Shell(){
 function e3resumo(q){
   const el=$('#e3sum');if(!el||!q)return;
   const c=calc(q);
-  el.innerHTML=`<small>Área ${nf(c.area)} m² · ${c.nSlabs} chapa${c.nSlabs===1?'':'s'}</small><br><b>${brl(c.price)}</b>${c.erro?'<br><small>⚠ '+esc(c.erro)+'</small>':''}`;
+  el.innerHTML=`<small>Área ${nf(c.area)} m² · ${c.nSlabs} chapa${c.nSlabs===1?'':'s'}</small><br><b>${brl(c.price)}</b>${c.erro?'<br><small>⚠ '+esc(c.erro)+'</small>':''}${materialSemPreco(matOf(q),q.params.charge)?'<br><small>⚠ pedra sem preço: o total não inclui o material</small>':''}`;
+}
+/* Material no 3D: primeiro os cadastrados; depois o catálogo (quadradinhos). Tocar numa pedra do catálogo adiciona ao cadastro com preço em branco e já usa no orçamento. */
+function e3Quad(q,{id,nome,cor,foto,acao,v,on,semPreco}){
+  const c=corDaPedra(cor);
+  return `<button class="e3mat" data-act="${acao}" data-v="${esc(v)}" aria-pressed="${on}" aria-label="${esc(nome)}${semPreco?' (sem preço)':''}">
+    <span class="e3sw" style="background:${c!=null?'#'+c.toString(16).padStart(6,'0'):'var(--surface2)'}">${foto?`<img src="${esc(foto)}" alt="" loading="lazy" decoding="async">`:''}${semPreco?'<i title="sem preço">⚠</i>':''}</span>
+    <span class="e3nm">${esc(nome)}</span></button>`;
+}
+function e3MatGrade(q){
+  const t=normalizarNome(nav.e3mq),bate=(n,c)=>!t||normalizarNome(n).includes(t)||normalizarNome(c).includes(t);
+  const meus=S.materials.filter(x=>bate(x.name,x.color)).map(x=>e3Quad(q,{nome:x.name,cor:x.color,foto:fotoDoMaterial(x),acao:'e3mat',v:x.id,on:x.id===q.materialId,semPreco:materialSemPreco(x,q.params.charge)})).join('');
+  const cat=CATALOGO.filter(p=>!jaCadastrada(S.materials,p.nome)&&bate(p.nome,p.cor)).map(p=>e3Quad(q,{nome:p.nome,cor:p.cor,foto:fotoPedra(p.nome),acao:'e3cat',v:p.nome,on:false,semPreco:false})).join('');
+  return `<div class="lbl">Seus materiais</div><div class="e3mats" role="group" aria-label="Seus materiais">${meus||`<div class="note">${t?'Nenhum dos seus materiais combina com a busca.':'Nenhum material cadastrado.'}</div>`}</div>
+    ${cat?`<div class="lbl">Catálogo: toque para adicionar e usar</div><div class="e3mats" role="group" aria-label="Catálogo de pedras">${cat}</div>
+    <div class="note">A pedra do catálogo entra no seu cadastro com preço em branco: preencha em Cadastros para o orçamento cobrar o material.</div>`:''}`;
 }
 function e3Painel(q,p){
   const PP=`quotes.${q.id}.pieces.${p.id}`,m=nav.e3m;
@@ -1035,12 +1051,9 @@ function e3Painel(q,p){
     <div class="grid2">${TYPES[p.type].campos.map(([k,l])=>fld(l,PP+'.d.'+k,'n',{unit:k==='N'?'un':'cm'})).join('')}</div>${p.type==='livre'?livreEd(q,p):''}`;
   if(m==='acab')return trava+acabEd(p,PP);
   if(m==='itens')return trava+(RECORTAVEL.includes(p.type)?recortesEd(q,p):`<div class="note">Este formato não tem recortes de cuba ou cooktop.</div>`);
-  const grade=S.materials.map(x=>{
-    const foto=fotoDoMaterial(x),cor=corDaPedra(x.color),on=x.id===q.materialId,semPreco=materialSemPreco(x,q.params.charge);
-    return `<button class="e3mat" data-act="e3mat" data-v="${x.id}" aria-pressed="${on}" aria-label="${esc(x.name)}${semPreco?' (sem preço)':''}">
-      <span class="e3sw" style="background:${cor!=null?'#'+cor.toString(16).padStart(6,'0'):'var(--surface2)'}">${foto?`<img src="${esc(foto)}" alt="" loading="lazy" decoding="async">`:''}${semPreco?'<i title="sem preço">⚠</i>':''}</span>
-      <span class="e3nm">${esc(x.name)}</span></button>`}).join('');
-  return trava+`<div class="lbl">Material do orçamento</div><div class="e3mats" role="group" aria-label="Material">${grade||'<div class="note">Nenhum material cadastrado.</div>'}</div>
+  return trava+`<div class="lbl">Material do orçamento</div>
+    <input type="search" id="e3matq" value="${esc(nav.e3mq)}" placeholder="Buscar pedra por nome ou cor" aria-label="Buscar pedra" autocomplete="off" style="min-height:44px">
+    <div id="e3matgrid" class="stack" style="padding-top:0">${e3MatGrade(q)}</div>
     <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['material','Do material (nome e cor do cadastro)'],['liso','Lisa'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label>
     ${(p.recortes||[]).length?`<button class="k3d" data-act="equip3d" aria-pressed="${nav.equip3d}">Cuba, torneira e cooktop (ilustrativos)</button>`:''}
     <details><summary class="small muted" style="min-height:44px;display:flex;align-items:center">Sobre este 3D</summary><div class="note" id="n3d"></div></details>`;
@@ -1117,7 +1130,7 @@ function confirmTap(btn,fn){
   setTimeout(()=>{if(btn.isConnected){delete btn.dataset.armed;btn.textContent=btn.dataset.txt}},3000);
 }
 let pendingMat=null;
-const EDITA=new Set(['e3mat','add-recorte','del-recorte','addpiece','dup-piece','del-piece','add-rect','del-rect','del-line','quick-client','del-quote','addphoto','del-photo','ai','ai-apply','mark-sent']);
+const EDITA=new Set(['e3mat','e3cat','add-recorte','del-recorte','addpiece','dup-piece','del-piece','add-rect','del-rect','del-line','quick-client','del-quote','addphoto','del-photo','ai','ai-apply','mark-sent']);
 document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
   const a=b.dataset.act,v=b.dataset.v,q=curQ();
@@ -1136,6 +1149,11 @@ document.addEventListener('click',async e=>{
     case 'showtypes':nav.showTypes=!nav.showTypes;render();break;
     case 'toggle3d':nav.show3d=!nav.show3d;nav.rolar3d=nav.show3d;render();{const t=$('[data-act="toggle3d"]');if(t)t.focus({preventScroll:true})}break;   // render() refaz o HTML: devolve o foco ao botão
     case 'e3mat':{const m=S.materials.find(x=>x.id===v);if(m){q.materialId=m.id;q.params.charge=m.priceSlab>0?'chapa':'m2';save();render()}break}
+    case 'e3cat':{const pd=CATALOGO.find(x=>x.nome===v);if(!pd)break;
+      let m=S.materials.find(x=>normalizarNome(x.name)===normalizarNome(pd.nome));
+      if(!m){m=materialDoCatalogo(pd,uid());S.materials.push(m)}
+      q.materialId=m.id;q.params.charge=m.priceSlab>0?'chapa':'m2';save();render();
+      if(materialSemPreco(m,q.params.charge))toast(pd.nome+' adicionada. Preencha o preço em Cadastros.');break}
     case 'ed3d-abrir':abrirEd3d();break;
     case 'ed3d-sair':fecharEd3d();break;
     case 'e3menu':if(v===nav.e3m)nav.e3aberto=!nav.e3aberto;else{nav.e3m=v;nav.e3aberto=true}renderEd3d();if(v3&&nav.e3m==='mat')nota3d(modelo3d(q,q.pieces[nav.pi]));break;
