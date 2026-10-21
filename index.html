@@ -102,9 +102,43 @@ input[type=file]{display:none}
 .doc h2{color:#111}.doc table{width:100%;border-collapse:collapse}.doc td,.doc th{padding:6px 4px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}
 .doc td:last-child,.doc th:last-child{text-align:right;white-space:nowrap}
 @media (prefers-reduced-motion:no-preference){.toast{animation:up .18s ease-out}@keyframes up{from{opacity:0;transform:translate(-50%,8px)}}}
+
+/* Editor 3D em tela cheia: celular = 3D em cima e menu embaixo; computador/celular deitado = menu lateral */
+#ed3d{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.e3top{display:flex;align-items:center;gap:8px;padding:4px 8px;background:var(--surface);border-bottom:1px solid var(--line)}
+.e3top .tt{flex:1;min-width:0}.e3top b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.e3top small{color:var(--muted)}
+.e3main{flex:1;min-height:0;display:flex;flex-direction:column}
+.e3stage{flex:1;min-height:150px;position:relative;order:1}
+#ed3d #v3dbox{position:absolute;inset:0;height:100%!important;min-height:0!important;border:0;border-radius:0}
+.e3vistas{position:absolute;top:8px;left:8px;right:8px;z-index:5;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.e3vistas::-webkit-scrollbar{display:none}
+.e3vistas button{flex:none;padding:6px 12px;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.e3vistas button[aria-pressed=true]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.e3chip{position:absolute;right:8px;bottom:8px;z-index:5;background:var(--fg);color:var(--bg);border-radius:10px;padding:6px 12px;font-size:12.5px;line-height:1.3;text-align:right;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.e3chip b{font-family:var(--mono);font-size:15px}
+.e3dock{order:2;background:var(--surface);border-top:1px solid var(--line);display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px)}
+.e3rail{display:flex;overflow-x:auto;scrollbar-width:none}.e3rail::-webkit-scrollbar{display:none}
+.e3rail button{flex:1 0 auto;flex-direction:column;gap:2px;border:0;border-radius:0;background:none;color:var(--muted);font-size:11.5px;min-width:64px;min-height:52px;padding:6px 8px}
+.e3rail button[aria-selected=true]{color:var(--accent);box-shadow:inset 0 2px 0 var(--accent)}
+.e3rail svg{width:22px;height:22px}
+.e3panel{max-height:36vh;overflow:auto;padding:10px 12px 14px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
+.e3dock.fechado .e3panel{display:none}
+.e3panel .lbl{margin-bottom:0}
+.e3panel>*{flex:none}
+.e3tipos{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:6px}
+@media (min-width:820px),(max-height:500px) and (orientation:landscape){
+  .e3main{flex-direction:row}
+  .e3dock{order:0;flex-direction:row;border-top:0;border-right:1px solid var(--line);padding-bottom:0}
+  .e3rail{flex-direction:column;overflow-y:auto;width:78px;border-right:1px solid var(--line)}
+  .e3rail button{flex:none;min-width:0;width:100%;min-height:64px}
+  .e3rail button[aria-selected=true]{box-shadow:inset 3px 0 0 var(--accent)}
+  .e3panel{max-height:none;width:min(320px,42vw)}
+  .e3dock.fechado .e3panel{display:flex}
+}
 </style>
 <div id="app"></div>
 <nav class="tabs" id="tabs" aria-label="Navegação"></nav>
+<div id="ed3d" role="dialog" aria-modal="true" aria-label="Editor 3D" hidden></div>
 <input type="file" id="fileImport" accept="application/json">
 <input type="file" id="filePhoto" accept="image/*" capture="environment">
 <input type="file" id="fileMat" accept="image/*">
@@ -153,8 +187,8 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=10"></script>
-<script src="model3d.js?v=10"></script>
+<script src="calc.js?v=11"></script>
+<script src="model3d.js?v=11"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -167,7 +201,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=10;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=11;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -287,7 +321,7 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'liso',equip3d:true};
+const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'liso',equip3d:true,ed3d:false,e3m:'pecas',e3aberto:true};
 const IC={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
@@ -313,13 +347,14 @@ function render(){
   $('#app').innerHTML=h;
   if(q&&nav.tab!=='cad')aplicarTrava(q);
   if(nav.show3d&&nav.sec==='med'&&q&&nav.tab!=='cad')montar3d();
+  if(nav.ed3d)renderEd3d();
   if(nav.tab==='cfg'&&!q)mostrarVersao();
 }
 /* Orçamento fechado é só para ver: campos e botões de edição ficam desligados (o 3D e o PDF continuam). */
 function aplicarTrava(q){
   if(!fechado(q)||nav.sec==='orc')return;
   $$('#secbody input,#secbody select,#secbody textarea,#secbody button').forEach(el=>{
-    if(!el.matches('[data-act="toggle3d"],.k3d,[data-act="piece"]'))el.disabled=true;
+    if(!el.matches('[data-act="toggle3d"],[data-act="ed3d-abrir"],.k3d,[data-act="piece"]'))el.disabled=true;
   });
 }
 async function versoesEmCache(){
@@ -492,6 +527,7 @@ function secCli(q){
 }
 
 function secMed(q){
+  if(nav.ed3d)return '<div class="card muted" role="status">O editor 3D está aberto em tela cheia.</div>';
   if(nav.pi>=q.pieces.length)nav.pi=Math.max(0,q.pieces.length-1);
   const p=q.pieces[nav.pi];
   const types=`<div class="seg">${Object.entries(TYPES).map(([k,t])=>`<button data-act="addpiece" data-v="${k}">${t.nome}</button>`).join('')}</div>`;
@@ -503,6 +539,7 @@ function secMed(q){
   const sh=shape(p),area=partsArea(sh.parts);
   h+=`<div class="draw" id="pdraw">${drawPiece(p)}</div>
    <div class="row between"><span class="small muted">${TYPES[p.type].nome} · área da peça</span><b class="num" id="parea">${nf(area)} m²</b></div>
+   <button class="pri" data-act="ed3d-abrir">Abrir editor 3D (tela cheia)</button>
    <button data-act="toggle3d" aria-pressed="${nav.show3d}">${nav.show3d?'Esconder o 3D':'Ver em 3D'}</button>
    ${nav.show3d?`<div class="draw" id="v3dbox" style="padding:0;height:min(68vw,340px);min-height:260px;position:relative"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
    <div class="bar3d" role="group" aria-label="Vistas do 3D"><button class="k3d" data-act="view3d" data-v="persp" aria-pressed="true">Perspectiva</button><button class="k3d" data-act="view3d" data-v="topo" aria-pressed="false">De cima</button><button class="k3d" data-act="view3d" data-v="frente" aria-pressed="false">De frente</button><button class="k3d" data-act="enquadrar3d">Enquadrar</button></div>
@@ -514,14 +551,17 @@ function secMed(q){
     ${fld('Nome da peça',PP+'.name')}
     <div class="grid2">${TYPES[p.type].campos.map(([k,l])=>fld(l,PP+'.d.'+k,'n',{unit:k==='N'?'un':'cm'})).join('')}</div>
     ${p.type==='livre'?livreEd(q,p):''}
-    <div class="lbl">Acabamentos em material</div>
-    <div class="grid2">${fld('Saia (altura)',PP+'.saiaH','n',{unit:'cm'})}${fld('Rodabanca (altura)',PP+'.rodaH','n',{unit:'cm'})}
-     ${p.saiaH>0?fld('Saia (metros)',PP+'.saiaMl','n',{unit:'m',ph:'auto'}):''}${p.rodaH>0?fld('Rodabanca (metros)',PP+'.rodaMl','n',{unit:'m'}):''}</div>
-    ${(p.saiaH>0||p.rodaH>0)?`<div class="small muted">Metros em branco usam o cálculo automático (${nf(defMl(p,'saia'),2)} m saia · ${nf(defMl(p,'roda'),2)} m rodabanca).</div>`:''}
+    ${acabEd(p,PP)}
     ${RECORTAVEL.includes(p.type)?recortesEd(q,p):''}
    </div>
    <div class="row"><button class="grow" data-act="dup-piece" data-v="${p.id}">Duplicar peça</button><button class="danger" data-act="del-piece" data-v="${p.id}">Remover</button></div>`;
   return h;
+}
+function acabEd(p,PP){
+  return `<div class="lbl">Acabamentos em material</div>
+    <div class="grid2">${fld('Saia (altura)',PP+'.saiaH','n',{unit:'cm'})}${fld('Rodabanca (altura)',PP+'.rodaH','n',{unit:'cm'})}
+     ${p.saiaH>0?fld('Saia (metros)',PP+'.saiaMl','n',{unit:'m',ph:'auto'}):''}${p.rodaH>0?fld('Rodabanca (metros)',PP+'.rodaMl','n',{unit:'m'}):''}</div>
+    ${(p.saiaH>0||p.rodaH>0)?`<div class="small muted">Metros em branco usam o cálculo automático (${nf(defMl(p,'saia'),2)} m saia · ${nf(defMl(p,'roda'),2)} m rodabanca).</div>`:''}`;
 }
 /* ===== Recortes (cuba, cooktop...): só formatos com planta real; o app NÃO preenche medida nenhuma ===== */
 const RECORTAVEL=['reta','lavatorio','ilha','L','U'];
@@ -821,7 +861,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=10');
+    const m=await import('./viewer3d.js?v=11');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({cotas:Model3D.cotas})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -893,6 +933,80 @@ function atualizar3d(){
   nota3d(m);marcarVista();
 }
 
+/* ===== Editor 3D em tela cheia: mesmos campos, mesma peça, mesmo cálculo. Só muda onde a pessoa mexe. ===== */
+const LADO3D=()=>matchMedia('(min-width:820px),(max-height:500px) and (orientation:landscape)').matches;
+const E3I=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const MENUS3D=[
+  ['pecas','Peças',E3I('<path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4M3 16l9 4 9-4"/>')],
+  ['med','Medidas',E3I('<path d="M3 17L17 3l4 4L7 21l-4-4z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/>')],
+  ['acab','Acabamento',E3I('<path d="M4 15h16v3H4zM4 6h16v3H4z"/>')],
+  ['itens','Recortes',E3I('<rect x="3" y="5" width="18" height="14" rx="2"/><rect x="8" y="9" width="8" height="6" rx="1"/>')],
+  ['mat','Material',E3I('<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18" opacity=".5"/>')]
+];
+function e3Shell(){
+  $('#ed3d').innerHTML=`<div class="e3top"><button class="ghost" data-act="ed3d-sair" aria-label="Sair do editor 3D">${IC.back}</button>
+    <div class="tt"><b id="e3t"></b><small id="e3s"></small></div>
+    <button class="sm" data-act="cotas3d" aria-pressed="${nav.cotas3d}">Cotas</button></div>
+   <div class="e3main"><div class="e3dock" id="e3dock"><nav class="e3rail" id="e3rail" role="tablist" aria-label="Menus do editor"></nav><section class="e3panel" id="e3panel" aria-live="off"></section></div>
+    <div class="e3stage"><div class="draw" id="v3dbox"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
+     <div class="e3vistas bar3d" role="group" aria-label="Vistas do 3D" style="display:flex"><button class="k3d" data-act="view3d" data-v="persp" aria-pressed="true">Perspectiva</button><button class="k3d" data-act="view3d" data-v="topo" aria-pressed="false">De cima</button><button class="k3d" data-act="view3d" data-v="frente" aria-pressed="false">De frente</button><button class="k3d" data-act="enquadrar3d">Enquadrar</button></div>
+     <div class="e3chip" id="e3sum" role="status"></div></div></div>`;
+}
+function e3resumo(q){
+  const el=$('#e3sum');if(!el||!q)return;
+  const c=calc(q);
+  el.innerHTML=`<small>Área ${nf(c.area)} m² · ${c.nSlabs} chapa${c.nSlabs===1?'':'s'}</small><br><b>${brl(c.price)}</b>${c.erro?'<br><small>⚠ '+esc(c.erro)+'</small>':''}`;
+}
+function e3Painel(q,p){
+  const PP=`quotes.${q.id}.pieces.${p.id}`,m=nav.e3m;
+  const trava=fechado(q)?`<div class="note" role="status">Orçamento fechado: só visualização. Reabra para editar.</div>`:'';
+  if(m==='pecas')return trava+`<div class="lbl">Peças do orçamento</div>
+    <div class="seg" role="tablist">${q.pieces.map((x,i)=>`<button data-act="piece" data-v="${i}" aria-pressed="${i===nav.pi}">${esc(x.name||TYPES[x.type].nome)}</button>`).join('')}</div>
+    <div class="lbl">Adicionar formato</div>
+    <div class="e3tipos">${Object.entries(TYPES).map(([k,t])=>`<button data-act="addpiece" data-v="${k}">${t.nome}</button>`).join('')}</div>
+    <div class="row"><button class="grow" data-act="dup-piece" data-v="${p.id}">Duplicar</button>${q.pieces.length>1?`<button class="danger" data-act="del-piece" data-v="${p.id}">Remover</button>`:''}</div>`;
+  if(m==='med')return trava+`<div class="lbl">${TYPES[p.type].nome} · medidas em cm</div>${fld('Nome da peça',PP+'.name')}
+    <div class="grid2">${TYPES[p.type].campos.map(([k,l])=>fld(l,PP+'.d.'+k,'n',{unit:k==='N'?'un':'cm'})).join('')}</div>${p.type==='livre'?livreEd(q,p):''}`;
+  if(m==='acab')return trava+acabEd(p,PP);
+  if(m==='itens')return trava+(RECORTAVEL.includes(p.type)?recortesEd(q,p):`<div class="note">Este formato não tem recortes de cuba ou cooktop.</div>`);
+  const mats=S.materials.map(x=>[x.id,x.name]);
+  return trava+`<div class="lbl">Material do orçamento</div>${sel('Material','quotes.'+q.id+'.materialId',mats)}
+    <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['liso','Lisa'],['material','Do material'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label>
+    ${(p.recortes||[]).length?`<button class="k3d" data-act="equip3d" aria-pressed="${nav.equip3d}">Cuba, torneira e cooktop (ilustrativos)</button>`:''}
+    <details><summary class="small muted" style="min-height:44px;display:flex;align-items:center">Sobre este 3D</summary><div class="note" id="n3d"></div></details>`;
+}
+function renderEd3d(){
+  const q=curQ();if(!nav.ed3d||!q)return;
+  const p=q.pieces[nav.pi];
+  const cl=clientOf(q);
+  $('#e3t').textContent=p?(p.name||TYPES[p.type].nome):'Sem peça';
+  $('#e3s').textContent='#'+q.num+' '+(cl?.name||'Novo orçamento')+(fechado(q)?' · fechado':'');
+  $('#e3rail').innerHTML=MENUS3D.map(([k,l,i])=>`<button role="tab" data-act="e3menu" data-v="${k}" aria-selected="${nav.e3m===k&&(nav.e3aberto||LADO3D())}">${i}<span>${l}</span></button>`).join('');
+  $('#e3dock').classList.toggle('fechado',!nav.e3aberto);
+  if(p)$('#e3panel').innerHTML=e3Painel(q,p);
+  if(fechado(q))$$('#e3panel input,#e3panel select,#e3panel textarea,#e3panel button').forEach(el=>{if(!el.matches('.k3d,[data-act="piece"]'))el.disabled=true});
+  e3resumo(q);
+}
+function abrirEd3d(){
+  const q=curQ();if(!q)return;
+  if(!q.pieces.length){toast('Adicione uma peça em Medir primeiro.');return}
+  nav.ed3d=true;nav.show3d=true;nav.rolar3d=false;nav.e3m='pecas';nav.e3aberto=!LADO3D()?false:true;
+  e3Shell();$('#ed3d').hidden=false;document.body.style.overflow='hidden';
+  try{history.pushState({ed3d:1},'')}catch(e){}
+  render();
+  const b=$('#ed3d [data-act="ed3d-sair"]');if(b)b.focus({preventScroll:true});
+}
+function fecharEd3d(dePop){
+  if(!nav.ed3d)return;
+  nav.ed3d=false;nav.show3d=false;
+  if(v3)v3.soltar();v3Peca='';
+  $('#ed3d').hidden=true;$('#ed3d').innerHTML='';document.body.style.overflow='';
+  if(!dePop&&history.state&&history.state.ed3d){try{history.back()}catch(e){}}
+  render();
+}
+window.addEventListener('popstate',()=>fecharEd3d(true));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&nav.ed3d)fecharEd3d()});
+
 /* ===== Eventos ===== */
 const curQ=()=>nav.qid&&S.quotes.find(x=>x.id===nav.qid);
 function confirmTap(btn,fn){
@@ -919,6 +1033,9 @@ document.addEventListener('click',async e=>{
     case 'piece':nav.pi=+v;nav.showTypes=false;render();break;
     case 'showtypes':nav.showTypes=!nav.showTypes;render();break;
     case 'toggle3d':nav.show3d=!nav.show3d;nav.rolar3d=nav.show3d;render();{const t=$('[data-act="toggle3d"]');if(t)t.focus({preventScroll:true})}break;   // render() refaz o HTML: devolve o foco ao botão
+    case 'ed3d-abrir':abrirEd3d();break;
+    case 'ed3d-sair':fecharEd3d();break;
+    case 'e3menu':if(v===nav.e3m&&!LADO3D())nav.e3aberto=!nav.e3aberto;else{nav.e3m=v;nav.e3aberto=true}renderEd3d();if(v3&&nav.e3m==='mat')nota3d(modelo3d(q,q.pieces[nav.pi]));break;
     case 'retry3d':v3Promise=null;v3Falha='';render();break;
     case 'view3d':if(v3){v3.vista(v);marcarVista()}break;
     case 'enquadrar3d':if(v3)v3.enquadrar();break;
@@ -965,14 +1082,14 @@ document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.tar
 function live(){
   const q=curQ();if(!q)return;
   const sb=$('#sumbar');if(sb)sb.outerHTML=sumBar(q);
-  if(nav.sec==='med'){const p=q.pieces[nav.pi];if(p&&$('#pdraw')){$('#pdraw').innerHTML=drawPiece(p);$('#parea').textContent=nf(partsArea(shape(p).parts))+' m²'}const ri=$('#rcinfo');if(ri&&p){ri.innerHTML=rcInfo(q,p);const mr=rcModelo(q,p);(p.recortes||[]).forEach((r,i)=>{const e=$('#rcs'+i);if(e)e.innerHTML=rcStatus(mr.statusRecortes[i])})}atualizar3d()}
+  if(nav.sec==='med'){const p=q.pieces[nav.pi];if(p&&$('#pdraw')){$('#pdraw').innerHTML=drawPiece(p);$('#parea').textContent=nf(partsArea(shape(p).parts))+' m²'}const ri=$('#rcinfo');if(ri&&p){ri.innerHTML=rcInfo(q,p);const mr=rcModelo(q,p);(p.recortes||[]).forEach((r,i)=>{const e=$('#rcs'+i);if(e)e.innerHTML=rcStatus(mr.statusRecortes[i])})}atualizar3d();if(nav.ed3d)e3resumo(q)}
   if(nav.sec==='svc'){q.lines.forEach((l,i)=>{const s=S.services.find(x=>x.id===l.svcId),el=$('#ls'+i);if(el&&s)el.textContent=brl(s.price*l.qty)});const c=calc(q);$('#svcsub').textContent=brl(c.svc)}
   if(nav.sec==='cal'){const t=document.createElement('template');t.innerHTML=secCal(q);
     ['#calcbox','#aprov','#plano'].forEach(id=>{const n=t.content.querySelector(id),o=$(id);if(n&&o)o.innerHTML=n.innerHTML})}
 }
 document.addEventListener('input',e=>{
   const el=e.target.closest('[data-b]');if(!el||el.tagName==='SELECT')return;
-  if(fechado(curQ())&&el.closest('#secbody'))return;
+  if(fechado(curQ())&&el.closest('#secbody,#e3panel'))return;
   const old=getPath(el.dataset.b);
   const val=el.dataset.t==='n'?num(el.value):el.value;
   setPath(el.dataset.b,val);save();
@@ -983,7 +1100,7 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',e=>{
   const el=e.target;
   if(el.id==='tex3d'){nav.tex3d=el.value;atualizar3d();return}                 // só visual: vale também em orçamento fechado
-  if(fechado(curQ())&&el.closest('#secbody'))return;
+  if(fechado(curQ())&&el.closest('#secbody,#e3panel'))return;
   if(el.id==='addSvc'){const q=curQ();if(el.value){const f=q.lines.find(l=>l.svcId===el.value);if(f)f.qty+=1;else q.lines.push({svcId:el.value,qty:1});save();render()}return}
   if(el.matches('select[data-b]')&&el.dataset.b.endsWith('.status')){const q2=curQ();if(q2)setStatus(q2,el.value);render();return}
   if(el.matches('select[data-b]')){setPath(el.dataset.b,el.dataset.t==='n'?num(el.value):el.value);

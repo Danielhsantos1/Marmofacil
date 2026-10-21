@@ -61,3 +61,6 @@ Ao mudar **qualquer** arquivo do app, suba o número da versão nos 3 lugares (o
 Os scripts levam a versão no endereço (`calc.js?v=6`) para o celular nunca misturar arquivos de versões diferentes. O app abre sempre pela rede quando há sinal (versão nova na hora) e usa a cópia guardada sem sinal ou com sinal lento (mais de 3 s).
 
 **Rede de segurança:** se o app não conseguir abrir, ele limpa só o cache do app e tenta de novo uma vez; se ainda falhar, mostra a tela "O app não conseguiu abrir" com **Tentar de novo** e **Baixar cópia dos meus dados**. Nada disso apaga os dados salvos.
+
+## Editor 3D em tela cheia (versão 11)
+Em Medir, "Abrir editor 3D (tela cheia)". Celular: 3D em cima e menu embaixo (toque no menu ativo para recolher). Computador e celular deitado: menu lateral. Menus: Peças (trocar, adicionar formato, duplicar, remover), Medidas, Acabamento (saia e rodabanca), Recortes e Material (material, aparência, cuba ilustrativa). Usa os mesmos campos, o mesmo cálculo e a mesma peça de Medir: o preço atualiza ao digitar. Orçamento fechado abre só para ver. O botão voltar do aparelho e a tecla Esc fecham o editor. Ainda não é possível arrastar peças com o dedo (próximas etapas).
