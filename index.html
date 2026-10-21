@@ -16,17 +16,17 @@
 :root{
   --bg:#EDEFEE; --surface:#FFFFFF; --surface2:#E2E6E4; --fg:#15191A; --muted:#5C6664; --line:#CDD3D1;
   --accent:#0E6A5B; --accent-fg:#FFFFFF; --accent-soft:#D5ECE6;
-  --ok:#1D7A46; --warn:#A8620B; --bad:#B3321F; --slab:#D9DEDB; --slab-line:#8C9794;
+  --ok:#1D7A46; --warn:#A8620B; --bad:#B3321F; --slab:#D9DEDB; --slab-line:#8C9794; --dim:#1D5FD1; --emenda:#D9480F;
   --font:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#111514; --surface:#1A201F; --surface2:#242C2A; --fg:#E8EEEC; --muted:#93A09D; --line:#303A38;
   --accent:#3DBBA3; --accent-fg:#06201A; --accent-soft:#17332D;
-  --ok:#5BC48B; --warn:#E3A24F; --bad:#EE7C6A; --slab:#2B3432; --slab-line:#5E6C69; color-scheme:dark}}
+  --ok:#5BC48B; --warn:#E3A24F; --bad:#EE7C6A; --slab:#2B3432; --slab-line:#5E6C69; --dim:#8DB8FF; --emenda:#FF9166; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#111514; --surface:#1A201F; --surface2:#242C2A; --fg:#E8EEEC; --muted:#93A09D; --line:#303A38;
   --accent:#3DBBA3; --accent-fg:#06201A; --accent-soft:#17332D;
-  --ok:#5BC48B; --warn:#E3A24F; --bad:#EE7C6A; --slab:#2B3432; --slab-line:#5E6C69; color-scheme:dark}
+  --ok:#5BC48B; --warn:#E3A24F; --bad:#EE7C6A; --slab:#2B3432; --slab-line:#5E6C69; --dim:#8DB8FF; --emenda:#FF9166; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.4;
@@ -88,6 +88,13 @@ input[type=file]{display:none}
 .note{font-size:12.5px;color:var(--muted);border-left:3px solid var(--line);padding:2px 0 2px 10px}
 .ex{font-size:11px;font-weight:700;color:var(--warn);letter-spacing:.04em}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;z-index:40;max-width:90%;font-size:14px}
+.bar3d{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.bar3d button{padding:4px 2px;font-size:12.5px}
+@media (max-width:350px){.bar3d{grid-template-columns:repeat(2,1fr)}.bar3d button{font-size:13px}}
+@media (max-height:480px) and (orientation:landscape){.sum{position:static}#v3dbox{height:calc(100vh - 150px)!important;min-height:180px!important}}
+#v3dbox{scroll-margin-top:72px}
+.row3d{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
+.k3d[aria-pressed=true]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .upd{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:50;width:min(92%,420px);background:var(--fg);color:var(--bg);border-radius:12px;padding:8px 8px 8px 14px;display:flex;align-items:center;gap:10px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.25)}
 .upd span{flex:1}
 .lock{border-left:4px solid var(--ok)}
@@ -101,9 +108,53 @@ input[type=file]{display:none}
 <input type="file" id="fileImport" accept="application/json">
 <input type="file" id="filePhoto" accept="image/*" capture="environment">
 <input type="file" id="fileMat" accept="image/*">
+<script>
+/* Rede de segurança de abertura. Se o app não conseguir abrir (por exemplo, arquivos de versões diferentes
+   no cache do celular), limpa SÓ o cache do app e tenta de novo uma vez; se ainda falhar, mostra uma tela
+   com saída. Nunca apaga nem altera os dados salvos (localStorage). */
+(function(){
+  const FLAG='pf-cura';let mostrou=false;
+  const aberto=()=>!!document.querySelector('#tabs button');
+  const jaTentou=()=>{try{return sessionStorage.getItem(FLAG)==='1'}catch(e){return window.name===FLAG}};
+  const marcar=()=>{try{sessionStorage.setItem(FLAG,'1')}catch(e){window.name=FLAG}};
+  window.pfAbriu=()=>{try{sessionStorage.removeItem(FLAG)}catch(e){}if(window.name===FLAG)window.name=''};
+  async function curar(){
+    try{const k=await caches.keys();await Promise.all(k.filter(x=>/^(marmofacil|pedra-facil)-/.test(x)).map(x=>caches.delete(x)))}catch(e){}
+    try{const r=await navigator.serviceWorker.getRegistrations();await Promise.all(r.map(x=>x.unregister()))}catch(e){}
+    try{await Promise.all([location.href,...[...document.scripts].map(x=>x.src).filter(Boolean)].map(u=>fetch(u,{cache:'reload'})))}catch(e){}   // baixa de novo, ignorando o cache do navegador
+    location.reload();
+  }
+  function baixarDados(){
+    let t='';try{t=localStorage.getItem('pedrafacil.v1')||''}catch(e){}
+    if(!t){alert('Não há dados salvos neste endereço.');return}
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'application/json'}));
+    a.download='marmofacil-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();
+  }
+  function tela(msg){
+    if(mostrou)return;const d=document.getElementById('app');if(!d)return;mostrou=true;
+    d.innerHTML='<div class="stack" style="padding-top:24px"><h1>O app não conseguiu abrir</h1>'+
+      '<div class="card stack"><div>Seus dados continuam guardados neste aparelho. Toque em <b>Tentar de novo</b>. Se não resolver, baixe uma cópia dos dados antes de qualquer outra coisa.</div>'+
+      '<button class="pri" id="pfTentar">Tentar de novo</button><button id="pfBaixar">Baixar cópia dos meus dados</button></div>'+
+      '<div class="small muted">Detalhe técnico para suporte:</div><pre class="small" id="pfMsg" style="white-space:pre-wrap;word-break:break-word"></pre></div>';
+    document.getElementById('pfMsg').textContent=msg;
+    document.getElementById('pfTentar').onclick=curar;document.getElementById('pfBaixar').onclick=baixarDados;
+  }
+  function falhou(msg){
+    setTimeout(()=>{
+      if(aberto())return;
+      if(!jaTentou()){marcar();curar();return}
+      tela(msg);
+    },50);
+  }
+  addEventListener('error',e=>{
+    const t=e.target;if(t&&t!==window&&t.tagName!=='SCRIPT')return;            // fontes e imagens não contam
+    falhou((e.message||('Não carregou '+(t&&t.src)))+(e.filename?' ('+e.filename.split('/').pop()+':'+e.lineno+')':''));
+  },true);
+})();
+</script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js"></script>
-<script src="model3d.js"></script>
+<script src="calc.js?v=7"></script>
+<script src="model3d.js?v=7"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -116,6 +167,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
+const APP_V=7;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -229,7 +281,7 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false};
+const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'liso'};
 const IC={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
@@ -261,13 +313,16 @@ function render(){
 function aplicarTrava(q){
   if(!fechado(q)||nav.sec==='orc')return;
   $$('#secbody input,#secbody select,#secbody textarea,#secbody button').forEach(el=>{
-    if(!el.matches('[data-act="toggle3d"],[data-act="view3d"],[data-act="piece"]'))el.disabled=true;
+    if(!el.matches('[data-act="toggle3d"],.k3d,[data-act="piece"]'))el.disabled=true;
   });
+}
+async function versoesEmCache(){
+  return (await caches.keys()).map(x=>/^marmofacil-v(\d+)$/.exec(x)).filter(Boolean).map(m=>+m[1]).sort((a,b)=>a-b);
 }
 async function mostrarVersao(){
   const el=$('#ver');if(!el)return;
-  try{const k=(await caches.keys()).filter(x=>x.startsWith('marmofacil-'));el.textContent=k.length?'Versão instalada: '+k.sort().pop():'Versão: sem cache (aberto direto do site)'}
-  catch(e){el.textContent=''}
+  try{const k=await versoesEmCache();el.textContent=k.length?'Versão instalada: marmofacil-v'+k[k.length-1]:'Versão '+APP_V+' (sem cache: aberto direto do site)'}
+  catch(e){el.textContent='Versão '+APP_V}
 }
 let toastT=0;
 function toast(m){$$('.toast').forEach(e=>e.remove());const e=document.createElement('div');e.className='toast';e.textContent=m;document.body.appendChild(e);clearTimeout(toastT);toastT=setTimeout(()=>e.remove(),2600)}
@@ -283,13 +338,15 @@ function newQuote(clientId){
   S.quotes.unshift(q);save();return q;
 }
 function openQuote(id,sec){nav.tab='quotes';nav.qid=id;nav.sec=sec||'cli';nav.pi=0;nav.showTypes=false;nav.show3d=false;render();scrollTo(0,0)}
+/* Chapa e espessura de hoje, para o 3D do orçamento fechado desenhar o mesmo que foi cobrado (espessura 0 = padrão). */
+const chapaDoFechamento=(q,c)=>({SL:c.SL,SW:c.SW,thick:matOf(q)?.thick>0?matOf(q).thick:0});
 /* Fechar congela os valores (q.snap); qualquer outra etapa descongela. Devolve false se não puder fechar. */
 function setStatus(q,st){
   if(st==='Fechado'){
     if(q.status!=='Fechado'||!q.snap){
       const c=calcQuote(q,S.materials,S.services);
       if(c.erro){toast(c.erro);return false}
-      q.snap=snapshotOf(c,Date.now());
+      q.snap=snapshotOf(c,Date.now(),chapaDoFechamento(q,c));
     }
     if(q.status!=='Fechado')q.closedAt=Date.now();
   }else{delete q.snap;q.closedAt=null}
@@ -298,7 +355,7 @@ function setStatus(q,st){
 /* Orçamentos fechados antes desta versão (ou de backups antigos) ganham o snapshot com os valores de hoje. */
 function garantirSnapshots(){
   let mudou=false;
-  S.quotes.forEach(q=>{if(q.status==='Fechado'&&!q.snap){q.snap=snapshotOf(calcQuote(q,S.materials,S.services),Date.now());q.snap.migrado=true;mudou=true}});
+  S.quotes.forEach(q=>{if(q.status==='Fechado'&&!q.snap){const c=calcQuote(q,S.materials,S.services);q.snap=snapshotOf(c,Date.now(),chapaDoFechamento(q,c));q.snap.migrado=true;mudou=true}});
   if(mudou)save();
 }
 
@@ -441,9 +498,11 @@ function secMed(q){
   h+=`<div class="draw" id="pdraw">${drawPiece(p)}</div>
    <div class="row between"><span class="small muted">${TYPES[p.type].nome} · área da peça</span><b class="num" id="parea">${nf(area)} m²</b></div>
    <button data-act="toggle3d" aria-pressed="${nav.show3d}">${nav.show3d?'Esconder o 3D':'Ver em 3D'}</button>
-   ${nav.show3d?`<div class="draw" id="v3dbox" style="padding:0;height:min(64vw,320px);min-height:240px;position:relative"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
-   <div class="seg" role="group" aria-label="Vista do 3D"><button data-act="view3d" data-v="persp">Perspectiva</button><button data-act="view3d" data-v="topo">De cima</button><button data-act="view3d" data-v="frente">De frente</button></div>
-   <div class="note">Modelo ilustrativo com a espessura do material (${nf(matOf(q)?.thick>0?matOf(q).thick:Model3D.ESP_PADRAO,0)} cm). Arraste para girar e use dois dedos para aproximar. Não mostra emendas, recortes nem veio da pedra.</div>`:''}
+   ${nav.show3d?`<div class="draw" id="v3dbox" style="padding:0;height:min(68vw,340px);min-height:260px;position:relative"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
+   <div class="bar3d" role="group" aria-label="Vistas do 3D"><button class="k3d" data-act="view3d" data-v="persp" aria-pressed="true">Perspectiva</button><button class="k3d" data-act="view3d" data-v="topo" aria-pressed="false">De cima</button><button class="k3d" data-act="view3d" data-v="frente" aria-pressed="false">De frente</button><button class="k3d" data-act="enquadrar3d">Enquadrar</button></div>
+   <div class="row3d"><button class="k3d" data-act="cotas3d" aria-pressed="${nav.cotas3d}">Cotas</button>
+    <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['liso','Lisa'],['material','Do material'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label></div>
+   <div class="note" id="n3d">Arraste para girar e use dois dedos para aproximar.</div>`:''}
    <div class="card stack" style="padding-top:14px">
     ${fld('Nome da peça',PP+'.name')}
     <div class="grid2">${TYPES[p.type].campos.map(([k,l])=>fld(l,PP+'.d.'+k,'n',{unit:k==='N'?'un':'cm'})).join('')}</div>
@@ -720,13 +779,17 @@ Responda somente com JSON neste formato, em português do Brasil:
 }
 
 /* ===== 3D (carregado só quando o usuário abre) ===== */
-let v3=null,v3Promise=null,v3Falha='',v3Peca='';
+let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js');
-    if(!m.webglDisponivel())throw new Error('webgl');
-    v3=m.criarVisualizador();
-    v3.aoPerderContexto(()=>{nav.show3d=false;render();toast('O aparelho interrompeu o 3D. Toque em Ver em 3D para abrir de novo.')});
+    const m=await import('./viewer3d.js?v=7');
+    v3Modo=m.webglModo();
+    if(!v3Modo)throw new Error('webgl');
+    try{v3=m.criarVisualizador({cotas:Model3D.cotas})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
+    v3.aoFalharContexto(conectado=>{                                       // só depois de 4 s sem recuperar
+      if(v3)v3.destruir();v3=null;v3Promise=null;v3Peca='';                // descarta o visualizador morto: a próxima abertura cria outro
+      if(conectado){nav.show3d=false;render();toast('O aparelho interrompeu o 3D. Toque em Ver em 3D para abrir de novo.')}
+    });
     return v3;
   })().catch(e=>{
     v3Falha=e&&e.message==='webgl'?'Este aparelho não conseguiu iniciar o 3D. O desenho em 2D continua funcionando.':'Não foi possível carregar o 3D. Confira a conexão e tente de novo.';
@@ -734,18 +797,60 @@ function carregar3d(){
   });
   return v3Promise;
 }
+/* 3D indisponível: some o que não serve (vistas, cotas, aparência, nota) e, se foi a conexão, oferece tentar de novo */
+function falha3d(){
+  const m=$('#v3dmsg');
+  if(m){m.textContent=v3Falha;m.setAttribute('role','status');
+    if(/conexão/.test(v3Falha))m.insertAdjacentHTML('beforeend','<div style="margin-top:10px"><button class="pri" data-act="retry3d">Tentar de novo</button></div>')}
+  ['.bar3d','.row3d','#n3d'].forEach(s=>{const e=$(s);if(e)e.remove()});
+  const box=$('#v3dbox');if(box){box.style.height='auto';box.style.minHeight='0'}
+}
+/* marca qual vista está ativa (aria-pressed), olhando os ângulos reais da câmera */
+function marcarVista(){
+  if(!v3)return;
+  const e=v3.estado(),perto=(a,b)=>Math.abs(a-b)<0.01;
+  const v=perto(e.pol,0)?'topo':(perto(e.pol,Math.PI/2)&&perto(e.az,0))?'frente':(perto(e.pol,1)&&perto(e.az,-0.6))?'persp':'';
+  $$('[data-act="view3d"]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===v)));
+}
 async function montar3d(){
   const q=curQ();if(!q||!$('#v3dbox'))return;
-  try{await carregar3d()}catch(e){const m=$('#v3dmsg');if(m)m.textContent=v3Falha;return}
+  if(nav.rolar3d){nav.rolar3d=false;$('#v3dbox').scrollIntoView({block:'start'})}   // ao abrir, leva o 3D para a vista (a barra de preço não o esconde)
+  try{await carregar3d()}catch(e){falha3d();return}
   const box=$('#v3dbox');if(!nav.show3d||!box||curQ()!==q)return;      // a tela mudou enquanto carregava
   v3.anexar(box);const m=$('#v3dmsg');if(m)m.remove();
+  box.addEventListener('pointerup',marcarVista);box.addEventListener('wheel',marcarVista,{passive:true});
   atualizar3d();
+}
+/* Aparência "Do material": granito, mármore e quartzo têm textura; o resto fica liso. Puramente visual. */
+function texDe(q){
+  if(nav.tex3d!=='material')return nav.tex3d;
+  return {'Granito':'granito','Mármore':'marmore','Quartzo':'quartzo'}[matOf(q)?.cat]||'liso';
+}
+function modelo3d(q,p){
+  const c=calc(q),sn=fechado(q)?q.snap:null;                           // chapa usada pelo plano de corte: as emendas saem da mesma conta
+  const fixo=sn&&typeof sn.thick==='number'&&sn.SL>0&&sn.SW>0;          // fechado: chapa e espessura do fechamento, não do cadastro de hoje
+  return Model3D.buildModel(p,{espessura:fixo?sn.thick:matOf(q)?.thick,SL:fixo?sn.SL:c.SL,SW:fixo?sn.SW:c.SW});
+}
+function nota3d(m){
+  const el=$('#n3d');if(!el)return;
+  const partes=['Cotas em cm, com as medidas da peça.',
+    'Espessura '+nf(m.espessura,1)+' cm'+(m.espessuraOrigem==='padrao'?' (padrão: o material não tem espessura cadastrada).':' (do material).')];
+  const qq=curQ();
+  if(fechado(qq))partes.push(typeof qq.snap.thick==='number'&&qq.snap.SL>0?'Orçamento fechado: chapa e espessura do fechamento.':'Orçamento fechado antes desta versão: o 3D usa a chapa e a espessura do cadastro de hoje.');
+  if(m.emendasPlano>0)partes.push('Emendas do plano de corte em laranja: '+m.emendasPlano+(m.emendas.length!==m.emendasPlano?' (o desenho mostra '+m.emendas.length+' linhas de corte).':'.'));
+  m.avisos.forEach(a=>partes.push(a));
+  if(v3&&v3.gradeCm())partes.push('Grade de '+v3.gradeCm()+' cm.');
+  if(v3Modo==='software')partes.push('Este aparelho está desenhando o 3D por software: pode ficar lento.');
+  partes.push('Para conferência visual: não é desenho de fabricação'+(texDe(curQ())!=='liso'?'; a textura é ilustrativa e não mostra o veio da chapa.':'.'));
+  el.textContent=partes.join(' ');
 }
 function atualizar3d(){
   if(!v3||!nav.show3d||!$('#v3dbox'))return;
   const q=curQ(),p=q&&q.pieces[nav.pi];if(!p)return;
   const mantem=v3Peca===p.id;v3Peca=p.id;                              // mesma peça: não reenquadra a câmera
-  v3.definirModelo(Model3D.buildModel(p,matOf(q)?.thick),mantem);
+  const m=modelo3d(q,p);
+  v3.atualizar(m,mantem,{cotas:nav.cotas3d,textura:texDe(q)});
+  nota3d(m);marcarVista();
 }
 
 /* ===== Eventos ===== */
@@ -773,8 +878,11 @@ document.addEventListener('click',async e=>{
     case 'move':{const x=S.quotes.find(o=>o.id===v);const i=STATUS.indexOf(x.status)+(+b.dataset.d);if(STATUS[i]){setStatus(x,STATUS[i]);render()}break}
     case 'piece':nav.pi=+v;nav.showTypes=false;render();break;
     case 'showtypes':nav.showTypes=!nav.showTypes;render();break;
-    case 'toggle3d':nav.show3d=!nav.show3d;render();break;
-    case 'view3d':if(v3)v3.vista(v);break;
+    case 'toggle3d':nav.show3d=!nav.show3d;nav.rolar3d=nav.show3d;render();{const t=$('[data-act="toggle3d"]');if(t)t.focus({preventScroll:true})}break;   // render() refaz o HTML: devolve o foco ao botão
+    case 'retry3d':v3Promise=null;v3Falha='';render();break;
+    case 'view3d':if(v3){v3.vista(v);marcarVista()}break;
+    case 'enquadrar3d':if(v3)v3.enquadrar();break;
+    case 'cotas3d':nav.cotas3d=!nav.cotas3d;b.setAttribute('aria-pressed',nav.cotas3d);if(v3)v3.opcoes({cotas:nav.cotas3d});break;
     case 'addpiece':{const t=TYPES[v],d={};t.campos.forEach(([k,,def])=>d[k]=def);if(v==='livre')d.rects=[{w:100,h:50,q:1,l:'Peça'}];
       q.pieces.push({id:uid(),type:v,name:t.nome,d,saiaH:0,rodaH:0});nav.pi=q.pieces.length-1;nav.showTypes=false;save();render();break}
     case 'dup-piece':{const p=q.pieces.find(x=>x.id===v),n=JSON.parse(JSON.stringify(p));n.id=uid();n.name=(p.name||'Peça')+' (cópia)';q.pieces.push(n);nav.pi=q.pieces.length-1;save();render();break}
@@ -831,6 +939,7 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',e=>{
   const el=e.target;
+  if(el.id==='tex3d'){nav.tex3d=el.value;atualizar3d();return}                 // só visual: vale também em orçamento fechado
   if(fechado(curQ())&&el.closest('#secbody'))return;
   if(el.id==='addSvc'){const q=curQ();if(el.value){const f=q.lines.find(l=>l.svcId===el.value);if(f)f.qty+=1;else q.lines.push({svcId:el.value,qty:1});save();render()}return}
   if(el.matches('select[data-b]')&&el.dataset.b.endsWith('.status')){const q2=curQ();if(q2)setStatus(q2,el.value);render();return}
@@ -846,6 +955,7 @@ document.addEventListener('change',e=>{
 
 /* ===== Início ===== */
 load();garantirSnapshots();applyTheme();render();
+if(window.pfAbriu)window.pfAbriu();
 
 /* Aviso de nova versão: o app abre da cópia guardada; quando uma versão nova assume, oferece recarregar. */
 function avisoAtualizar(){
@@ -856,8 +966,9 @@ function avisoAtualizar(){
 }
 if('serviceWorker' in navigator){
   const tinhaControle=!!navigator.serviceWorker.controller;           // primeira instalação não avisa
-  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(tinhaControle)avisoAtualizar()});
+  navigator.serviceWorker.addEventListener('controllerchange',async()=>{if(!tinhaControle)return;try{const k=await versoesEmCache();if(k.length&&k[k.length-1]>APP_V)avisoAtualizar()}catch(e){avisoAtualizar()}});
   addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(reg=>{
+    reg.update().catch(()=>{});                                       // procura versão nova a cada abertura
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)reg.update().catch(()=>{})});
   }).catch(()=>{}));
 }

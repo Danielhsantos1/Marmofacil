@@ -3,7 +3,7 @@
    antes de mover as funções para calc.js, para provar que nada mudou nos preços. */
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {defMl,shape,partsArea,nestParts,calcQuote}=require('../calc.js');
+const {defMl,shape,partsArea,divisoes,nestParts,calcQuote}=require('../calc.js');
 const golden=require('./golden.json');
 
 const near=(a,b,msg,eps=1e-6)=>assert.ok(Math.abs(a-b)<=eps,`${msg}: esperado ${b}, veio ${a}`);
@@ -148,4 +148,18 @@ test('o cálculo não altera os dados recebidos',()=>{
   const antes=JSON.stringify([q,mats,svcs]);
   calcQuote(q,mats,svcs);
   assert.equal(JSON.stringify([q,mats,svcs]),antes);
+});
+
+/* ---------- divisoes: como o plano de corte divide cada peça (usada também pelo 3D) ---------- */
+test('divisoes: k pedaços no lado maior, m no menor; emendas = k×m − 1',()=>{
+  assert.deepEqual(divisoes(280,60,310,180),{L:280,W:60,k:1,m:1,emendas:0});
+  assert.deepEqual(divisoes(400,65,310,180),{L:400,W:65,k:2,m:1,emendas:1});
+  assert.deepEqual(divisoes(65,400,310,180),{L:400,W:65,k:2,m:1,emendas:1},'não depende da ordem');
+  assert.deepEqual(divisoes(700,200,310,180),{L:700,W:200,k:3,m:2,emendas:5});
+});
+
+test('divisoes: a soma das emendas das peças é igual às emendas do plano de corte',()=>{
+  const partes=[{w:400,h:65,q:2},{w:700,h:200,q:1},{w:120,h:50,q:3},{w:310,h:180,q:1},{w:310.5,h:60,q:1}];
+  const esperado=partes.reduce((t,a)=>t+divisoes(a.w,a.h,310,180).emendas*a.q,0);
+  assert.equal(nestParts(partes,310,180).emendas,esperado);
 });

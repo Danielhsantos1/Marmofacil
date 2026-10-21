@@ -47,11 +47,17 @@ function shape(p){
 const partsArea=parts=>parts.reduce((s,a)=>s+a.w*a.h*(a.q||1),0)/1e4;
 
 /* ===== Plano de corte (prateleiras, estimativa) ===== */
+/* Como uma peça w×h é dividida numa chapa SL×SW: k pedaços no lado maior (L) e m no menor (W).
+   Usada pelo plano de corte e pelo 3D (para desenhar as emendas no mesmo lugar que o cálculo conta). */
+function divisoes(w,h,SL,SW){
+  const L=Math.max(w,h),W=Math.min(w,h);
+  const k=Math.max(1,Math.ceil(L/SL)),m=Math.max(1,Math.ceil(W/SW));
+  return {L,W,k,m,emendas:k*m-1};
+}
 function nestParts(parts,SL,SW){
   const kerf=0.4;let items=[],emendas=0;
   parts.forEach(a=>{for(let i=0;i<(a.q||1);i++){
-    const L=Math.max(a.w,a.h),W=Math.min(a.w,a.h);
-    const k=Math.max(1,Math.ceil(L/SL)),m=Math.max(1,Math.ceil(W/SW));
+    const {L,W,k,m}=divisoes(a.w,a.h,SL,SW);
     emendas+=k*m-1;
     for(let a1=0;a1<k;a1++)for(let b1=0;b1<m;b1++)items.push({w:L/k,h:W/m,l:a.l})}});
   items.sort((x,y)=>y.h-x.h||y.w-x.w);
@@ -104,9 +110,11 @@ function calcQuote(q,materials,services){
    Ao fechar, guardamos os valores calculados. Depois disso, mudar o preço de um material ou
    serviço no cadastro não altera mais o orçamento fechado nem o faturamento do painel. */
 const SNAP_CAMPOS=['price','cost','profit','taxV','mat','labor','svc','fab','inst','frete','perM2','area','nSlabs','util'];
-function snapshotOf(c,quando){
+function snapshotOf(c,quando,chapa){
   const s={versao:1,em:quando};
   SNAP_CAMPOS.forEach(k=>{s[k]=c[k]});
+  /* chapa e espessura do fechamento: só o 3D usa (aplicarSnapshot não mexe nelas), para o desenho bater com o orçamento congelado */
+  if(chapa)['SL','SW','thick'].forEach(k=>{if(typeof chapa[k]==='number'&&isFinite(chapa[k]))s[k]=chapa[k]});
   return s;
 }
 /* Devolve o cálculo com os valores do snapshot por cima (sem snapshot, devolve o mesmo cálculo). */
@@ -118,4 +126,4 @@ function aplicarSnapshot(c,s){
   return r;
 }
 
-if(typeof module!=='undefined')module.exports={defMl,shape,partsArea,nestParts,calcQuote,snapshotOf,aplicarSnapshot,SNAP_CAMPOS};
+if(typeof module!=='undefined')module.exports={defMl,shape,partsArea,divisoes,nestParts,calcQuote,snapshotOf,aplicarSnapshot,SNAP_CAMPOS};
