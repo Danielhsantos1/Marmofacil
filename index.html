@@ -125,6 +125,13 @@ input[type=file]{display:none}
 .e3dock.fechado .e3panel{display:none}
 .e3panel .lbl{margin-bottom:0}
 .e3panel>*{flex:none}
+.e3mats{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:8px}
+.e3mat{flex-direction:column;align-items:stretch;gap:4px;padding:4px;min-height:0;font-weight:600;font-size:11.5px;line-height:1.15;text-align:center;border-radius:10px}
+.e3mat[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.e3sw{display:block;position:relative;aspect-ratio:1.5;border-radius:7px;overflow:hidden;border:1px solid var(--line)}
+.e3sw img{width:100%;height:100%;object-fit:cover;display:block}
+.e3sw i{position:absolute;right:2px;top:2px;font-style:normal;background:var(--warn);color:#fff;border-radius:99px;font-size:10px;padding:1px 5px}
+.e3nm{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .e3tipos{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:6px}
 @media (min-width:820px),(max-height:500px) and (orientation:landscape){
   .e3main{flex-direction:row}
@@ -187,9 +194,9 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=15"></script>
-<script src="catalogo.js?v=15"></script>
-<script src="model3d.js?v=15"></script>
+<script src="calc.js?v=16"></script>
+<script src="catalogo.js?v=16"></script>
+<script src="model3d.js?v=16"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -202,7 +209,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=15;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=16;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -516,7 +523,7 @@ function secCli(q){
     <button class="sm" data-act="quick-client">+ Novo cliente</button></div>
    <div class="card stack" style="padding-top:14px">
     ${sel('Material',P+'.materialId',S.materials.map(x=>[x.id,`${x.name} (${x.cat})`]),{blank:'Selecione...'})}
-    ${m?`<div class="row">${m.photo?`<img class="thumb" src="${m.photo}" alt="">`:`<div class="thumb">sem foto</div>`}
+    ${m?`<div class="row">${fotoDoMaterial(m)?`<img class="thumb" src="${esc(fotoDoMaterial(m))}" alt="" loading="lazy">`:`<div class="thumb">sem foto</div>`}
      <div class="small"><div><b>${esc(m.cat)}</b> · ${esc(m.color)} · ${nf(m.thick,0)} cm</div>
      <div class="mono muted">${nf(m.slabL,0)}×${nf(m.slabW,0)} cm · ${brl(m.priceSlab)}/chapa · ${brl(m.priceM2)}/m²</div>
      <div class="muted">${esc(m.supplier)} · estoque ${m.stock}</div></div></div>`:''}</div>
@@ -720,7 +727,7 @@ function viewCad(){
   let list='';
   const ex=o=>o.ex?' <span class="ex">EXEMPLO</span>':'';
   if(k==='mat')list=S.materials.map(m=>`<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="edit" data-k="materials" data-v="${m.id}">
-    ${m.photo?`<img class="thumb" src="${m.photo}" alt="">`:`<div class="thumb">sem foto</div>`}
+    ${fotoDoMaterial(m)?`<img class="thumb" src="${esc(fotoDoMaterial(m))}" alt="" loading="lazy">`:`<div class="thumb">sem foto</div>`}
     <div class="grow"><b>${esc(m.name)}</b>${ex(m)}<div class="small muted">${esc(m.cat)} · ${esc(m.color)} · ${nf(m.thick,0)} cm</div>${materialSemPreco(m,'chapa')&&materialSemPreco(m,'m2')?'<div class="small" style="color:var(--warn);font-weight:600">⚠ preencher o preço</div>':''}</div>
     <div style="text-align:right"><div class="num"><b>${brl(m.priceSlab)}</b></div><div class="small muted">${m.stock} em estoque</div></div></div>`).join('');
   if(k==='svc')list=S.services.map(s=>`<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="edit" data-k="services" data-v="${s.id}">
@@ -738,6 +745,7 @@ function linhasCatalogo(){
     const ja=jaCadastrada(S.materials,p.nome),on=nav.catSel.includes(p.nome);
     return `<button class="li catrow" style="width:100%;border-radius:0;border-width:1px 0 0;text-align:left;justify-content:flex-start;gap:12px" data-act="cat-toggle" data-v="${esc(p.nome)}" aria-pressed="${on}"${ja?' disabled':''}>
      <span aria-hidden="true" style="flex:none;width:24px;height:24px;border-radius:6px;border:2px solid ${on?'var(--accent)':'var(--line)'};background:${on?'var(--accent)':'transparent'};color:var(--accent-fg);display:flex;align-items:center;justify-content:center;font-size:15px">${on?'✓':''}</span>
+     <img class="thumb" style="width:48px;height:32px;border-radius:6px" src="${esc(fotoPedra(p.nome))}" alt="" loading="lazy" decoding="async">
      <span class="grow"><b>${esc(p.nome)}</b><span class="small muted" style="display:block">${esc(p.cat)} · ${esc(p.cor)}${p.confere?' · confira a categoria':''}</span></span>
      ${ja?'<span class="chip">já cadastrada</span>':''}</button>`}).join('')+'</div>';
 }
@@ -890,7 +898,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=15');
+    const m=await import('./viewer3d.js?v=16');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -931,6 +939,7 @@ async function montar3d(){
 }
 /* Aparência "Do material": granito, mármore e quartzo têm textura; o resto fica liso. Puramente visual. */
 /* tom da pedra no 3D: só em "Do material", a partir do campo Cor do cadastro (aproximado; null = padrão) */
+function fotoDe(q){return nav.tex3d==='material'?fotoDoMaterial(matOf(q)):null}
 function corDe(q){return nav.tex3d==='material'?corDaPedra(matOf(q)?.color):null}
 function texDe(q){
   if(nav.tex3d!=='material')return nav.tex3d;
@@ -959,7 +968,7 @@ function nota3d(m){
   m.avisos.forEach(a=>partes.push(a));
   if(v3&&v3.gradeCm())partes.push('Grade de '+v3.gradeCm()+' cm.');
   if(v3Modo==='software')partes.push('Este aparelho está desenhando o 3D por software: pode ficar lento.');
-  partes.push('Para conferência visual: não é desenho de fabricação'+(texDe(curQ())!=='liso'?'; a textura e o tom são ilustrativos (o tom vem do campo Cor do material) e não mostram o veio da chapa.':'.'));
+  partes.push('Para conferência visual: não é desenho de fabricação'+(texDe(curQ())!=='liso'?'; a textura é ilustrativa: foto do material (ou tom do campo Cor), com escala aproximada; não mostra o veio da chapa que será cortada.':'.'));
   el.textContent=partes.join(' ');
 }
 function atualizar3d(){
@@ -968,7 +977,7 @@ function atualizar3d(){
   const chave=q.id+':'+q.pieces.length,mantem=v3Peca===chave;v3Peca=chave;   // mesmo orçamento e mesmas peças: não reenquadra a câmera (trocar a peça selecionada não mexe na cena)
   const lay=layout3d(q),m=Model3D.comporCena(lay.itens,nav.pi);
   v3.editar(nav.ed3d&&nav.alcas3d&&!fechado(q),aoEditar3d);                // alças só no editor e fora de orçamento fechado
-  v3.atualizar(m,mantem,{cotas:nav.cotas3d,textura:texDe(q),cor:corDe(q),equip:nav.equip3d});
+  v3.atualizar(m,mantem,{cotas:nav.cotas3d,textura:texDe(q),cor:corDe(q),foto:fotoDe(q),equip:nav.equip3d});
   nota3d(lay.itens[nav.pi].modelo);marcarVista();
 }
 
@@ -1008,8 +1017,12 @@ function e3Painel(q,p){
     <div class="grid2">${TYPES[p.type].campos.map(([k,l])=>fld(l,PP+'.d.'+k,'n',{unit:k==='N'?'un':'cm'})).join('')}</div>${p.type==='livre'?livreEd(q,p):''}`;
   if(m==='acab')return trava+acabEd(p,PP);
   if(m==='itens')return trava+(RECORTAVEL.includes(p.type)?recortesEd(q,p):`<div class="note">Este formato não tem recortes de cuba ou cooktop.</div>`);
-  const mats=S.materials.map(x=>[x.id,x.name]);
-  return trava+`<div class="lbl">Material do orçamento</div>${sel('Material','quotes.'+q.id+'.materialId',mats)}
+  const grade=S.materials.map(x=>{
+    const foto=fotoDoMaterial(x),cor=corDaPedra(x.color),on=x.id===q.materialId,semPreco=materialSemPreco(x,q.params.charge);
+    return `<button class="e3mat" data-act="e3mat" data-v="${x.id}" aria-pressed="${on}" aria-label="${esc(x.name)}${semPreco?' (sem preço)':''}">
+      <span class="e3sw" style="background:${cor!=null?'#'+cor.toString(16).padStart(6,'0'):'var(--surface2)'}">${foto?`<img src="${esc(foto)}" alt="" loading="lazy" decoding="async">`:''}${semPreco?'<i title="sem preço">⚠</i>':''}</span>
+      <span class="e3nm">${esc(x.name)}</span></button>`}).join('');
+  return trava+`<div class="lbl">Material do orçamento</div><div class="e3mats" role="group" aria-label="Material">${grade||'<div class="note">Nenhum material cadastrado.</div>'}</div>
     <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['material','Do material (nome e cor do cadastro)'],['liso','Lisa'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label>
     ${(p.recortes||[]).length?`<button class="k3d" data-act="equip3d" aria-pressed="${nav.equip3d}">Cuba, torneira e cooktop (ilustrativos)</button>`:''}
     <details><summary class="small muted" style="min-height:44px;display:flex;align-items:center">Sobre este 3D</summary><div class="note" id="n3d"></div></details>`;
@@ -1085,7 +1098,7 @@ function confirmTap(btn,fn){
   setTimeout(()=>{if(btn.isConnected){delete btn.dataset.armed;btn.textContent=btn.dataset.txt}},3000);
 }
 let pendingMat=null;
-const EDITA=new Set(['add-recorte','del-recorte','addpiece','dup-piece','del-piece','add-rect','del-rect','del-line','quick-client','del-quote','addphoto','del-photo','ai','ai-apply','mark-sent']);
+const EDITA=new Set(['e3mat','add-recorte','del-recorte','addpiece','dup-piece','del-piece','add-rect','del-rect','del-line','quick-client','del-quote','addphoto','del-photo','ai','ai-apply','mark-sent']);
 document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
   const a=b.dataset.act,v=b.dataset.v,q=curQ();
@@ -1103,6 +1116,7 @@ document.addEventListener('click',async e=>{
     case 'piece':nav.pi=+v;nav.showTypes=false;render();break;
     case 'showtypes':nav.showTypes=!nav.showTypes;render();break;
     case 'toggle3d':nav.show3d=!nav.show3d;nav.rolar3d=nav.show3d;render();{const t=$('[data-act="toggle3d"]');if(t)t.focus({preventScroll:true})}break;   // render() refaz o HTML: devolve o foco ao botão
+    case 'e3mat':{const m=S.materials.find(x=>x.id===v);if(m){q.materialId=m.id;q.params.charge=m.priceSlab>0?'chapa':'m2';save();render()}break}
     case 'ed3d-abrir':abrirEd3d();break;
     case 'ed3d-sair':fecharEd3d();break;
     case 'e3menu':if(v===nav.e3m&&!LADO3D())nav.e3aberto=!nav.e3aberto;else{nav.e3m=v;nav.e3aberto=true}renderEd3d();if(v3&&nav.e3m==='mat')nota3d(modelo3d(q,q.pieces[nav.pi]));break;

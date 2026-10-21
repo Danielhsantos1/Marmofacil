@@ -11,6 +11,7 @@ SaaS para marmorarias. O vendedor usa só o celular na visita ao cliente para me
 Protótipo funcional, JS puro, **sem build**, instalável como PWA (`manifest.webmanifest`, `sw.js`, ícones). Arquivos:
 - `index.html` (~80 KB): telas, estado e integração.
 - `calc.js`: geometria, plano de corte, preço e snapshot de orçamento fechado (funções puras).
+- `catalogo.js`: catálogo de pedras para escolher (nome, tipo, cor; funções puras) e foto/cor aproximada da pedra; fotos em `pedras/` (origem: ver README).
 - `model3d.js`: modelo 3D da peça, emendas, recortes e cotas (funções puras, mesma peça do cálculo).
 - `viewer3d.js`: visualizador Three.js (carregado só ao abrir o 3D; Three.js local em `vendor/`, MIT, 692 KB).
 - `vendor/jspdf.umd.min.js`: PDF.

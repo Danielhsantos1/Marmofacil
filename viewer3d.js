@@ -7,7 +7,8 @@
 import * as THREE from './vendor/three.module.min.js';
 
 const CM=0.01;
-const TILE=0.5;                                   // metros por repetição da textura
+const TILE=0.5;
+const TILE_FOTO=[1.2,0.7];                       // foto de pedra: metros por repetição (largura, altura); a escala real da chapa não é conhecida                                   // metros por repetição da textura
 /* cor do material liso e tinta (multiplica a textura) por tipo de sólido */
 const LISO={tampo:0xd8dfdc,degrau:0xd8dfdc,saia:0xa3b3ae,roda:0xc3cfcb,espelho:0xb6c3bf,painel:0xcbd5d1};
 const TINTA={tampo:0xffffff,degrau:0xffffff,saia:0xb4bdba,roda:0xdde3e0,espelho:0xc9d0cd,painel:0xeef1ef};
@@ -72,9 +73,9 @@ function textura(nome){
 }
 
 /* UV proporcional ao tamanho real da face (a textura repete a cada 0,5 m, sem esticar) */
-function escalarUV(geo,sx,sy,sz){
+function escalarUV(geo,sx,sy,sz,tu=TILE,tv=TILE){
   const uv=geo.attributes.uv,tam=[[sz,sy],[sz,sy],[sx,sz],[sx,sz],[sx,sy],[sx,sy]];   // +x −x +y −y +z −z
-  for(let f=0;f<6;f++)for(let v=0;v<4;v++){const i=f*4+v;uv.setXY(i,uv.getX(i)*tam[f][0]*CM/TILE,uv.getY(i)*tam[f][1]*CM/TILE)}
+  for(let f=0;f<6;f++)for(let v=0;v<4;v++){const i=f*4+v;uv.setXY(i,uv.getX(i)*tam[f][0]*CM/tu,uv.getY(i)*tam[f][1]*CM/tv)}
   uv.needsUpdate=true;
 }
 
@@ -99,7 +100,7 @@ export function criarVisualizador(deps={}){
   let grade=null;
 
   const alvo=new THREE.Vector3(),est={az:-0.6,pol:1.0,dist:3};
-  const opt={cotas:true,textura:'liso',equip:true,cor:null};      // cor: tom da pedra (0xRRGGBB) vindo do cadastro; null = padrão
+  const opt={cotas:true,textura:'liso',equip:true,cor:null,foto:null};      // cor: tom da pedra (0xRRGGBB) vindo do cadastro; null = padrão
   let modelo=null,quadro=[],raioQ=1,dMin=0.3,dMax=20,zoomManual=false,pedido=0,perdido=false,aoPerder=null,aoFalhar=null,aoRecuperar=null,tRecup=0;
   let ladoCotas={x:'esq',z:'frente'},rotulos=[],listaCotas=[];
   const texturas={};
@@ -177,7 +178,7 @@ export function criarVisualizador(deps={}){
   });
   canvas.addEventListener('webglcontextrestored',()=>{
     perdido=false;clearTimeout(tRecup);camada.style.visibility='visible';mostrarAviso('');
-    Object.values(texturas).forEach(t=>{t.needsUpdate=true});
+    Object.values(texturas).forEach(t=>{if(t)t.needsUpdate=true});
     aoRecuperar&&aoRecuperar();pedir();
   });
   function mostrarAviso(t){aviso.textContent=t;aviso.style.display=t?'block':'none'}
@@ -322,10 +323,29 @@ export function criarVisualizador(deps={}){
   }
   function material(kind){
     const nome=opt.textura;
+    if(opt.foto){                                                                           // foto da pedra (catálogo ou da marmoraria); enquanto carrega, vale o tom
+      const tf=texFoto(opt.foto),k=({tampo:1,degrau:1,saia:0.85,roda:0.95,espelho:0.9,painel:1})[kind]||1;
+      if(tf)return new THREE.MeshLambertMaterial({color:new THREE.Color(0xffffff).multiplyScalar(k),map:tf});
+    }
     const fator={tampo:1,degrau:1,saia:0.85,roda:0.95,espelho:0.9,painel:1}[kind]||1;     // saia e peças de apoio um pouco mais escuras que o tampo
     if(nome==='liso')return new THREE.MeshLambertMaterial({color:opt.cor!=null?new THREE.Color(opt.cor).multiplyScalar(fator):(LISO[kind]||LISO.tampo)});
     const tx=texturas[nome]||(texturas[nome]=textura(nome));
     return new THREE.MeshLambertMaterial({color:opt.cor!=null?new THREE.Color(opt.cor).multiplyScalar(fator):(TINTA[kind]||0xffffff),map:tx});
+  }
+
+  /* foto da pedra como textura: carrega uma vez (cache em `texturas`); quando chega, refaz a cena. Falha = fica o tom. */
+  const fotosFalhas=new Set();
+  function texFoto(url){
+    const k='foto:'+url,tx=texturas[k];
+    if(tx&&tx.image)return tx;
+    if(tx===undefined&&!fotosFalhas.has(url)){
+      texturas[k]=null;
+      new THREE.TextureLoader().load(url,t=>{
+        t.wrapS=t.wrapT=THREE.MirroredRepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=2;texturas[k]=t;
+        if(opt.foto===url&&modelo){construir();pedir()}
+      },undefined,()=>{delete texturas[k];fotosFalhas.add(url)});
+    }
+    return null;
   }
 
   /* ---------- construção da cena a partir do modelo ---------- */
@@ -339,11 +359,11 @@ export function criarVisualizador(deps={}){
       const g=new THREE.ExtrudeGeometry(sh,{depth:s.sy*CM,bevelEnabled:false});
       g.rotateX(-Math.PI/2);                                  // (x, -z, espessura) -> (x, espessura, z)
       g.translate((s.x)*CM,s.y*CM,s.z*CM);
-      if(opt.textura!=='liso'){const uv=g.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)/TILE,uv.getY(i)/TILE);uv.needsUpdate=true}
+      if(opt.textura!=='liso'||opt.foto){const uv=g.attributes.uv,[tu,tv]=opt.foto?TILE_FOTO:[TILE,TILE];for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)/tu,uv.getY(i)/tv);uv.needsUpdate=true}
       return {g,extrudado:true};
     }
     const g=new THREE.BoxGeometry(s.sx*CM,s.sy*CM,s.sz*CM);
-    if(opt.textura!=='liso')escalarUV(g,s.sx,s.sy,s.sz);
+    if(opt.textura!=='liso'||opt.foto)escalarUV(g,s.sx,s.sy,s.sz,...(opt.foto?TILE_FOTO:[TILE,TILE]));
     return {g,extrudado:false};
   }
   function construir(){
@@ -528,7 +548,7 @@ export function criarVisualizador(deps={}){
       if(mq&&mq.removeEventListener)mq.removeEventListener('change',aoMudarTema);
       if(ro)ro.disconnect();canvas.remove();camada.remove();aviso.remove();camadaEdit.remove();
       liberar(grupo);liberar(grupoCotas);if(grade){grade.geometry.dispose();grade.material.dispose();grade=null}
-      Object.values(texturas).forEach(t=>t.dispose());
+      Object.values(texturas).forEach(t=>{if(t)t.dispose()});
       renderer.dispose();try{renderer.forceContextLoss()}catch(e){}
       modelo=null;
     },
@@ -546,7 +566,7 @@ export function criarVisualizador(deps={}){
     },
     /* atualiza modelo e opções numa construção só: o = {cotas, textura} */
     atualizar(m,mantem,o){
-      if(o){if('cor' in o)opt.cor=o.cor==null?null:o.cor;if(o.cotas!=null)opt.cotas=!!o.cotas;if(o.textura!=null)opt.textura=o.textura;if(o.equip!=null)opt.equip=!!o.equip}
+      if(o){if('cor' in o)opt.cor=o.cor==null?null:o.cor;if('foto' in o)opt.foto=o.foto||null;if(o.cotas!=null)opt.cotas=!!o.cotas;if(o.textura!=null)opt.textura=o.textura;if(o.equip!=null)opt.equip=!!o.equip}
       const novo=!mantem||!modelo;
       modelo=m;construir();
       if(novo){zoomManual=false;est.dist=distIdeal(est.az,est.pol);posicionar()}else garantirVisivel();
@@ -555,7 +575,8 @@ export function criarVisualizador(deps={}){
     opcoes(o){
       const mudouCor='cor' in o&&(o.cor==null?null:o.cor)!==opt.cor;
       if('cor' in o)opt.cor=o.cor==null?null:o.cor;
-      const mudouTx=mudouCor||o.textura!=null&&o.textura!==opt.textura,mudouCotas=o.cotas!=null&&o.cotas!==opt.cotas,mudouEq=o.equip!=null&&!!o.equip!==opt.equip;
+      const mudouFoto='foto' in o&&(o.foto||null)!==opt.foto;if('foto' in o)opt.foto=o.foto||null;
+      const mudouTx=mudouCor||mudouFoto||o.textura!=null&&o.textura!==opt.textura,mudouCotas=o.cotas!=null&&o.cotas!==opt.cotas,mudouEq=o.equip!=null&&!!o.equip!==opt.equip;
       if(o.cotas!=null)opt.cotas=!!o.cotas;
       if(o.equip!=null)opt.equip=!!o.equip;
       if(o.textura!=null)opt.textura=o.textura;

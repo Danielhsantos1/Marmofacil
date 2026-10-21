@@ -1,13 +1,13 @@
-/* Marmofácil: catálogo de pedras para ESCOLHER (só nomes, tipo e cor em palavras; sem foto, preço ou tamanho de chapa).
+/* Marmofácil: catálogo de pedras para ESCOLHER (nomes, tipo, cor em palavras e foto de referência em pedras/; sem preço nem tamanho de chapa).
+   Origem: catálogo Marmofacil do Daniel (PDF dele). Os nomes seguem o catálogo, inclusive grafias como "Humatá" e "Blanco Serreno".
    Quem escolhe adiciona ao próprio cadastro de materiais com preço e chapa em branco, para a marmoraria preencher.
    Funções puras; roda no navegador (funções globais) e no Node (tests/catalogo.test.js).
    `confere:true` = a categoria foi deduzida da ordem do catálogo de origem e deve ser conferida pela marmoraria. */
 
 const CATALOGO=[
-  /* granitos */
-  {nome:'Ocre',cat:'Granito',cor:'Cinza com marrom'},
-  {nome:'Andorinha',cat:'Granito',cor:'Cinza'},
-  {nome:'Corumbazinho',cat:'Granito',cor:'Cinza claro'},
+  {nome:'Branco Dália',cat:'Granito',cor:'Cinza com marrom'},
+  {nome:'Achatinha',cat:'Granito',cor:'Cinza'},
+  {nome:'Cinza Absoluto (claro)',cat:'Granito',cor:'Cinza claro',confere:true},
   {nome:'Branco Dallas',cat:'Granito',cor:'Branco'},
   {nome:'Verde',cat:'Granito',cor:'Verde escuro',confere:true},
   {nome:'Ornamental',cat:'Granito',cor:'Bege dourado'},
@@ -16,11 +16,13 @@ const CATALOGO=[
   {nome:'Maracujá',cat:'Granito',cor:'Rosado'},
   {nome:'Florença',cat:'Granito',cor:'Laranja'},
   {nome:'Icaraí',cat:'Granito',cor:'Bege claro'},
-  {nome:'Humaitá',cat:'Granito',cor:'Dourado'},
-  {nome:'Vermelho Brasília',cat:'Granito',cor:'Vermelho'},
+  {nome:'Humatá',cat:'Granito',cor:'Dourado'},
+  {nome:'Mármore Branco',cat:'Mármore',cor:'Branco com veios verdes'},
   {nome:'Preto São Gabriel',cat:'Granito',cor:'Preto'},
-  {nome:'Verde Savana',cat:'Granito',cor:'Verde'},
+  {nome:'Vermelho Brasília',cat:'Granito',cor:'Vermelho'},
+  {nome:'Verde Ubatuba',cat:'Granito',cor:'Verde'},
   {nome:'Marrom Absoluto',cat:'Granito',cor:'Marrom'},
+  {nome:'Travertino',cat:'Mármore',cor:'Bege',confere:true},
   {nome:'Rosa Raíssa',cat:'Granito',cor:'Rosa e cinza'},
   {nome:'Branco Siena',cat:'Granito',cor:'Branco'},
   {nome:'Preto Via Láctea',cat:'Granito',cor:'Preto veiado'},
@@ -30,27 +32,23 @@ const CATALOGO=[
   {nome:'Branco Alpha',cat:'Granito',cor:'Branco acinzentado'},
   {nome:'Azul da Vinci',cat:'Granito',cor:'Azul'},
   {nome:'Bordô da Vinci',cat:'Granito',cor:'Bordô'},
-  {nome:'Cinza Absoluto',cat:'Granito',cor:'Cinza'},
-  /* mármores */
-  {nome:'Mármore Branco',cat:'Mármore',cor:'Branco com veios verdes'},
-  {nome:'Travertino',cat:'Mármore',cor:'Bege',confere:true},
-  {nome:'Marrom Imperador',cat:'Mármore',cor:'Marrom'},
-  {nome:'Crema Marfil',cat:'Mármore',cor:'Creme'},
-  {nome:'Mármore Carrara Gioia',cat:'Mármore',cor:'Branco veiado'},
-  {nome:'Mármore Branco Paraná',cat:'Mármore',cor:'Branco'},
-  /* quartzos */
+  {nome:'Cinza Absoluto (escuro)',cat:'Granito',cor:'Cinza',confere:true},
   {nome:'Calacata Prime',cat:'Quartzo',cor:'Branco veiado',confere:true},
   {nome:'Branco Prime',cat:'Quartzo',cor:'Branco',confere:true},
-  {nome:'Marengo',cat:'Quartzo',cor:'Cinza escuro'},
+  {nome:'Marrom Imperial',cat:'Mármore',cor:'Marrom'},
+  {nome:'Crema Marfil',cat:'Mármore',cor:'Creme'},
+  {nome:'Mármore Calacata Gold',cat:'Mármore',cor:'Branco veiado'},
+  {nome:'Mármore Branco Paraná',cat:'Mármore',cor:'Branco'},
+  {nome:'Arenoso',cat:'Quartzo',cor:'Cinza escuro'},
   {nome:'Desert',cat:'Quartzo',cor:'Bege'},
-  {nome:'Unsui',cat:'Quartzo',cor:'Marrom rosado'},
+  {nome:'Urushi',cat:'Quartzo',cor:'Marrom rosado'},
   {nome:'Kensho',cat:'Quartzo',cor:'Cinza'},
   {nome:'Sky White',cat:'Quartzo',cor:'Branco acinzentado'},
-  {nome:'Bianco Sereno',cat:'Quartzo',cor:'Branco'},
-  {nome:'Branco Stellar',cat:'Quartzo',cor:'Branco'},
-  {nome:'Vermelho Stellar',cat:'Quartzo',cor:'Vermelho'},
-  {nome:'Cinza Stellar',cat:'Quartzo',cor:'Cinza'},
-  {nome:'Preto Stellar',cat:'Quartzo',cor:'Preto'},
+  {nome:'Blanco Serreno',cat:'Quartzo',cor:'Branco'},
+  {nome:'Branco Solar',cat:'Quartzo',cor:'Branco'},
+  {nome:'Vermelho Solar',cat:'Quartzo',cor:'Vermelho'},
+  {nome:'Cinza Solar',cat:'Quartzo',cor:'Cinza'},
+  {nome:'Preto Solar',cat:'Quartzo',cor:'Preto'},
   {nome:'Branco Zeus',cat:'Quartzo',cor:'Branco'},
   {nome:'Super Nano',cat:'Quartzo',cor:'Branco'}
 ];
@@ -91,4 +89,10 @@ function corDaPedra(texto){
   return (Math.round(r)<<16)|(Math.round(g)<<8)|Math.round(b);
 }
 
-if(typeof module!=='undefined')module.exports={corDaPedra,CATALOGO,normalizarNome,buscarCatalogo,jaCadastrada,materialDoCatalogo,materialSemPreco};
+/* foto da pedra do catálogo (arquivo em pedras/): só existe para as pedras da lista; o nome do arquivo é o nome sem acento, com hífens */
+const slugPedra=nome=>normalizarNome(nome).replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+const fotoPedra=nome=>{const n=normalizarNome(nome);return CATALOGO.some(p=>normalizarNome(p.nome)===n)?'pedras/'+slugPedra(nome)+'.jpg':null};
+/* foto do material: a que a marmoraria subiu tem prioridade; senão, a do catálogo (pelo nome); senão, nenhuma */
+const fotoDoMaterial=m=>m?(m.photo||fotoPedra(m.name)):null;
+
+if(typeof module!=='undefined')module.exports={slugPedra,fotoPedra,fotoDoMaterial,corDaPedra,CATALOGO,normalizarNome,buscarCatalogo,jaCadastrada,materialDoCatalogo,materialSemPreco};
