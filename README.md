@@ -70,3 +70,6 @@ No editor 3D, as bolinhas verdes nas pontas das cotas mudam a medida ao arrastar
 
 ### Várias peças na mesma cena (versão 13)
 O 3D mostra todas as peças do orçamento juntas. Cada peça continua independente (medidas, recortes, preço e plano de corte). Peças novas entram à direita das outras (40 cm de vão). Com as Alças ligadas: o nome de cada peça aparece na cena (tocar seleciona), e o ✥ escuro, perto do canto de trás à esquerda da peça selecionada, move a peça. Uma peça não pode ser arrastada por cima de outra. A posição (`p.pos`, canto de trás à esquerda, em cm) é só de desenho: não entra em área, preço nem plano de corte, e é opcional (orçamentos antigos funcionam sem ela). Ainda não há rotação de peça nem união entre peças.
+
+## Catálogo de pedras (versão 14)
+Cadastros > Materiais > "Escolher pedras do catálogo": 46 pedras (granitos, mármores e quartzos) com busca e filtro. Cada pedra escolhida entra no cadastro com **preço e chapa em branco** (o catálogo só traz nome, tipo e cor em palavras; sem foto, preço ou medida de terceiros). Pedras já cadastradas aparecem desabilitadas. Material sem preço é avisado na lista de materiais e na barra de preço do orçamento ("o orçamento não cobra a pedra"). `catalogo.js` (funções puras, com testes). Categorias marcadas "confira a categoria" foram deduzidas da ordem do catálogo de origem.

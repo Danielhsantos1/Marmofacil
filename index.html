@@ -187,8 +187,9 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=13"></script>
-<script src="model3d.js?v=13"></script>
+<script src="calc.js?v=14"></script>
+<script src="catalogo.js?v=14"></script>
+<script src="model3d.js?v=14"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -201,7 +202,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=13;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=14;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -321,7 +322,7 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'liso',equip3d:true,ed3d:false,alcas3d:true,e3m:'pecas',e3aberto:true};
+const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'liso',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
 const IC={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
@@ -330,7 +331,7 @@ const IC={
   gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>',
   back:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 5l-7 7 7 7"/></svg>'
 };
-function goTab(t){nav.tab=t;nav.qid=null;nav.edit=null;render();scrollTo(0,0)}
+function goTab(t){nav.catAberto=false;nav.tab=t;nav.qid=null;nav.edit=null;render();scrollTo(0,0)}
 function renderTabs(){
   const T=[['home','Início',IC.home],['quotes','Orçamentos',IC.list],['new','Novo',IC.plus],['cad','Cadastros',IC.box],['cfg','Ajustes',IC.gear]];
   $('#tabs').innerHTML=T.map(([k,l,i])=>`<button data-act="tab" data-v="${k}" ${nav.tab===k&&!(k!=='new'&&nav.qid&&k==='quotes'&&false)?'aria-current="page"':''}>${i}<span>${l}</span></button>`).join('');
@@ -484,7 +485,7 @@ function sel(label,path,options,opt={}){
 const SECS=[['cli','Cliente'],['med','Medir'],['svc','Serviços'],['cal','Cálculo'],['fot','Fotos e IA'],['orc','Orçamento']];
 function sumBar(q){
   const c=calc(q);
-  return `<div class="sum" id="sumbar"><div class="grow"><small>Preço final</small><b>${brl(c.price)}</b>${c.erro?`<small style="color:#FFC9BF;opacity:1" role="alert">⚠ ${esc(c.erro)}</small>`:''}</div>
+  return `<div class="sum" id="sumbar"><div class="grow"><small>Preço final</small><b>${brl(c.price)}</b>${c.erro?`<small style="color:#FFC9BF;opacity:1" role="alert">⚠ ${esc(c.erro)}</small>`:''}${materialSemPreco(matOf(q),q.params.charge)?`<small style="color:#FFC9BF;opacity:1" role="alert">⚠ Material sem preço: o orçamento não cobra a pedra. Preencha em Cadastros.</small>`:''}</div>
    <div style="text-align:right"><small>${nf(c.area)} m² · ${c.nSlabs} chapa${c.nSlabs===1?'':'s'}</small><small>lucro ${brl(c.profit)}</small></div></div>`;
 }
 function viewEditor(q){
@@ -711,6 +712,7 @@ const CATS=['Granito','Mármore','Quartzo','Quartzito','Porcelanato','Outra'];
 const SVC_CATS=['Acabamentos','Furos','Recortes','Instalação','Frete','Cubas','Saia','Rodabanca','Pingadeira'];
 function viewCad(){
   if(nav.edit)return viewCadEdit();
+  if(nav.catAberto&&nav.cad==='mat')return viewCatalogo();
   const k=nav.cad;
   const seg=`<div class="seg"><button data-act="cad" data-v="mat" aria-pressed="${k==='mat'}">Materiais</button>
     <button data-act="cad" data-v="svc" aria-pressed="${k==='svc'}">Serviços</button>
@@ -719,15 +721,42 @@ function viewCad(){
   const ex=o=>o.ex?' <span class="ex">EXEMPLO</span>':'';
   if(k==='mat')list=S.materials.map(m=>`<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="edit" data-k="materials" data-v="${m.id}">
     ${m.photo?`<img class="thumb" src="${m.photo}" alt="">`:`<div class="thumb">sem foto</div>`}
-    <div class="grow"><b>${esc(m.name)}</b>${ex(m)}<div class="small muted">${esc(m.cat)} · ${esc(m.color)} · ${nf(m.thick,0)} cm</div></div>
+    <div class="grow"><b>${esc(m.name)}</b>${ex(m)}<div class="small muted">${esc(m.cat)} · ${esc(m.color)} · ${nf(m.thick,0)} cm</div>${materialSemPreco(m,'chapa')&&materialSemPreco(m,'m2')?'<div class="small" style="color:var(--warn);font-weight:600">⚠ preencher o preço</div>':''}</div>
     <div style="text-align:right"><div class="num"><b>${brl(m.priceSlab)}</b></div><div class="small muted">${m.stock} em estoque</div></div></div>`).join('');
   if(k==='svc')list=S.services.map(s=>`<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="edit" data-k="services" data-v="${s.id}">
     <div class="grow"><b>${esc(s.name)}</b>${ex(s)}<div class="small muted">${esc(s.cat)}</div></div><div class="num"><b>${brl(s.price)}</b><span class="small muted"> /${s.unit}</span></div></div>`).join('');
   if(k==='cli')list=S.clients.map(c=>`<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="edit" data-k="clients" data-v="${c.id}">
     <div class="grow"><b>${esc(c.name)}</b>${ex(c)}<div class="small muted">${esc(c.phone)} ${c.address?'· '+esc(c.address):''}</div></div></div>`).join('');
   return `<header class="top"><h1>Cadastros</h1><button class="pri" data-act="add-cad">Novo</button></header>
-   <div class="stack">${seg}${list?`<div class="sheet">${list}</div>`:'<div class="card muted" style="text-align:center">Nada cadastrado.</div>'}</div>`;
+   <div class="stack">${seg}${k==='mat'?'<button data-act="cat-abrir">Escolher pedras do catálogo</button>':''}${list?`<div class="sheet">${list}</div>`:'<div class="card muted" style="text-align:center">Nada cadastrado.</div>'}</div>`;
 }
+/* ===== Catálogo de pedras: a marmoraria escolhe e a pedra entra no cadastro com preço e chapa em branco ===== */
+function linhasCatalogo(){
+  const L=buscarCatalogo(nav.catQ,nav.catCat);
+  if(!L.length)return '<div class="card muted" style="text-align:center">Nenhuma pedra encontrada.</div>';
+  return '<div class="sheet">'+L.map(p=>{
+    const ja=jaCadastrada(S.materials,p.nome),on=nav.catSel.includes(p.nome);
+    return `<button class="li catrow" style="width:100%;border-radius:0;border-width:1px 0 0;text-align:left;justify-content:flex-start;gap:12px" data-act="cat-toggle" data-v="${esc(p.nome)}" aria-pressed="${on}"${ja?' disabled':''}>
+     <span aria-hidden="true" style="flex:none;width:24px;height:24px;border-radius:6px;border:2px solid ${on?'var(--accent)':'var(--line)'};background:${on?'var(--accent)':'transparent'};color:var(--accent-fg);display:flex;align-items:center;justify-content:center;font-size:15px">${on?'✓':''}</span>
+     <span class="grow"><b>${esc(p.nome)}</b><span class="small muted" style="display:block">${esc(p.cat)} · ${esc(p.cor)}${p.confere?' · confira a categoria':''}</span></span>
+     ${ja?'<span class="chip">já cadastrada</span>':''}</button>`}).join('')+'</div>';
+}
+function viewCatalogo(){
+  const n=nav.catSel.length;
+  return `<header class="top"><button class="ghost" data-act="cat-fechar" aria-label="Voltar">${IC.back}</button><h1>Catálogo de pedras</h1></header>
+  <div class="stack">
+   <div class="note">Só nomes, tipo e cor. Preço e tamanho da chapa ficam em branco: preencha em Cadastros depois de escolher. Sem preço, o orçamento não cobra o material.</div>
+   <label class="f">Buscar<input type="search" id="catq" value="${esc(nav.catQ)}" placeholder="nome ou cor" autocomplete="off"></label>
+   <div class="seg" role="group" aria-label="Tipo de pedra">${[['todas','Todas'],['Granito','Granito'],['Mármore','Mármore'],['Quartzo','Quartzo']].map(([k,l])=>`<button data-act="cat-filtro" data-v="${k}" aria-pressed="${nav.catCat===k}">${l}</button>`).join('')}</div>
+   <div id="catlista" class="stack" style="padding-top:0">${linhasCatalogo()}</div>
+   <div class="sum" style="background:var(--surface);color:var(--fg);border:1px solid var(--line)"><span class="grow small" id="catn">${n?n+' selecionada'+(n===1?'':'s'):'Toque nas pedras que você trabalha'}</span>
+    <button class="pri" id="catadd" data-act="cat-add"${n?'':' disabled'}>Adicionar</button></div>
+  </div>`;
+}
+document.addEventListener('input',e=>{
+  if(e.target.id!=='catq')return;
+  nav.catQ=e.target.value;const l=$('#catlista');if(l)l.innerHTML=linhasCatalogo();       // só a lista muda: o campo de busca mantém o foco
+});
 function viewCadEdit(){
   const {kind,id}=nav.edit,o=S[kind].find(x=>x.id===id);
   if(!o){nav.edit=null;return viewCad()}
@@ -861,7 +890,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=13');
+    const m=await import('./viewer3d.js?v=14');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1098,7 +1127,18 @@ document.addEventListener('click',async e=>{
     case 'ai-apply':{(q.ai.medidas||[]).forEach(m=>{const A=num(m.comprimento_cm),P=num(m.profundidade_cm);if(A>0&&P>0)q.pieces.push({id:uid(),type:'reta',name:String(m.peca||'Peça sugerida'),d:{A,P},saiaH:0,rodaH:0})});nav.sec='med';save();render();toast('Peças adicionadas. Confirme com a trena.');break}
     case 'pdf':if(calc(q).erro){toast('Corrija a margem e os impostos antes de gerar o PDF.');break}try{await saveFile(`orcamento-${q.num}.pdf`,buildPdf(q))}catch(err){toast('Não foi possível gerar o PDF.')}break;
     case 'mark-sent':setStatus(q,'Enviado');render();toast('Marcado como enviado.');break;
-    case 'cad':nav.cad=v;render();break;
+    case 'cad':nav.cad=v;nav.catAberto=false;render();break;
+    case 'cat-abrir':nav.catAberto=true;nav.catQ='';nav.catCat='todas';nav.catSel=[];render();scrollTo(0,0);break;
+    case 'cat-fechar':nav.catAberto=false;render();break;
+    case 'cat-filtro':nav.catCat=v;render();break;
+    case 'cat-toggle':{const i=nav.catSel.indexOf(v);if(i>=0)nav.catSel.splice(i,1);else nav.catSel.push(v);
+      b.setAttribute('aria-pressed',String(i<0));const l=$('#catlista');if(l)l.innerHTML=linhasCatalogo();
+      const n=nav.catSel.length;$('#catn').textContent=n?n+' selecionada'+(n===1?'':'s'):'Toque nas pedras que você trabalha';$('#catadd').disabled=!n;break}
+    case 'cat-add':{
+      const novas=CATALOGO.filter(p=>nav.catSel.includes(p.nome)&&!jaCadastrada(S.materials,p.nome));
+      novas.forEach(p=>S.materials.push(materialDoCatalogo(p,uid())));
+      nav.catAberto=false;nav.catSel=[];if(novas.length)save();render();
+      toast(novas.length?novas.length+' pedra'+(novas.length===1?'':'s')+' adicionada'+(novas.length===1?'':'s')+'. Preencha preço e chapa de cada uma.':'Essas pedras já estavam cadastradas.');break}
     case 'add-cad':{const k=nav.cad;let o;
       if(k==='mat'){o={id:uid(),name:'Nova pedra',cat:'Granito',color:'',thick:2,priceSlab:0,priceM2:0,slabL:300,slabW:160,supplier:'',stock:0,photo:''};S.materials.unshift(o);nav.edit={kind:'materials',id:o.id}}
       else if(k==='svc'){o={id:uid(),name:'Novo serviço',cat:'Acabamentos',unit:'un',price:0};S.services.unshift(o);nav.edit={kind:'services',id:o.id}}
