@@ -1,7 +1,7 @@
 /* Catálogo de pedras para escolher (catalogo.js). Rodar na raiz: node --test */
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {CATALOGO,normalizarNome,buscarCatalogo,jaCadastrada,materialDoCatalogo,materialSemPreco}=require('../catalogo.js');
+const {corDaPedra,CATALOGO,normalizarNome,buscarCatalogo,jaCadastrada,materialDoCatalogo,materialSemPreco}=require('../catalogo.js');
 
 test('catálogo: nomes únicos (sem acento), categorias válidas e cor preenchida',()=>{
   const nomes=CATALOGO.map(p=>normalizarNome(p.nome));
@@ -37,4 +37,16 @@ test('material do catálogo nasce com preço em branco e chapa padrão editável
   assert.equal(materialSemPreco({priceSlab:100,priceM2:0},'chapa'),false);
   assert.equal(materialSemPreco({priceSlab:100,priceM2:0},'m2'),true,'cobrança por m² olha o preço por m²');
   assert.equal(materialSemPreco(undefined,'chapa'),false);
+});
+
+test('cor da pedra para o 3D: primeira cor citada, escuro/claro ajustam, desconhecida = null',()=>{
+  const lum=h=>((h>>16&255)+(h>>8&255)+(h&255))/3;
+  assert.ok(lum(corDaPedra('Preto veiado'))<60);
+  assert.ok(lum(corDaPedra('Branco com veios verdes'))>220,'vale o Branco, que vem primeiro');
+  assert.ok(lum(corDaPedra('Cinza escuro'))<lum(corDaPedra('Cinza')));
+  assert.ok(lum(corDaPedra('Bege claro'))>lum(corDaPedra('Bege')));
+  assert.ok(corDaPedra('Bordô')!==null,'acento ignorado');
+  assert.equal(corDaPedra(''),null);assert.equal(corDaPedra('xyz'),null);assert.equal(corDaPedra(null),null);
+  assert.equal(corDaPedra('Brancoso'),null,'só palavra inteira');
+  for(const p of CATALOGO)assert.notEqual(corDaPedra(p.cor),null,p.nome+': a cor do catálogo é reconhecida');
 });

@@ -99,7 +99,7 @@ export function criarVisualizador(deps={}){
   let grade=null;
 
   const alvo=new THREE.Vector3(),est={az:-0.6,pol:1.0,dist:3};
-  const opt={cotas:true,textura:'liso',equip:true};
+  const opt={cotas:true,textura:'liso',equip:true,cor:null};      // cor: tom da pedra (0xRRGGBB) vindo do cadastro; null = padrão
   let modelo=null,quadro=[],raioQ=1,dMin=0.3,dMax=20,zoomManual=false,pedido=0,perdido=false,aoPerder=null,aoFalhar=null,aoRecuperar=null,tRecup=0;
   let ladoCotas={x:'esq',z:'frente'},rotulos=[],listaCotas=[];
   const texturas={};
@@ -322,9 +322,10 @@ export function criarVisualizador(deps={}){
   }
   function material(kind){
     const nome=opt.textura;
-    if(nome==='liso')return new THREE.MeshLambertMaterial({color:LISO[kind]||LISO.tampo});
+    const fator={tampo:1,degrau:1,saia:0.85,roda:0.95,espelho:0.9,painel:1}[kind]||1;     // saia e peças de apoio um pouco mais escuras que o tampo
+    if(nome==='liso')return new THREE.MeshLambertMaterial({color:opt.cor!=null?new THREE.Color(opt.cor).multiplyScalar(fator):(LISO[kind]||LISO.tampo)});
     const tx=texturas[nome]||(texturas[nome]=textura(nome));
-    return new THREE.MeshLambertMaterial({color:TINTA[kind]||0xffffff,map:tx});
+    return new THREE.MeshLambertMaterial({color:opt.cor!=null?new THREE.Color(opt.cor).multiplyScalar(fator):(TINTA[kind]||0xffffff),map:tx});
   }
 
   /* ---------- construção da cena a partir do modelo ---------- */
@@ -545,14 +546,16 @@ export function criarVisualizador(deps={}){
     },
     /* atualiza modelo e opções numa construção só: o = {cotas, textura} */
     atualizar(m,mantem,o){
-      if(o){if(o.cotas!=null)opt.cotas=!!o.cotas;if(o.textura!=null)opt.textura=o.textura;if(o.equip!=null)opt.equip=!!o.equip}
+      if(o){if('cor' in o)opt.cor=o.cor==null?null:o.cor;if(o.cotas!=null)opt.cotas=!!o.cotas;if(o.textura!=null)opt.textura=o.textura;if(o.equip!=null)opt.equip=!!o.equip}
       const novo=!mantem||!modelo;
       modelo=m;construir();
       if(novo){zoomManual=false;est.dist=distIdeal(est.az,est.pol);posicionar()}else garantirVisivel();
     },
     /* opções visuais: {cotas:boolean, textura:'liso'|'granito'|'marmore'|'quartzo'} */
     opcoes(o){
-      const mudouTx=o.textura!=null&&o.textura!==opt.textura,mudouCotas=o.cotas!=null&&o.cotas!==opt.cotas,mudouEq=o.equip!=null&&!!o.equip!==opt.equip;
+      const mudouCor='cor' in o&&(o.cor==null?null:o.cor)!==opt.cor;
+      if('cor' in o)opt.cor=o.cor==null?null:o.cor;
+      const mudouTx=mudouCor||o.textura!=null&&o.textura!==opt.textura,mudouCotas=o.cotas!=null&&o.cotas!==opt.cotas,mudouEq=o.equip!=null&&!!o.equip!==opt.equip;
       if(o.cotas!=null)opt.cotas=!!o.cotas;
       if(o.equip!=null)opt.equip=!!o.equip;
       if(o.textura!=null)opt.textura=o.textura;
