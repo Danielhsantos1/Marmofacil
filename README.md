@@ -86,3 +86,6 @@ O 3D agora abre em "Do material": a textura vem da categoria (granito, mármore,
 
 ### Rótulo nas faixas soltas (versão 17)
 Faixas de saia ou rodabanca desenhadas deitadas ao lado da peça agora dizem o que são: "sobra de saia/rodabanca N cm" (metragem que passa do contorno da peça ou cantos menores que a espessura) ou "saia/rodabanca solta N cm" (formatos sem contorno definido, como nicho e escada). A medida é a real; a área e o preço não mudam.
+
+### Editor 3D com mais tela (versão 18)
+Em tela larga (computador, tablet) e no celular deitado, a faixa de cima some: **Voltar** vai para o menu lateral, o nome do orçamento e da peça vira uma etiqueta sobre o 3D e as ferramentas (perspectiva, de cima, de frente, enquadrar, alças, cotas) viram uma coluna de ícones no canto do 3D (alvos de toque de 40 a 44 px). Tocar no menu ativo recolhe o painel para o 3D ocupar a tela toda; no celular deitado o editor já abre com o painel recolhido. No celular em pé nada muda (faixa de cima e barra de botões com texto).
