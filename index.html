@@ -187,9 +187,9 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=14"></script>
-<script src="catalogo.js?v=14"></script>
-<script src="model3d.js?v=14"></script>
+<script src="calc.js?v=15"></script>
+<script src="catalogo.js?v=15"></script>
+<script src="model3d.js?v=15"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -202,7 +202,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=14;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=15;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -322,7 +322,7 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'liso',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
+const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
 const IC={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
@@ -545,7 +545,7 @@ function secMed(q){
    ${nav.show3d?`<div class="draw" id="v3dbox" style="padding:0;height:min(68vw,340px);min-height:260px;position:relative"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
    <div class="bar3d" role="group" aria-label="Vistas do 3D"><button class="k3d" data-act="view3d" data-v="persp" aria-pressed="true">Perspectiva</button><button class="k3d" data-act="view3d" data-v="topo" aria-pressed="false">De cima</button><button class="k3d" data-act="view3d" data-v="frente" aria-pressed="false">De frente</button><button class="k3d" data-act="enquadrar3d">Enquadrar</button></div>
    <div class="row3d"><button class="k3d" data-act="cotas3d" aria-pressed="${nav.cotas3d}">Cotas</button>
-    <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['liso','Lisa'],['material','Do material'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label>
+    <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['material','Do material (nome e cor do cadastro)'],['liso','Lisa'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label>
     ${(p.recortes||[]).length?`<button class="k3d" data-act="equip3d" aria-pressed="${nav.equip3d}" style="grid-column:1/-1">Cuba, torneira e cooktop (ilustrativos)</button>`:''}</div>
    <div class="note" id="n3d">Arraste para girar e use dois dedos para aproximar.</div>`:''}
    <div class="card stack" style="padding-top:14px">
@@ -890,7 +890,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=14');
+    const m=await import('./viewer3d.js?v=15');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -930,6 +930,8 @@ async function montar3d(){
   atualizar3d();
 }
 /* Aparência "Do material": granito, mármore e quartzo têm textura; o resto fica liso. Puramente visual. */
+/* tom da pedra no 3D: só em "Do material", a partir do campo Cor do cadastro (aproximado; null = padrão) */
+function corDe(q){return nav.tex3d==='material'?corDaPedra(matOf(q)?.color):null}
 function texDe(q){
   if(nav.tex3d!=='material')return nav.tex3d;
   return {'Granito':'granito','Mármore':'marmore','Quartzo':'quartzo'}[matOf(q)?.cat]||'liso';
@@ -957,7 +959,7 @@ function nota3d(m){
   m.avisos.forEach(a=>partes.push(a));
   if(v3&&v3.gradeCm())partes.push('Grade de '+v3.gradeCm()+' cm.');
   if(v3Modo==='software')partes.push('Este aparelho está desenhando o 3D por software: pode ficar lento.');
-  partes.push('Para conferência visual: não é desenho de fabricação'+(texDe(curQ())!=='liso'?'; a textura é ilustrativa e não mostra o veio da chapa.':'.'));
+  partes.push('Para conferência visual: não é desenho de fabricação'+(texDe(curQ())!=='liso'?'; a textura e o tom são ilustrativos (o tom vem do campo Cor do material) e não mostram o veio da chapa.':'.'));
   el.textContent=partes.join(' ');
 }
 function atualizar3d(){
@@ -966,7 +968,7 @@ function atualizar3d(){
   const chave=q.id+':'+q.pieces.length,mantem=v3Peca===chave;v3Peca=chave;   // mesmo orçamento e mesmas peças: não reenquadra a câmera (trocar a peça selecionada não mexe na cena)
   const lay=layout3d(q),m=Model3D.comporCena(lay.itens,nav.pi);
   v3.editar(nav.ed3d&&nav.alcas3d&&!fechado(q),aoEditar3d);                // alças só no editor e fora de orçamento fechado
-  v3.atualizar(m,mantem,{cotas:nav.cotas3d,textura:texDe(q),equip:nav.equip3d});
+  v3.atualizar(m,mantem,{cotas:nav.cotas3d,textura:texDe(q),cor:corDe(q),equip:nav.equip3d});
   nota3d(lay.itens[nav.pi].modelo);marcarVista();
 }
 
@@ -1008,7 +1010,7 @@ function e3Painel(q,p){
   if(m==='itens')return trava+(RECORTAVEL.includes(p.type)?recortesEd(q,p):`<div class="note">Este formato não tem recortes de cuba ou cooktop.</div>`);
   const mats=S.materials.map(x=>[x.id,x.name]);
   return trava+`<div class="lbl">Material do orçamento</div>${sel('Material','quotes.'+q.id+'.materialId',mats)}
-    <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['liso','Lisa'],['material','Do material'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label>
+    <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['material','Do material (nome e cor do cadastro)'],['liso','Lisa'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label>
     ${(p.recortes||[]).length?`<button class="k3d" data-act="equip3d" aria-pressed="${nav.equip3d}">Cuba, torneira e cooktop (ilustrativos)</button>`:''}
     <details><summary class="small muted" style="min-height:44px;display:flex;align-items:center">Sobre este 3D</summary><div class="note" id="n3d"></div></details>`;
 }

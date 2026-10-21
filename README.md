@@ -73,3 +73,6 @@ O 3D mostra todas as peças do orçamento juntas. Cada peça continua independen
 
 ## Catálogo de pedras (versão 14)
 Cadastros > Materiais > "Escolher pedras do catálogo": 46 pedras (granitos, mármores e quartzos) com busca e filtro. Cada pedra escolhida entra no cadastro com **preço e chapa em branco** (o catálogo só traz nome, tipo e cor em palavras; sem foto, preço ou medida de terceiros). Pedras já cadastradas aparecem desabilitadas. Material sem preço é avisado na lista de materiais e na barra de preço do orçamento ("o orçamento não cobra a pedra"). `catalogo.js` (funções puras, com testes). Categorias marcadas "confira a categoria" foram deduzidas da ordem do catálogo de origem.
+
+### Aparência "Do material" (versão 15)
+O 3D agora abre em "Do material": a textura vem da categoria (granito, mármore, quartzo) e o **tom vem do campo Cor do material** (ex.: "Preto" escurece, "Bege claro" clareia; ver `corDaPedra` em `catalogo.js`). Trocar o material do orçamento troca o tom na hora. É só aparência aproximada: sem foto da chapa e sem veio real. Cor não reconhecida usa o tom padrão.

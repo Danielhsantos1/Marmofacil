@@ -76,4 +76,19 @@ function materialDoCatalogo(p,id){
 /* o preço que o orçamento vai usar está em branco? (cobrança por chapa usa priceSlab; por m², priceM2) */
 const materialSemPreco=(m,cobranca)=>!!m&&!((cobranca==='m2'?m.priceM2:m.priceSlab)>0);
 
-if(typeof module!=='undefined')module.exports={CATALOGO,normalizarNome,buscarCatalogo,jaCadastrada,materialDoCatalogo,materialSemPreco};
+/* cor aproximada (0xRRGGBB) a partir do texto do campo Cor do material, só para o 3D ("Preto veiado", "Bege claro"...).
+   Vale a primeira cor citada; "escuro" e "claro" ajustam o tom. Sem cor reconhecida: null (o 3D usa o padrão). */
+const CORES_PEDRA=[['preto',0x23252a],['branco',0xf1f1ee],['cinza',0x9a9d9c],['bege',0xd9c4a0],['creme',0xe8d9b0],['marrom',0x6b4a36],
+  ['vermelho',0xa8332a],['rosado',0xd2a39a],['rosa',0xd2a39a],['verde',0x4d6b57],['azul',0x2f7fb0],['laranja',0xd98a4f],
+  ['dourado',0xc9a24f],['bordo',0x7a2e2a],['amarelo',0xe0c35a]];
+function corDaPedra(texto){
+  const t=normalizarNome(texto);let melhor=null;
+  CORES_PEDRA.forEach(([nome,hex])=>{const i=t.search(new RegExp('\\b'+nome+'\\b'));if(i>=0&&(!melhor||i<melhor.i))melhor={i,hex}});
+  if(!melhor)return null;
+  let [r,g,b]=[melhor.hex>>16&255,melhor.hex>>8&255,melhor.hex&255];
+  if(/\bescuro\b/.test(t)){r*=0.62;g*=0.62;b*=0.62}
+  else if(/\bclaro\b/.test(t)){r+=(255-r)*0.45;g+=(255-g)*0.45;b+=(255-b)*0.45}
+  return (Math.round(r)<<16)|(Math.round(g)<<8)|Math.round(b);
+}
+
+if(typeof module!=='undefined')module.exports={corDaPedra,CATALOGO,normalizarNome,buscarCatalogo,jaCadastrada,materialDoCatalogo,materialSemPreco};
