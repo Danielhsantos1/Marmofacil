@@ -76,3 +76,10 @@ Cadastros > Materiais > "Escolher pedras do catálogo": 46 pedras (granitos, má
 
 ### Aparência "Do material" (versão 15)
 O 3D agora abre em "Do material": a textura vem da categoria (granito, mármore, quartzo) e o **tom vem do campo Cor do material** (ex.: "Preto" escurece, "Bege claro" clareia; ver `corDaPedra` em `catalogo.js`). Trocar o material do orçamento troca o tom na hora. É só aparência aproximada: sem foto da chapa e sem veio real. Cor não reconhecida usa o tom padrão.
+
+### Fotos das pedras e escolha por quadradinhos (versão 16)
+- `pedras/` tem a foto de cada pedra do catálogo (46 arquivos, ~660 KB, nome do arquivo = nome da pedra sem acento, com hífens). **Origem: catálogo "Marmofacil" (PDF) enviado pelo Daniel, que declarou ser o dono.** Para remover as fotos: apagar a pasta `pedras/` e as funções `fotoPedra`/`fotoDoMaterial` em `catalogo.js` (e o teste que confere a pasta).
+- A lista "Escolher pedras do catálogo" mostra a foto de cada pedra. Os dois "Cinza Absoluto" do catálogo ficaram como "(claro)" e "(escuro)" para terem nomes diferentes; "Humatá" e "Blanco Serreno" seguem a grafia do catálogo.
+- A foto do material que a marmoraria subiu em Cadastros tem prioridade sobre a do catálogo.
+- No editor 3D, menu Material: quadradinhos com a foto de cada material (toque para escolher). Em "Aparência: Do material", o 3D usa a foto como textura (repete a cada 1,2 m × 0,7 m com espelhamento; a escala real da chapa não é conhecida e o veio não acompanha o corte). Sem foto, usa o tom da cor.
+- As fotos carregam sob demanda e ficam guardadas para uso sem internet depois de vistas uma vez.
