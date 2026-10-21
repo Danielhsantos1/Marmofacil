@@ -394,3 +394,35 @@ test('propriedades (1500 peças aleatórias): área = corte, sem sobreposição,
     assert.deepEqual(m.avisos.filter(a=>/NaN|inválid/.test(a)),[]);
   }
 });
+
+/* ================= Recortes editáveis: contrato de dados ================= */
+test('recortes: origem "medido" (padrão) ou "estimado"; estimado aparece marcado na cota e no modelo',()=>{
+  const p=pc('reta',{A:280,P:60},{recortes:[
+    {tipo:'cuba',x:100,z:10,w:80,d:45},                           // sem origem (dado antigo ou digitado): medido
+    {tipo:'cooktop',x:200,z:10,w:50,d:40,origem:'estimado'},
+    {tipo:'outro',x:20,z:10,w:30,d:20,origem:'qualquer coisa'}      // valor desconhecido: tratado como medido
+  ]});
+  const m=buildModel(p,{espessura:2,SL:400,SW:200});
+  assert.deepEqual(m.recortes.map(r=>r.origem),['medido','estimado','medido']);
+  assert.deepEqual(cotas(m).filter(c=>c.tipo==='rotulo').map(c=>c.texto),['cuba 80×45 cm','cooktop 50×40 cm (estimado)','outro 30×20 cm']);
+});
+
+test('recortes: campos vazios de um recorte novo (sem medidas) não desenham nada e avisam',()=>{
+  const m=buildModel(pc('reta',{A:280,P:60},{recortes:[{id:'x',tipo:'cuba',origem:'medido'}]}),2);
+  assert.equal(m.recortes.length,0);assert.equal(m.avisos.length,1);assert.match(m.avisos[0],/sem medidas válidas/);
+  assert.equal(m.area,areaCorte(pc('reta',{A:280,P:60})),'a área não muda');
+});
+
+test('recortes: o campo id e dados antigos sem "recortes" convivem; a peça recebida não é alterada',()=>{
+  const p=pc('reta',{A:280,P:60},{recortes:[{id:'abc',tipo:'cuba',x:100,z:10,w:80,d:45,origem:'medido'}]});
+  const antes=JSON.stringify(p);buildModel(p,2);assert.equal(JSON.stringify(p),antes);
+  assert.deepEqual(buildModel(pc('reta',{A:280,P:60}),2).recortes,[]);
+});
+
+test('o preço e o plano de corte não dependem dos recortes (mesmo orçamento com e sem)',()=>{
+  const base=pc('reta',{A:280,P:60}),com=pc('reta',{A:280,P:60},{recortes:[{tipo:'cuba',x:100,z:10,w:80,d:45},{tipo:'cooktop',x:200,z:10,w:50,d:40}]});
+  const mats=[{id:'m',slabL:310,slabW:180,priceSlab:2900,priceM2:640}],q=p=>({materialId:'m',pieces:[p],lines:[],params:par()});
+  const a=calcQuote(q(base),mats,[]),b=calcQuote(q(com),mats,[]);
+  for(const k of ['area','price','cost','profit','nSlabs'])assert.equal(b[k],a[k],k);
+  assert.equal(b.nest.emendas,a.nest.emendas);
+});
