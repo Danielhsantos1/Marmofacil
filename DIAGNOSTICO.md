@@ -1,5 +1,7 @@
 # Diagnóstico técnico e de produto: Marmofácil
 
+> **Atualização (2026-10-21).** Este diagnóstico é de 2026-10-20 e descreve o estado de então. Desde aquele dia: o cálculo foi separado em `calc.js` com testes (A4); a margem + impostos acima de 95% é bloqueada (A1); orçamento fechado congela os valores (A2); o app tem aviso de nova versão e rede de segurança de abertura (M1); e há um visualizador 3D técnico com cotas, emendas e recortes (ver `README.md`). Continuam em aberto: C1 a C3 (login, nuvem, validação do plano de corte com projetos reais), A3 (fotos no `localStorage`), A5, M3 a M7. O 3D ainda **não** foi medido em um Android de entrada real.
+
 Data: 2026-10-20. Base: leitura completa de `index.html` (853 linhas), `sw.js`, `manifest.webmanifest`, `CLAUDE.md`, `ROADMAP.md`, mais um teste rápido da lógica de cálculo em Node.
 Repositório: https://github.com/Danielhsantos1/Marmofacil (público). Site: https://danielhsantos1.github.io/Marmofacil/ (GitHub Pages ligado em 2026-10-20; o deploy atual ainda é a versão com nome antigo até o PR #1 ser aprovado).
 

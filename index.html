@@ -90,7 +90,9 @@ input[type=file]{display:none}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;z-index:40;max-width:90%;font-size:14px}
 .bar3d{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .bar3d button{padding:4px 2px;font-size:12.5px}
-@media (max-width:350px){.bar3d{gap:4px}.bar3d button{padding:2px 1px;font-size:11.5px}}
+@media (max-width:350px){.bar3d{grid-template-columns:repeat(2,1fr)}.bar3d button{font-size:13px}}
+@media (max-height:480px) and (orientation:landscape){.sum{position:static}#v3dbox{height:calc(100vh - 150px)!important;min-height:180px!important}}
+#v3dbox{scroll-margin-top:72px}
 .row3d{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
 .k3d[aria-pressed=true]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .upd{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:50;width:min(92%,420px);background:var(--fg);color:var(--bg);border-radius:12px;padding:8px 8px 8px 14px;display:flex;align-items:center;gap:10px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.25)}
@@ -336,13 +338,15 @@ function newQuote(clientId){
   S.quotes.unshift(q);save();return q;
 }
 function openQuote(id,sec){nav.tab='quotes';nav.qid=id;nav.sec=sec||'cli';nav.pi=0;nav.showTypes=false;nav.show3d=false;render();scrollTo(0,0)}
+/* Chapa e espessura de hoje, para o 3D do orçamento fechado desenhar o mesmo que foi cobrado (espessura 0 = padrão). */
+const chapaDoFechamento=(q,c)=>({SL:c.SL,SW:c.SW,thick:matOf(q)?.thick>0?matOf(q).thick:0});
 /* Fechar congela os valores (q.snap); qualquer outra etapa descongela. Devolve false se não puder fechar. */
 function setStatus(q,st){
   if(st==='Fechado'){
     if(q.status!=='Fechado'||!q.snap){
       const c=calcQuote(q,S.materials,S.services);
       if(c.erro){toast(c.erro);return false}
-      q.snap=snapshotOf(c,Date.now());
+      q.snap=snapshotOf(c,Date.now(),chapaDoFechamento(q,c));
     }
     if(q.status!=='Fechado')q.closedAt=Date.now();
   }else{delete q.snap;q.closedAt=null}
@@ -351,7 +355,7 @@ function setStatus(q,st){
 /* Orçamentos fechados antes desta versão (ou de backups antigos) ganham o snapshot com os valores de hoje. */
 function garantirSnapshots(){
   let mudou=false;
-  S.quotes.forEach(q=>{if(q.status==='Fechado'&&!q.snap){q.snap=snapshotOf(calcQuote(q,S.materials,S.services),Date.now());q.snap.migrado=true;mudou=true}});
+  S.quotes.forEach(q=>{if(q.status==='Fechado'&&!q.snap){const c=calcQuote(q,S.materials,S.services);q.snap=snapshotOf(c,Date.now(),chapaDoFechamento(q,c));q.snap.migrado=true;mudou=true}});
   if(mudou)save();
 }
 
@@ -495,8 +499,8 @@ function secMed(q){
    <div class="row between"><span class="small muted">${TYPES[p.type].nome} · área da peça</span><b class="num" id="parea">${nf(area)} m²</b></div>
    <button data-act="toggle3d" aria-pressed="${nav.show3d}">${nav.show3d?'Esconder o 3D':'Ver em 3D'}</button>
    ${nav.show3d?`<div class="draw" id="v3dbox" style="padding:0;height:min(68vw,340px);min-height:260px;position:relative"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
-   <div class="bar3d" role="group" aria-label="Vistas do 3D"><button class="k3d" data-act="view3d" data-v="persp">Perspectiva</button><button class="k3d" data-act="view3d" data-v="topo">De cima</button><button class="k3d" data-act="view3d" data-v="frente">De frente</button><button class="k3d" data-act="enquadrar3d">Enquadrar</button></div>
-   <div class="row3d"><button class="k3d" data-act="cotas3d" aria-pressed="${nav.cotas3d}">Cotas: ${nav.cotas3d?'ligadas':'desligadas'}</button>
+   <div class="bar3d" role="group" aria-label="Vistas do 3D"><button class="k3d" data-act="view3d" data-v="persp" aria-pressed="true">Perspectiva</button><button class="k3d" data-act="view3d" data-v="topo" aria-pressed="false">De cima</button><button class="k3d" data-act="view3d" data-v="frente" aria-pressed="false">De frente</button><button class="k3d" data-act="enquadrar3d">Enquadrar</button></div>
+   <div class="row3d"><button class="k3d" data-act="cotas3d" aria-pressed="${nav.cotas3d}">Cotas</button>
     <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['liso','Lisa'],['material','Do material'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label></div>
    <div class="note" id="n3d">Arraste para girar e use dois dedos para aproximar.</div>`:''}
    <div class="card stack" style="padding-top:14px">
@@ -775,13 +779,17 @@ Responda somente com JSON neste formato, em português do Brasil:
 }
 
 /* ===== 3D (carregado só quando o usuário abre) ===== */
-let v3=null,v3Promise=null,v3Falha='',v3Peca='';
+let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
     const m=await import('./viewer3d.js?v=7');
-    if(!m.webglDisponivel())throw new Error('webgl');
-    v3=m.criarVisualizador();
-    v3.aoFalharContexto(()=>{nav.show3d=false;render();toast('O aparelho interrompeu o 3D. Toque em Ver em 3D para abrir de novo.')});     // só depois de 4 s sem recuperar
+    v3Modo=m.webglModo();
+    if(!v3Modo)throw new Error('webgl');
+    try{v3=m.criarVisualizador({cotas:Model3D.cotas})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
+    v3.aoFalharContexto(conectado=>{                                       // só depois de 4 s sem recuperar
+      if(v3)v3.destruir();v3=null;v3Promise=null;v3Peca='';                // descarta o visualizador morto: a próxima abertura cria outro
+      if(conectado){nav.show3d=false;render();toast('O aparelho interrompeu o 3D. Toque em Ver em 3D para abrir de novo.')}
+    });
     return v3;
   })().catch(e=>{
     v3Falha=e&&e.message==='webgl'?'Este aparelho não conseguiu iniciar o 3D. O desenho em 2D continua funcionando.':'Não foi possível carregar o 3D. Confira a conexão e tente de novo.';
@@ -789,11 +797,28 @@ function carregar3d(){
   });
   return v3Promise;
 }
+/* 3D indisponível: some o que não serve (vistas, cotas, aparência, nota) e, se foi a conexão, oferece tentar de novo */
+function falha3d(){
+  const m=$('#v3dmsg');
+  if(m){m.textContent=v3Falha;m.setAttribute('role','status');
+    if(/conexão/.test(v3Falha))m.insertAdjacentHTML('beforeend','<div style="margin-top:10px"><button class="pri" data-act="retry3d">Tentar de novo</button></div>')}
+  ['.bar3d','.row3d','#n3d'].forEach(s=>{const e=$(s);if(e)e.remove()});
+  const box=$('#v3dbox');if(box){box.style.height='auto';box.style.minHeight='0'}
+}
+/* marca qual vista está ativa (aria-pressed), olhando os ângulos reais da câmera */
+function marcarVista(){
+  if(!v3)return;
+  const e=v3.estado(),perto=(a,b)=>Math.abs(a-b)<0.01;
+  const v=perto(e.pol,0)?'topo':(perto(e.pol,Math.PI/2)&&perto(e.az,0))?'frente':(perto(e.pol,1)&&perto(e.az,-0.6))?'persp':'';
+  $$('[data-act="view3d"]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===v)));
+}
 async function montar3d(){
   const q=curQ();if(!q||!$('#v3dbox'))return;
-  try{await carregar3d()}catch(e){const m=$('#v3dmsg');if(m)m.textContent=v3Falha;return}
+  if(nav.rolar3d){nav.rolar3d=false;$('#v3dbox').scrollIntoView({block:'start'})}   // ao abrir, leva o 3D para a vista (a barra de preço não o esconde)
+  try{await carregar3d()}catch(e){falha3d();return}
   const box=$('#v3dbox');if(!nav.show3d||!box||curQ()!==q)return;      // a tela mudou enquanto carregava
   v3.anexar(box);const m=$('#v3dmsg');if(m)m.remove();
+  box.addEventListener('pointerup',marcarVista);box.addEventListener('wheel',marcarVista,{passive:true});
   atualizar3d();
 }
 /* Aparência "Do material": granito, mármore e quartzo têm textura; o resto fica liso. Puramente visual. */
@@ -802,16 +827,20 @@ function texDe(q){
   return {'Granito':'granito','Mármore':'marmore','Quartzo':'quartzo'}[matOf(q)?.cat]||'liso';
 }
 function modelo3d(q,p){
-  const c=calc(q);                                                      // chapa usada pelo plano de corte: as emendas saem da mesma conta
-  return Model3D.buildModel(p,{espessura:matOf(q)?.thick,SL:c.SL,SW:c.SW});
+  const c=calc(q),sn=fechado(q)?q.snap:null;                           // chapa usada pelo plano de corte: as emendas saem da mesma conta
+  const fixo=sn&&typeof sn.thick==='number'&&sn.SL>0&&sn.SW>0;          // fechado: chapa e espessura do fechamento, não do cadastro de hoje
+  return Model3D.buildModel(p,{espessura:fixo?sn.thick:matOf(q)?.thick,SL:fixo?sn.SL:c.SL,SW:fixo?sn.SW:c.SW});
 }
 function nota3d(m){
   const el=$('#n3d');if(!el)return;
   const partes=['Cotas em cm, com as medidas da peça.',
     'Espessura '+nf(m.espessura,1)+' cm'+(m.espessuraOrigem==='padrao'?' (padrão: o material não tem espessura cadastrada).':' (do material).')];
+  const qq=curQ();
+  if(fechado(qq))partes.push(typeof qq.snap.thick==='number'&&qq.snap.SL>0?'Orçamento fechado: chapa e espessura do fechamento.':'Orçamento fechado antes desta versão: o 3D usa a chapa e a espessura do cadastro de hoje.');
   if(m.emendasPlano>0)partes.push('Emendas do plano de corte em laranja: '+m.emendasPlano+(m.emendas.length!==m.emendasPlano?' (o desenho mostra '+m.emendas.length+' linhas de corte).':'.'));
   m.avisos.forEach(a=>partes.push(a));
   if(v3&&v3.gradeCm())partes.push('Grade de '+v3.gradeCm()+' cm.');
+  if(v3Modo==='software')partes.push('Este aparelho está desenhando o 3D por software: pode ficar lento.');
   partes.push('Para conferência visual: não é desenho de fabricação'+(texDe(curQ())!=='liso'?'; a textura é ilustrativa e não mostra o veio da chapa.':'.'));
   el.textContent=partes.join(' ');
 }
@@ -820,9 +849,8 @@ function atualizar3d(){
   const q=curQ(),p=q&&q.pieces[nav.pi];if(!p)return;
   const mantem=v3Peca===p.id;v3Peca=p.id;                              // mesma peça: não reenquadra a câmera
   const m=modelo3d(q,p);
-  v3.opcoes({cotas:nav.cotas3d,textura:texDe(q)});
-  v3.definirModelo(m,mantem);
-  nota3d(m);
+  v3.atualizar(m,mantem,{cotas:nav.cotas3d,textura:texDe(q)});
+  nota3d(m);marcarVista();
 }
 
 /* ===== Eventos ===== */
@@ -850,10 +878,11 @@ document.addEventListener('click',async e=>{
     case 'move':{const x=S.quotes.find(o=>o.id===v);const i=STATUS.indexOf(x.status)+(+b.dataset.d);if(STATUS[i]){setStatus(x,STATUS[i]);render()}break}
     case 'piece':nav.pi=+v;nav.showTypes=false;render();break;
     case 'showtypes':nav.showTypes=!nav.showTypes;render();break;
-    case 'toggle3d':nav.show3d=!nav.show3d;render();break;
-    case 'view3d':if(v3)v3.vista(v);break;
+    case 'toggle3d':nav.show3d=!nav.show3d;nav.rolar3d=nav.show3d;render();{const t=$('[data-act="toggle3d"]');if(t)t.focus({preventScroll:true})}break;   // render() refaz o HTML: devolve o foco ao botão
+    case 'retry3d':v3Promise=null;v3Falha='';render();break;
+    case 'view3d':if(v3){v3.vista(v);marcarVista()}break;
     case 'enquadrar3d':if(v3)v3.enquadrar();break;
-    case 'cotas3d':nav.cotas3d=!nav.cotas3d;b.setAttribute('aria-pressed',nav.cotas3d);b.textContent='Cotas: '+(nav.cotas3d?'ligadas':'desligadas');if(v3)v3.opcoes({cotas:nav.cotas3d});break;
+    case 'cotas3d':nav.cotas3d=!nav.cotas3d;b.setAttribute('aria-pressed',nav.cotas3d);if(v3)v3.opcoes({cotas:nav.cotas3d});break;
     case 'addpiece':{const t=TYPES[v],d={};t.campos.forEach(([k,,def])=>d[k]=def);if(v==='livre')d.rects=[{w:100,h:50,q:1,l:'Peça'}];
       q.pieces.push({id:uid(),type:v,name:t.nome,d,saiaH:0,rodaH:0});nav.pi=q.pieces.length-1;nav.showTypes=false;save();render();break}
     case 'dup-piece':{const p=q.pieces.find(x=>x.id===v),n=JSON.parse(JSON.stringify(p));n.id=uid();n.name=(p.name||'Peça')+' (cópia)';q.pieces.push(n);nav.pi=q.pieces.length-1;save();render();break}

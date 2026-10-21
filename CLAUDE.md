@@ -8,10 +8,19 @@ SaaS para marmorarias. O vendedor usa só o celular na visita ao cliente para me
 - Fale em português do Brasil. Seja direto. Aponte quando algo estiver ineficiente ou errado, mesmo sem ele perguntar.
 
 ## Estado atual
-Protótipo funcional em **um único arquivo** (`index.html`, ~64 KB, JS puro, sem build). Já é PWA (`manifest.webmanifest`, `sw.js`, ícones, `vendor/jspdf.umd.min.js`).
+Protótipo funcional, JS puro, **sem build**, instalável como PWA (`manifest.webmanifest`, `sw.js`, ícones). Arquivos:
+- `index.html` (~80 KB): telas, estado e integração.
+- `calc.js`: geometria, plano de corte, preço e snapshot de orçamento fechado (funções puras).
+- `model3d.js`: modelo 3D da peça, emendas, recortes e cotas (funções puras, mesma peça do cálculo).
+- `viewer3d.js`: visualizador Three.js (carregado só ao abrir o 3D; Three.js local em `vendor/`, MIT, 692 KB).
+- `vendor/jspdf.umd.min.js`: PDF.
+- `tests/`: `npm test` (Node 18+, sem dependências). Regressão do cálculo com `tests/golden.json`, gerado pelo código original: **não mudar os valores esperados sem decisão comercial**.
+- Versão: `V` em `sw.js`, `APP_V` e os `?v=` em `index.html` têm o mesmo número (`tests/versao.test.js` confere). Subir os três a cada mudança de arquivo.
 - Dados só em `localStorage` (chave `pedrafacil.v1`, nome antigo mantido de propósito para não perder dados já salvos). Sem login, nuvem ou permissões.
+- Orçamento **Fechado** congela os valores (`q.snap`, inclusive chapa e espessura para o 3D) e fica só para ver até ser reaberto.
 - Fora do Claude, a leitura de fotos por IA não existe (o botão avisa). O PDF baixa por link comum.
-- GitHub Pages ainda **não está funcionando** neste repositório (deploy nunca rodou). Não era problema do código.
+- GitHub Pages: https://danielhsantos1.github.io/Marmofacil/ (o endereço github.io é compartilhado com outros projetos do mesmo usuário: o service worker só apaga caches do Marmofácil).
+- Visualizador 3D: ver `README.md`. É conferência visual, não desenho de fabricação; recortes só existem se `p.recortes` vier com dados (a interface ainda não os cria).
 
 ## O que o protótipo faz (comportamento a preservar)
 - Peças: reta, L, U, ilha, escada, nicho, lavatório, medidas livres. Tudo em **cm**; área em m².

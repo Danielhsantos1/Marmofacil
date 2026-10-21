@@ -23,8 +23,18 @@
   const sobrepoe=(a,b)=>Math.min(a.x+a.sx,b.x+b.sx)-Math.max(a.x,b.x)>1e-9&&Math.min(a.z+a.sz,b.z+b.sz)-Math.max(a.z,b.z)>1e-9;
 
   function buildModel(p,o){
-    const {t,origem,SL,SW}=opcoes(o),d=p.d||{};
+    const {t,origem,SL,SW}=opcoes(o);
     const sol=[],avisos=[];
+    /* medidas não finitas (NaN, Infinity) são tratadas como 0, com aviso: nunca viram coordenada */
+    const d={};
+    Object.keys(p.d||{}).forEach(k=>{
+      const v=p.d[k];
+      if(typeof v==='number'&&!isFinite(v)){d[k]=0;avisos.push('Medida "'+k+'" inválida: tratada como 0.')}
+      else d[k]=v;
+    });
+    const fin=(v,nome)=>{if(typeof v==='number'&&!isFinite(v)){avisos.push(nome+' inválido: tratado como 0.');return 0}return v};
+    const saiaH=fin(p.saiaH,'Altura da saia'),rodaH=fin(p.rodaH,'Altura da rodabanca'),saiaMl=fin(p.saiaMl,'Metragem da saia'),rodaMl=fin(p.rodaMl,'Metragem da rodabanca');
+    const pp=Object.assign({},p,{d,saiaH,rodaH,saiaMl,rodaMl});                  // peça saneada (usada também por defMl)
     function add(s){
       const dim={x:s.sx,y:s.sy,z:s.sz};
       s.face=dim[s.fa[0]]*dim[s.fa[1]];
@@ -34,7 +44,7 @@
     }
     const plate=(x,z,w,dp,label)=>{if(w>0&&dp>0)add({kind:'tampo',label,x,y:0,z,sx:w,sy:t,sz:dp,fa:['x','z']})};
 
-    if(p.type==='reta'||p.type==='lavatorio')plate(0,0,d.A,d.P,'Tampo');
+    if(pp.type==='reta'||pp.type==='lavatorio')plate(0,0,d.A,d.P,'Tampo');
     else if(p.type==='L'){plate(0,0,d.A,d.P,'Trecho A');plate(0,d.P,d.P,Math.max(0,d.B-d.P),'Trecho B')}
     else if(p.type==='U'){plate(0,0,d.A,d.P,'Fundo');plate(0,d.P,d.P,Math.max(0,d.B-d.P),'Esq.');plate(d.A-d.P,d.P,d.P,Math.max(0,d.C-d.P),'Dir.')}
     else if(p.type==='ilha')plate(0,0,d.A,d.B,'Tampo');
@@ -61,9 +71,11 @@
     }
     else if(p.type==='livre'){                       // peças soltas, lado a lado, como no desenho 2D
       let x=0,z=0,rowH=0;const W=320,g=6;
-      (d.rects||[]).forEach(r=>{
+      (Array.isArray(d.rects)?d.rects:[]).forEach(r=>{
+        if(!r)return;
         const w=r.w,h=r.h;if(!(w>0&&h>0))return;
         const q=Math.max(1,Math.round(r.q||1));
+        if(r.q!=null&&(!Number.isInteger(r.q)||r.q<1))avisos.push('Peça livre com quantidade "'+r.q+'": o cálculo usa '+r.q+'× a área, o 3D desenha '+q+' peça(s). Use quantidade inteira.');
         for(let i=0;i<q;i++){
           if(x>0&&x+w>W){x=0;z+=rowH+g;rowH=0}
           plate(x,z,w,h,r.l||'Peça');x+=w+g;rowH=Math.max(rowH,h)
@@ -90,22 +102,23 @@
                                     :[seg(0,B,A,B,0,1),seg(A,B,A,0,1,0),seg(A,0,0,0,0,-1),seg(0,0,0,B,-1,0)];
       return null;                                          // escada, nicho, livre: os dados não dizem onde a faixa fica
     };
-    [['saia',p.saiaH,p.saiaMl,'Saia'],['roda',p.rodaH,p.rodaMl,'Rodabanca']].forEach(([tipo,h,mlManual,nome])=>{
+    [['saia',saiaH,saiaMl,'Saia'],['roda',rodaH,rodaMl,'Rodabanca']].forEach(([tipo,h,mlManual,nome])=>{
       if(!(h>0))return;
-      const ml=mlManual||defMl(p,tipo);let resta=ml*100;
+      const ml=mlManual||defMl(pp,tipo);let resta=ml*100;
       if(!(resta>0))return;
       const path=rota(tipo);
-      if(!path){                                              // sem posição definida: faixa SOLTA ao lado da peça, deitada, como no desenho 2D
+      const solta=(comp,rot)=>{                               // faixa SEM posição nos dados: deitada ao lado da peça, como no desenho 2D
         const g=6;let zs=Dz+15;
         sol.filter(x=>x.solta).forEach(x=>{zs=Math.max(zs,x.z+x.sz+g)});
-        const st=add({kind:tipo,label:nome+' (solta)',solta:true,x:0,y:0,z:zs,sx:resta,sy:t,sz:h,fa:['x','z']});
-        st.nom=resta;return;
-      }
-      const y=tipo==='saia'?-h:t,feitas=[],parte={tipo,h,total:ml*100,segs:[]};let acc=0;partes.push(parte);
-      path.forEach((s,i)=>{
-        if(resta<=0)return;
+        const st=add({kind:tipo,label:nome+rot,solta:true,x:0,y:0,z:zs,sx:comp,sy:t,sz:h,fa:['x','z']});
+        st.nom=comp;return st;
+      };
+      if(!path){solta(resta,' (solta)');return}
+      const y=tipo==='saia'?-h:t,feitas=[],parte={tipo,h,total:ml*100,segs:[]};let acc=0,semLugar=0;partes.push(parte);
+      path.forEach(s=>{
+        if(resta<=1e-9)return;
         const dx=Math.sign(s.x1-s.x0),dz=Math.sign(s.z1-s.z0),comp=Math.abs(s.x1-s.x0)+Math.abs(s.z1-s.z0);
-        const l=i===path.length-1?resta:Math.min(resta,comp);   // se passar do percurso, segue reto (medida manual)
+        const l=Math.min(resta,comp);                         // nunca passa do percurso real da pedra
         if(!(l>0))return;
         const alongX=dx!==0;
         const c={kind:tipo,label:nome,y,sy:h,sx:alongX?l:t,sz:alongX?t:l,fa:[alongX?'x':'z','y']};
@@ -119,11 +132,17 @@
           if(alongX){if(ox[0]<=c.x+1e-9){c.sx-=ox[1]-c.x;c.x=ox[1]}else c.sx=ox[0]-c.x}
           else{if(oz[0]<=c.z+1e-9){c.sz-=oz[1]-c.z;c.z=oz[1]}else c.sz=oz[0]-c.z}
         });
-        if(!(c.sx>1e-9&&c.sz>1e-9)){resta-=l;acc+=l;return}
+        if(!(c.sx>1e-9&&c.sz>1e-9)){semLugar+=l;resta-=l;acc+=l;return}     // menor que a espessura: vai para a faixa solta
         const st=add(c);st.nom=l;st.faceGeom=st.face;st.face=l*h;
         Object.assign(st,{nomIni:acc,eixoP:alongX?'x':'z',sinal:alongX?dx:dz,inicio:alongX?s.x0:s.z0,parte:true});
         parte.segs.push(st);feitas.push(st);resta-=l;acc+=l;
       });
+      const sobra=resta+semLugar;                             // metragem que não cabe no percurso (ou em cantos menores que a espessura)
+      if(sobra>1e-9){
+        const st=solta(sobra,' (sem posição)');
+        Object.assign(st,{nomIni:acc-semLugar,eixoP:'x',sinal:1,inicio:st.x,parte:true});parte.segs.push(st);
+        if(sobra>t*2)avisos.push(nome+': '+fmt(Math.round(sobra*10)/10)+' cm de faixa não têm posição definida nos dados (a metragem passa do contorno da peça); aparecem soltas ao lado.');
+      }
     });
 
     /* ---- recortes: só os que vierem na peça (p.recortes) e couberem inteiros num tampo ---- */
@@ -132,8 +151,14 @@
       const nome=(r&&r.tipo)||'recorte';
       const num=[r&&r.x,r&&r.z,r&&r.w,r&&r.d].every(v=>typeof v==='number'&&isFinite(v));
       if(!num||!(r.w>0)||!(r.d>0)){avisos.push('Recorte "'+nome+'" sem medidas válidas: não desenhado.');return}
-      const hospedeira=sol.find(s=>s.kind==='tampo'&&r.x>s.x&&r.z>s.z&&r.x+r.w<s.x+s.sx&&r.z+r.d<s.z+s.sz);
-      if(!hospedeira){avisos.push('Recorte "'+nome+'" fora da pedra: não desenhado.');return}
+      const dentro=s=>r.x>s.x&&r.z>s.z&&r.x+r.w<s.x+s.sx&&r.z+r.d<s.z+s.sz;
+      const hospedeira=sol.find(s=>s.kind==='tampo'&&dentro(s));
+      if(!hospedeira){
+        avisos.push(sol.some(s=>s.kind!=='tampo'&&s.kind!=='saia'&&s.kind!=='roda'&&dentro(s))
+          ?'Recorte "'+nome+'" em piso ou painel não é desenhado nesta versão.'
+          :'Recorte "'+nome+'" fora da pedra (ou encostado na borda): não desenhado.');
+        return;
+      }
       const ocupa=(hospedeira.furos||[]).some(f=>Math.min(f.x+f.w,r.x+r.w)>Math.max(f.x,r.x)&&Math.min(f.z+f.d,r.z+r.d)>Math.max(f.z,r.z));
       if(ocupa){avisos.push('Recorte "'+nome+'" sobrepõe outro: não desenhado.');return}
       const f={tipo:nome,x:r.x,z:r.z,w:r.w,d:r.d,solidId:hospedeira.id};
@@ -153,14 +178,14 @@
       emendasPlano+=dv.emendas;
       const longo=(s.nom!=null?s.nom:dim[a])>=dim[b]?a:b,curto=longo===a?b:a;
       const cortes=[];
-      for(let i=1;i<dv.k;i++)cortes.push([longo,dim[longo]*i/dv.k]);
-      for(let j=1;j<dv.m;j++)cortes.push([curto,dim[curto]*j/dv.m]);
+      for(let i=1;i<Math.min(dv.k,200);i++)cortes.push([longo,dim[longo]*i/dv.k]);       // no máximo 200 linhas por peça
+      for(let j=1;j<Math.min(dv.m,200);j++)cortes.push([curto,dim[curto]*j/dv.m]);
       cortes.forEach(([eixo,pos])=>volta(s,eixo,[s.x,s.y,s.z][AX[eixo]]+pos));
     });
     partes.forEach(pt=>{
       if(!pt.segs.length&&!(pt.total>0))return;
       const dv=divisoes(pt.total,pt.h,SL,SW);emendasPlano+=dv.emendas;
-      for(let i=1;i<dv.k;i++){                                             // cortes nos múltiplos de total/k, ao longo do percurso
+      for(let i=1;i<Math.min(dv.k,200);i++){                               // cortes nos múltiplos de total/k, ao longo do percurso
         const c=pt.total*i/dv.k,sg=pt.segs.filter(s=>s.nomIni<=c+1e-9&&c<=s.nomIni+s.nom+1e-9).pop()||pt.segs[pt.segs.length-1];
         if(!sg)continue;
         const ini=[s=>s.x,s=>s.z][sg.eixoP==='x'?0:1](sg),fim=ini+(sg.eixoP==='x'?sg.sx:sg.sz);
@@ -169,11 +194,26 @@
       }
     });
 
+    recortes.forEach(r=>{                                                  // recorte em cima de uma emenda: continua desenhado, mas avisa
+      if(emendas.some(e=>e.solidId===r.solidId&&((e.eixo==='x'&&e.pos>r.x&&e.pos<r.x+r.w)||(e.eixo==='z'&&e.pos>r.z&&e.pos<r.z+r.d))))
+        avisos.push('Recorte "'+r.tipo+'" cruza uma emenda do plano de corte.');
+    });
+
+    /* rede de segurança: partes que se sobrepõem indicam medidas inconsistentes (ex.: U com A < 2P) */
+    let sobrepostas=false;
+    for(let i=0;i<sol.length&&!sobrepostas;i++)for(let j=i+1;j<sol.length;j++){
+      const a=sol[i],b=sol[j],o=(p0,q0,r0,s0)=>Math.max(0,Math.min(p0+q0,r0+s0)-Math.max(p0,r0));
+      if(o(a.x,a.sx,b.x,b.sx)*o(a.y,a.sy,b.y,b.sy)*o(a.z,a.sz,b.z,b.sz)>1e-6){sobrepostas=true;break}
+    }
+    if(sobrepostas)avisos.push(pp.type==='U'&&d.A>0&&d.A<2*d.P
+      ?'No U, a largura A precisa ser pelo menos 2 vezes a profundidade P: as pernas se sobrepõem e o cálculo conta pedra que não existe.'
+      :'Medidas inconsistentes: partes da peça se sobrepõem. Confira as medidas.');
+
     const bb=caixa(sol);
     const modelo={solids:sol,espessura:t,espessuraOrigem:origem,vazio:!sol.length,
       bbox:sol.length?bb:{min:[0,0,0],max:[0,0,0]},bboxPeca:principais.length?bp:{min:[0,0,0],max:[0,0,0]},
       area:sol.reduce((s,x)=>s+x.face,0)/1e4,emendas,emendasPlano,recortes,avisos,
-      peca:{type:p.type,d:JSON.parse(JSON.stringify(d)),saiaH:p.saiaH,rodaH:p.rodaH}};
+      peca:{type:p.type,d:JSON.parse(JSON.stringify(d)),saiaH,rodaH}};
     modelo.cotas=cotas(modelo);
     return modelo;
   }

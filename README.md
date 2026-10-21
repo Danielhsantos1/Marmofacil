@@ -21,7 +21,7 @@ Mostra a peça em 3D para **conferir** as medidas antes do orçamento. Não é d
 - **Espessura** vem do cadastro do material; sem espessura cadastrada usa 2 cm e a cota avisa "(padrão)".
 - **Emendas** (linha laranja): onde o plano de corte divide uma peça maior que a chapa, na mesma conta do cálculo. Detalhe e limites em *Divergências conhecidas*.
 - **Recortes** (cuba, cooktop...): só aparecem como abertura real se a peça tiver `recortes: [{tipo, x, z, w, d}]` (cm, no plano da peça) e couberem inteiros num tampo; o que for inválido é recusado com aviso na tela. A interface atual **ainda não cria** recortes, e o cálculo atual **não desconta** a área deles.
-- **Câmera:** Perspectiva, De cima e De frente (exatas), Enquadrar, giro por toque ou mouse, zoom por pinça ou roda com limites, reenquadra ao redimensionar a tela. Se o aparelho perder o contexto WebGL, tenta recuperar por 4 s antes de voltar ao 2D.
+- **Câmera:** Perspectiva, De cima e De frente (exatas), Enquadrar, giro por toque ou mouse (no celular, 1 dedo gira na horizontal e a página continua rolando na vertical; 2 dedos aproximam e inclinam; com o mouse gira nos dois eixos), zoom por pinça ou roda com limites (o zoom escolhido é mantido ao editar), reenquadra ao redimensionar a tela. Se o aparelho perder o contexto WebGL, tenta recuperar por 4 s antes de voltar ao 2D.
 - **Aparência (só visual):** lisa, do material, granito, mármore ou quartzo. Texturas procedurais pequenas, ilustrativas, que **não** mostram o veio da chapa e não afetam preço, área nem chapas.
 - Saia e rodabanca em escada, nicho e peça livre aparecem **soltas** ao lado da peça: os dados não dizem onde elas ficam.
 
@@ -33,6 +33,11 @@ Arquivos: `model3d.js` (modelo, emendas, recortes e cotas: funções puras, test
 - Quando uma peça é maior que a chapa nos **dois** lados, o cálculo conta *peças − 1* emendas e o desenho mostra as linhas de corte (menos linhas). A nota do 3D mostra os dois números.
 - Nos cantos, a faixa de saia/rodabanca que encosta na outra é encurtada no desenho (junta de topo); o comprimento do corte e a área não mudam.
 - Um nicho com largura 0 ainda conta as 2 laterais na área (comportamento anterior, mantido).
+- Peça livre com **quantidade fracionária ou menor que 1**: o preço soma `q × área`, o plano de corte monta peças inteiras e o 3D desenha `max(1, arredondado)`. O 3D avisa; o cálculo não foi alterado (decisão comercial).
+- **U com largura A menor que 2× a profundidade P**: as pernas se sobrepõem e o cálculo conta pedra que não existe. O 3D avisa; o cálculo não foi alterado.
+- A saia/rodabanca **automática** tem metragem `defMl` maior que o contorno real em L e U; o que passa do contorno aparece como faixa solta "(sem posição)", com aviso.
+- Medidas absurdamente grandes (como `1e300`) podem travar o cálculo do plano de corte (`nestParts`), fora do 3D, que limita as linhas de corte. Falta um limite nos campos de medida.
+
 
 ## Testes do cálculo
 A geometria, o plano de corte e o preço ficam em `calc.js` (funções puras, sem tela). Os testes ficam em `tests/` e precisam só do Node 18 ou mais novo, sem instalar nada:

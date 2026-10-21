@@ -3,6 +3,6 @@
   "private": true,
   "description": "Marmofácil: orçamento de marmoraria no celular. O app não usa build; o package.json só existe para rodar os testes.",
   "scripts": {
-    "test": "node --test"
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test"
   }
 }

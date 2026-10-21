@@ -12,8 +12,38 @@ const TILE=0.5;                                   // metros por repetição da t
 const LISO={tampo:0xd8dfdc,degrau:0xd8dfdc,saia:0xa3b3ae,roda:0xc3cfcb,espelho:0xb6c3bf,painel:0xcbd5d1};
 const TINTA={tampo:0xffffff,degrau:0xffffff,saia:0xb4bdba,roda:0xdde3e0,espelho:0xc9d0cd,painel:0xeef1ef};
 
-export function webglDisponivel(){
-  try{const c=document.createElement('canvas');return !!(c.getContext('webgl2')||c.getContext('webgl'))}catch(e){return false}
+/* 'gpu' (aceleração de hardware), 'software' (funciona, mas pode ficar lento) ou null (sem WebGL) */
+export function webglModo(){
+  const tenta=opts=>{
+    try{
+      const c=document.createElement('canvas'),gl=c.getContext('webgl2',opts)||c.getContext('webgl',opts);
+      if(!gl)return false;
+      const e=gl.getExtension('WEBGL_lose_context');e&&e.loseContext();            // não deixa o contexto de teste ocupando um lugar
+      return true;
+    }catch(e){return false}
+  };
+  if(tenta({failIfMajorPerformanceCaveat:true}))return 'gpu';
+  return tenta({})?'software':null;
+}
+export const webglDisponivel=()=>webglModo()!==null;
+
+/* ---- matemática da câmera: função pura (arrays), testada em Node sem WebGL ----
+   az = giro em volta do eixo y; pol = 0 (de cima) até π/2 (de frente). `dir` aponta do alvo para a câmera,
+   `r` é a direita da tela e `u` o cima da tela. Só dependem de az, então não há degeneração em pol = 0 nem π/2. */
+const cruz=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const pesc=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+export function baseCamera(az,pol){
+  const dir=[Math.sin(pol)*Math.sin(az),Math.cos(pol),Math.sin(pol)*Math.cos(az)],r=[Math.cos(az),0,-Math.sin(az)];
+  return {dir,r,u:cruz(dir,r)};
+}
+/* menor distância da câmera ao alvo em que todos os pontos cabem na tela (com folga para textos e bordas) */
+export function distanciaIdeal({pontos,alvo,az,pol,fov,aspecto,min=0,folga=0.86}){
+  const b=baseCamera(az,pol),tv=Math.tan(fov*Math.PI/360)*folga,th=tv*aspecto;let d=0;
+  pontos.forEach(p=>{
+    const v=[p[0]-alvo[0],p[1]-alvo[1],p[2]-alvo[2]],xr=pesc(v,b.r),yu=pesc(v,b.u),zf=-pesc(v,b.dir);
+    d=Math.max(d,Math.abs(xr)/th-zf,Math.abs(yu)/tv-zf);
+  });
+  return Math.max(d,min);
 }
 
 /* ---- texturas de pedra: puramente visuais, geradas no aparelho (128 px), sempre as mesmas ---- */
@@ -48,10 +78,11 @@ function escalarUV(geo,sx,sy,sz){
   uv.needsUpdate=true;
 }
 
-export function criarVisualizador(){
+/* deps.cotas = Model3D.cotas (injetada pelo app: o visualizador não depende de variável global) */
+export function criarVisualizador(deps={}){
   const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'low-power'});
   const canvas=renderer.domElement;
-  canvas.style.cssText='display:block;width:100%;height:100%;touch-action:none;cursor:grab';
+  canvas.style.cssText='display:block;width:100%;height:100%;touch-action:pan-y;cursor:grab';     // pan-y: arrastar na vertical com 1 dedo rola a página
   canvas.setAttribute('role','img');
   canvas.setAttribute('aria-label','Modelo 3D da peça com cotas em centímetros. Arraste para girar e use dois dedos para aproximar.');
   const camada=document.createElement('div');                   // textos das cotas e avisos, por cima do canvas
@@ -72,6 +103,10 @@ export function criarVisualizador(){
   let modelo=null,quadro=[],raioQ=1,dMin=0.3,dMax=20,zoomManual=false,pedido=0,perdido=false,aoPerder=null,aoFalhar=null,aoRecuperar=null,tRecup=0;
   let ladoCotas={x:'esq',z:'frente'},rotulos=[],listaCotas=[];
   const texturas={};
+  const mq=typeof matchMedia==='function'?matchMedia('(prefers-color-scheme: dark)'):null;
+  const aoMudarTema=()=>{if(modelo){construir();pedir()}};            // cores de contorno, cotas e emendas seguem o tema
+  if(mq&&mq.addEventListener)mq.addEventListener('change',aoMudarTema);
+  let dprAtual=0;
   let extPerdaCache=null;                                        // só para testes: depois de perdido, getExtension devolve nulo
   const extPerda=()=>extPerdaCache||(extPerdaCache=renderer.getContext().getExtension('WEBGL_lose_context'));
 
@@ -81,10 +116,8 @@ export function criarVisualizador(){
 
   /* ---------- câmera: ângulos, base própria (vista de cima e de frente exatas) e enquadramento ---------- */
   function base(az,pol){
-    const dir=new THREE.Vector3(Math.sin(pol)*Math.sin(az),Math.cos(pol),Math.sin(pol)*Math.cos(az));   // do alvo para a câmera
-    const dir_r=new THREE.Vector3(Math.cos(az),0,-Math.sin(az));                                          // direita na tela (só depende de az)
-    const cima=new THREE.Vector3().crossVectors(dir,dir_r);
-    return {dir,r:dir_r,u:cima};
+    const b=baseCamera(az,pol);
+    return {dir:new THREE.Vector3(...b.dir),r:new THREE.Vector3(...b.r),u:new THREE.Vector3(...b.u)};
   }
   function posicionar(){
     est.pol=Math.min(Math.max(est.pol,0),Math.PI/2);            // de cima (0) até de frente (π/2); sem olhar por baixo
@@ -95,15 +128,9 @@ export function criarVisualizador(){
     camera.updateMatrixWorld();
     atualizarLado();pedir();
   }
-  /* menor distância em que todos os pontos do quadro (peça + cotas) cabem, com folga para os textos */
   function distIdeal(az,pol){
     if(!quadro.length)return est.dist;
-    const b=base(az,pol),tv=Math.tan(camera.fov*Math.PI/360)*0.86,th=tv*camera.aspect;
-    let d=0;
-    const v=new THREE.Vector3();
-    quadro.forEach(p=>{v.copy(p).sub(alvo);const xr=v.dot(b.r),yu=v.dot(b.u),zf=-v.dot(b.dir);
-      d=Math.max(d,Math.abs(xr)/th-zf,Math.abs(yu)/tv-zf)});
-    return Math.max(d,dMin);
+    return distanciaIdeal({pontos:quadro.map(p=>[p.x,p.y,p.z]),alvo:[alvo.x,alvo.y,alvo.z],az,pol,fov:camera.fov,aspecto:camera.aspect,min:dMin});
   }
   function enquadrar(){zoomManual=false;est.dist=distIdeal(est.az,est.pol);posicionar()}
   function vista(nome){
@@ -112,10 +139,10 @@ export function criarVisualizador(){
     else{est.az=-0.6;est.pol=1.0}
     enquadrar();
   }
-  /* depois de mudar tamanho do container ou do modelo: nunca deixa a peça cortada */
+  /* depois de mudar o tamanho do container ou do modelo: sem zoom manual, reenquadra a peça inteira;
+     com zoom manual, respeita o que o usuário escolheu (só aplica os limites). O botão Enquadrar sempre volta ao quadro. */
   function garantirVisivel(){
-    const ideal=distIdeal(est.az,est.pol);
-    if(!zoomManual||est.dist<ideal)est.dist=ideal;
+    if(!zoomManual)est.dist=distIdeal(est.az,est.pol);
     posicionar();
   }
 
@@ -123,13 +150,19 @@ export function criarVisualizador(){
   const ptr=new Map();let d0=0;
   canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});if(ptr.size===2){const [a,b]=[...ptr.values()];d0=Math.hypot(a.x-b.x,a.y-b.y)}canvas.style.cursor='grabbing'});
   const solta=e=>{ptr.delete(e.pointerId);d0=0;if(!ptr.size)canvas.style.cursor='grab'};
-  canvas.addEventListener('pointerup',solta);canvas.addEventListener('pointercancel',solta);
+  canvas.addEventListener('pointerup',solta);canvas.addEventListener('pointercancel',solta);canvas.addEventListener('lostpointercapture',solta);
   canvas.addEventListener('pointermove',e=>{
     const p=ptr.get(e.pointerId);if(!p)return;
-    if(ptr.size===1){est.az-=(e.clientX-p.x)*0.008;est.pol-=(e.clientY-p.y)*0.008;p.x=e.clientX;p.y=e.clientY}
-    else if(ptr.size===2){
-      p.x=e.clientX;p.y=e.clientY;const [a,b]=[...ptr.values()],d=Math.hypot(a.x-b.x,a.y-b.y);
+    if(ptr.size===1){
+      est.az-=(e.clientX-p.x)*0.008;
+      if(e.pointerType==='mouse')est.pol-=(e.clientY-p.y)*0.008;    // com o mouse gira nos dois eixos; no toque a vertical é da página
+      p.x=e.clientX;p.y=e.clientY;
+    }else if(ptr.size===2){                                         // dois dedos: aproxima/afasta e inclina juntos
+      const antes=[...ptr.values()],my0=(antes[0].y+antes[1].y)/2;
+      p.x=e.clientX;p.y=e.clientY;
+      const [a,b]=[...ptr.values()],d=Math.hypot(a.x-b.x,a.y-b.y),my1=(a.y+b.y)/2;
       if(d0>0&&d>0){est.dist*=d0/d;zoomManual=true}d0=d;
+      est.pol-=(my1-my0)*0.008;
     }
     posicionar();
   });
@@ -137,12 +170,12 @@ export function criarVisualizador(){
 
   /* ---------- contexto WebGL: tenta recuperar antes de desistir ---------- */
   canvas.addEventListener('webglcontextlost',e=>{
-    e.preventDefault();perdido=true;mostrarAviso('O aparelho pausou o 3D. Tentando recuperar…');
+    e.preventDefault();perdido=true;camada.style.visibility='hidden';mostrarAviso('O aparelho pausou o 3D. Tentando recuperar…');
     aoPerder&&aoPerder();
-    clearTimeout(tRecup);tRecup=setTimeout(()=>{if(perdido){mostrarAviso('');aoFalhar&&aoFalhar()}},4000);
+    clearTimeout(tRecup);tRecup=setTimeout(()=>{if(perdido){mostrarAviso('');aoFalhar&&aoFalhar(canvas.isConnected)}},4000);   // true = o 3D estava na tela
   });
   canvas.addEventListener('webglcontextrestored',()=>{
-    perdido=false;clearTimeout(tRecup);mostrarAviso('');
+    perdido=false;clearTimeout(tRecup);camada.style.visibility='visible';mostrarAviso('');
     Object.values(texturas).forEach(t=>{t.needsUpdate=true});
     aoRecuperar&&aoRecuperar();pedir();
   });
@@ -152,7 +185,8 @@ export function criarVisualizador(){
   function ajustarTamanho(){
     const c=canvas.parentElement;if(!c)return;
     const w=Math.max(1,c.clientWidth),h=Math.max(1,c.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+    const dpr=Math.min(window.devicePixelRatio||1,1.5);
+    if(dpr!==dprAtual){renderer.setPixelRatio(dpr);dprAtual=dpr}
     renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
     if(modelo)garantirVisivel();else pedir();
   }
@@ -199,7 +233,7 @@ export function criarVisualizador(){
   function construir(){
     liberar(grupo);liberar(grupoCotas);rotulos.forEach(r=>r.el.remove());rotulos=[];
     if(grade){scene.remove(grade);grade.geometry.dispose();grade.material.dispose();grade=null}
-    if(!modelo||modelo.vazio){quadro=[];pedir();return}
+    if(!modelo||modelo.vazio){quadro=[];listaCotas=[];gradeCm=0;pedir();return}
     const borda=cssVar('--fg','#15191A');
     const emenda=cssVar('--emenda','#d9480f'),dimCor=cssVar('--dim','#1d5fd1');
     modelo.solids.forEach(s=>{
@@ -267,7 +301,7 @@ export function criarVisualizador(){
     rotulos.forEach(r=>{r.w=r.el.offsetWidth;r.h=r.el.offsetHeight});
   }
   /* Model3D.cotas é global (model3d.js); o visualizador recalcula quando o lado preferido muda */
-  const Model3D_cotas=(m,l)=>window.Model3D.cotas(m,l);
+  const Model3D_cotas=(m,l)=>deps.cotas?deps.cotas(m,l):(m.cotas||[]);
 
   /* pontos que precisam caber na tela: caixa da peça + extremos das cotas */
   function montarQuadro(a,b){
@@ -281,17 +315,22 @@ export function criarVisualizador(){
     dMin=Math.max(0.25,raioQ*0.45);dMax=raioQ*7;
   }
 
-  /* lado preferido das cotas: o que está virado para a câmera (só muda quando a câmera troca de lado) */
+  /* lado preferido das cotas (só reta, lavatório e ilha usam; nos demais as cotas têm posição fixa).
+     Histerese: só troca quando a câmera passa claramente para o outro lado, sem reconstruir a cada pixel do gesto. */
   function atualizarLado(){
-    if(!modelo||!opt.cotas)return;
-    const n={x:camera.position.x<alvo.x?'esq':'dir',z:camera.position.z>alvo.z?'frente':'fundo'};
-    if(est.pol<0.2){n.x=ladoCotas.x;n.z=ladoCotas.z}                // de cima: a câmera está em cima da peça, não troca de lado
+    if(!modelo||modelo.vazio||!opt.cotas||!['reta','lavatorio','ilha'].includes(modelo.peca.type))return;
+    if(est.pol<0.2)return;                                          // de cima: a câmera está em cima da peça, não troca de lado
+    const dx=camera.position.x-alvo.x,dz=camera.position.z-alvo.z,m=0.06*est.dist,n={x:ladoCotas.x,z:ladoCotas.z};
+    if(dx<-m)n.x='esq';else if(dx>m)n.x='dir';
+    if(dz>m)n.z='frente';else if(dz<-m)n.z='fundo';
     if(n.x!==ladoCotas.x||n.z!==ladoCotas.z){ladoCotas=n;reconstruirCotas()}
   }
+  let nReconst=0;                                                   // só para testes: quantas vezes as cotas foram reconstruídas
   function reconstruirCotas(){
+    nReconst++;
     liberar(grupoCotas);rotulos.forEach(r=>r.el.remove());
     montarCotas(cssVar('--dim','#1d5fd1'));
-    const [a,b]=[modelo.bbox.min,modelo.bbox.max];montarQuadro(a,b);
+    const [a,b]=[modelo.bbox.min,modelo.bbox.max];montarQuadro(a,b);pedir();
   }
 
   /* textos das cotas em tela: projeção, sem sobrepor e dentro do canvas.
@@ -328,13 +367,24 @@ export function criarVisualizador(){
 
   return {
     anexar(container){
+      ptr.clear();d0=0;                                       // gesto interrompido por uma troca de tela não deixa ponteiro preso
       if(canvas.parentElement!==container)container.appendChild(canvas);
       if(camada.parentElement!==container)container.appendChild(camada);
       if(aviso.parentElement!==container)container.appendChild(aviso);
       if(ro){ro.disconnect();ro.observe(container)}
       ajustarTamanho();
     },
-    soltar(){if(ro)ro.disconnect();canvas.remove();camada.remove();aviso.remove()},
+    soltar(){clearTimeout(tRecup);if(ro)ro.disconnect();canvas.remove();camada.remove();aviso.remove()},
+    /* descarta o visualizador de vez (contexto perdido sem volta): o app cria outro na próxima abertura */
+    destruir(){
+      clearTimeout(tRecup);if(pedido)cancelAnimationFrame(pedido);pedido=0;
+      if(mq&&mq.removeEventListener)mq.removeEventListener('change',aoMudarTema);
+      if(ro)ro.disconnect();canvas.remove();camada.remove();aviso.remove();
+      liberar(grupo);liberar(grupoCotas);if(grade){grade.geometry.dispose();grade.material.dispose();grade=null}
+      Object.values(texturas).forEach(t=>t.dispose());
+      renderer.dispose();try{renderer.forceContextLoss()}catch(e){}
+      modelo=null;
+    },
     aoPerderContexto(fn){aoPerder=fn},
     aoFalharContexto(fn){aoFalhar=fn},
     aoRecuperarContexto(fn){aoRecuperar=fn},
@@ -343,6 +393,13 @@ export function criarVisualizador(){
       const novo=!mantem||!modelo;
       modelo=m;
       construir();
+      if(novo){zoomManual=false;est.dist=distIdeal(est.az,est.pol);posicionar()}else garantirVisivel();
+    },
+    /* atualiza modelo e opções numa construção só: o = {cotas, textura} */
+    atualizar(m,mantem,o){
+      if(o){if(o.cotas!=null)opt.cotas=!!o.cotas;if(o.textura!=null)opt.textura=o.textura}
+      const novo=!mantem||!modelo;
+      modelo=m;construir();
       if(novo){zoomManual=false;est.dist=distIdeal(est.az,est.pol);posicionar()}else garantirVisivel();
     },
     /* opções visuais: {cotas:boolean, textura:'liso'|'granito'|'marmore'|'quartzo'} */
@@ -361,7 +418,7 @@ export function criarVisualizador(){
       return {objetos:grupo.children.length,az:est.az,pol:est.pol,dist:est.dist,dMin,dMax,perdido,zoomManual,ladoCotas:{...ladoCotas},
         rotulos:rotulos.map(r=>({txt:r.txt,visivel:r.el.style.display!=='none'&&opt.cotas})),cotasVisiveis:opt.cotas&&grupoCotas.visible,
         foraDoQuadro:fora,grade:gradeCm,textura:opt.textura,memoria:{...renderer.info.memory},
-        canvas:{w:canvas.clientWidth,h:canvas.clientHeight}};
+        canvas:{w:canvas.clientWidth,h:canvas.clientHeight},reconstrucoesCotas:nReconst};
     },
     perderContextoParaTeste(){const e=extPerda();e&&e.loseContext();return !!e},
     restaurarContextoParaTeste(){const e=extPerda();e&&e.restoreContext();return !!e}

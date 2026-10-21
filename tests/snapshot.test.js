@@ -62,3 +62,17 @@ test('o cálculo do snapshot não altera o cálculo original',()=>{
   aplicarSnapshot(c,{price:1,em:1});
   assert.equal(c.price,antes);
 });
+
+test('snapshot guarda a chapa e a espessura do fechamento só para o 3D (não mexe no cálculo)',()=>{
+  const c=calcQuote(quote(),mats(),svcs());
+  const snap=snapshotOf(c,1,{SL:310,SW:180,thick:2});
+  assert.equal(snap.SL,310);assert.equal(snap.SW,180);assert.equal(snap.thick,2);
+  assert.ok(JSON.stringify(snap).length<400,'continua pequeno');
+  const outra=calcQuote(quote(),[{id:'m',slabL:999,slabW:999,priceSlab:1,priceM2:1}],svcs());
+  const r=aplicarSnapshot(outra,snap);
+  assert.equal(r.SL,999,'o cálculo não é alterado pelo snapshot (a chapa do desenho vem dos campos próprios)');
+  assert.equal(r.price,c.price);
+  assert.equal(snapshotOf(c,1).SL,undefined,'sem chapa informada, nada é guardado');
+  assert.equal(snapshotOf(c,1,{SL:NaN,SW:'x',thick:0}).SL,undefined);
+  assert.equal(snapshotOf(c,1,{thick:0}).thick,0,'espessura 0 = padrão fica registrada');
+});

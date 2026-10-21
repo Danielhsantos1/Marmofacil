@@ -110,9 +110,11 @@ function calcQuote(q,materials,services){
    Ao fechar, guardamos os valores calculados. Depois disso, mudar o preço de um material ou
    serviço no cadastro não altera mais o orçamento fechado nem o faturamento do painel. */
 const SNAP_CAMPOS=['price','cost','profit','taxV','mat','labor','svc','fab','inst','frete','perM2','area','nSlabs','util'];
-function snapshotOf(c,quando){
+function snapshotOf(c,quando,chapa){
   const s={versao:1,em:quando};
   SNAP_CAMPOS.forEach(k=>{s[k]=c[k]});
+  /* chapa e espessura do fechamento: só o 3D usa (aplicarSnapshot não mexe nelas), para o desenho bater com o orçamento congelado */
+  if(chapa)['SL','SW','thick'].forEach(k=>{if(typeof chapa[k]==='number'&&isFinite(chapa[k]))s[k]=chapa[k]});
   return s;
 }
 /* Devolve o cálculo com os valores do snapshot por cima (sem snapshot, devolve o mesmo cálculo). */
