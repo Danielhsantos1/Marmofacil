@@ -111,7 +111,7 @@ export function criarVisualizador(deps={}){
   const extPerda=()=>extPerdaCache||(extPerdaCache=renderer.getContext().getExtension('WEBGL_lose_context'));
 
   /* ---------- desenho sob demanda ---------- */
-  const render=()=>{pedido=0;if(perdido)return;renderer.render(scene,camera);posicionarRotulos()};
+  const render=()=>{pedido=0;if(perdido)return;renderer.render(scene,camera);posicionarRotulos();posicionarAlcas()};
   const pedir=()=>{if(!pedido)pedido=requestAnimationFrame(render)};
 
   /* ---------- câmera: ângulos, base própria (vista de cima e de frente exatas) e enquadramento ---------- */
@@ -142,6 +142,7 @@ export function criarVisualizador(deps={}){
   /* depois de mudar o tamanho do container ou do modelo: sem zoom manual, reenquadra a peça inteira;
      com zoom manual, respeita o que o usuário escolheu (só aplica os limites). O botão Enquadrar sempre volta ao quadro. */
   function garantirVisivel(){
+    if(arrastando){posicionar();return}                            // durante o arrasto o quadro não muda (o dedo e a escala ficam estáveis)
     if(!zoomManual)est.dist=distIdeal(est.az,est.pol);
     posicionar();
   }
@@ -180,6 +181,105 @@ export function criarVisualizador(deps={}){
     aoRecuperar&&aoRecuperar();pedir();
   });
   function mostrarAviso(t){aviso.textContent=t;aviso.style.display=t?'block':'none'}
+
+
+  /* ---------- alças de edição: arrastar a ponta de uma cota muda a medida; recorte: mover (✥) e redimensionar (canto).
+     O visualizador só mede o gesto e pede a mudança ao app (edicao.fn); o app valida e devolve o modelo novo. ---------- */
+  const camadaEdit=document.createElement('div');
+  camadaEdit.style.cssText='position:absolute;inset:0;overflow:hidden;pointer-events:none';
+  let edicao={ativo:false,fn:null},arrastando=null,pend=0,pendAcao=null;
+  const alcas=new Map();
+  const tela=p=>{const v=p.clone().project(camera);return [(v.x*0.5+0.5)*canvas.clientWidth,(-v.y*0.5+0.5)*canvas.clientHeight,v.z]};
+  function criarAlca(a){
+    const el=document.createElement('div'),mover=a.tipo==='mover',cota=a.tipo==='cota';
+    el.style.cssText='position:absolute;left:0;top:0;width:44px;height:44px;display:none;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;cursor:grab;z-index:4';
+    const d=document.createElement('span'),bg=cota?'var(--accent,#0e6a5b)':'var(--warn,#a8620b)';
+    d.style.cssText='display:flex;align-items:center;justify-content:center;color:#fff;font:700 15px/1 sans-serif;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45);background:'+bg+';'+
+      (cota?'width:22px;height:22px;border-radius:50%':mover?'width:30px;height:30px;border-radius:50%':'width:22px;height:22px;border-radius:5px');
+    if(mover)d.textContent='✥';
+    el.appendChild(d);el.setAttribute('role','button');
+    el.setAttribute('aria-label',cota?'Arrastar para mudar '+a.rot:mover?'Arrastar para mover o recorte':'Arrastar para mudar o tamanho do recorte');
+    el.addEventListener('pointerdown',e=>iniciarArrasto(alcas.get(a.chave),e));
+    el.addEventListener('pointermove',moverArrasto);
+    el.addEventListener('pointerup',fimArrasto);el.addEventListener('pointercancel',fimArrasto);
+    camadaEdit.appendChild(el);
+    return {a,el};
+  }
+  function montarAlcas(){
+    const vivas=new Set();
+    const def=a=>{vivas.add(a.chave);let h=alcas.get(a.chave);if(!h){h=criarAlca(a);alcas.set(a.chave,h)}h.a=a};
+    if(edicao.ativo&&modelo&&!modelo.vazio){
+      listaCotas.forEach(c=>{
+        if(c.tipo!=='cota'||!c.campo)return;
+        const u=new THREE.Vector3(c.p2[0]-c.p1[0],c.p2[1]-c.p1[1],c.p2[2]-c.p1[2]).normalize();
+        def({chave:'c:'+c.campo,tipo:'cota',campo:c.campo,valor:c.valor,rot:c.texto,u,
+          pos:new THREE.Vector3((c.p2[0]+c.dir[0]*c.off)*CM,(c.p2[1]+c.dir[1]*c.off)*CM,(c.p2[2]+c.dir[2]*c.off)*CM)});
+      });
+      const t=modelo.espessura;
+      (modelo.recortes||[]).forEach(r=>{
+        const base={indice:r.indice,r:{x:r.x,z:r.z,w:r.w,d:r.d}};
+        def({...base,chave:'m:'+r.indice,tipo:'mover',pos:new THREE.Vector3((r.x+r.w/2)*CM,t*CM,(r.z+r.d/2)*CM)});
+        def({...base,chave:'s:'+r.indice,tipo:'tamanho',pos:new THREE.Vector3((r.x+r.w)*CM,t*CM,(r.z+r.d)*CM)});
+      });
+    }
+    alcas.forEach((h,k)=>{if(!vivas.has(k)&&!(arrastando&&arrastando.chave===k)){h.el.remove();alcas.delete(k)}});
+  }
+  function posicionarAlcas(){
+    if(!alcas.size)return;
+    const W=canvas.clientWidth,H=canvas.clientHeight,pos={};
+    alcas.forEach(h=>{
+      const a=h.a,[x,y,z]=tela(a.pos);let ok=z<=1&&z>=-1&&x>-10&&x<W+10&&y>-10&&y<H+10;
+      if(ok&&a.tipo==='cota'){const q=tela(a.pos.clone().addScaledVector(a.u,10*CM));ok=Math.hypot(q[0]-x,q[1]-y)/10>=0.6}      // eixo apontando para o olho: sem como arrastar
+      if(ok&&a.tipo!=='cota')ok=est.pol<=1.2;                                                                                   // recorte: precisa ver a bancada de cima
+      h.x=x;h.y=y;h.ok=ok;pos[a.chave]=h;
+    });
+    alcas.forEach(h=>{                                                // 
+      if(h.a.tipo==='tamanho'&&h.ok){                                  // canto colado no ✥ (recorte pequeno na tela): o canto se afasta na diagonal para os dois ficarem tocáveis
+        const m=pos['m:'+h.a.indice];
+        if(m&&m.ok){let vx=h.x-m.x,vy=h.y-m.y;const n=Math.hypot(vx,vy);if(n<42){if(n<1){vx=1;vy=1}else{vx/=n;vy/=n}h.x=m.x+vx*42;h.y=m.y+vy*42}}
+      }
+      const vis=h.ok||(arrastando&&arrastando.chave===h.a.chave);
+      h.el.style.display=vis?'flex':'none';
+      if(vis)h.el.style.transform='translate('+(h.x-22).toFixed(1)+'px,'+(h.y-22).toFixed(1)+'px)';
+    });
+  }
+  function iniciarArrasto(h,e){
+    if(!h||!edicao.ativo||arrastando)return;
+    e.preventDefault();e.stopPropagation();
+    try{h.el.setPointerCapture(e.pointerId)}catch(x){}
+    const a=h.a,o=tela(a.pos),px=(v3)=>{const q=tela(a.pos.clone().addScaledVector(v3,10*CM));return [(q[0]-o[0])/10,(q[1]-o[1])/10]};
+    const base=a.tipo==='cota'?{ex:px(a.u),v0:a.valor}:{ex:px(new THREE.Vector3(1,0,0)),ez:px(new THREE.Vector3(0,0,1)),r:{...a.r}};
+    arrastando={chave:a.chave,tipo:a.tipo,campo:a.campo,indice:a.indice,x0:e.clientX,y0:e.clientY,base,pid:e.pointerId,ult:''};
+    h.el.style.cursor='grabbing';
+  }
+  function acaoDoGesto(e){
+    const g=arrastando,b=g.base,dx=e.clientX-g.x0,dy=e.clientY-g.y0,lim=(v,mn)=>Math.min(1000,Math.max(mn,Math.round(v)));
+    if(g.tipo==='cota'){
+      const n=b.ex[0]*b.ex[0]+b.ex[1]*b.ex[1];if(n<0.36)return null;
+      return {tipo:'campo',campo:g.campo,valor:lim(b.v0+(dx*b.ex[0]+dy*b.ex[1])/n,/^(saia|roda)H$|^ES$/.test(g.campo)?1:5)};
+    }
+    const det=b.ex[0]*b.ez[1]-b.ex[1]*b.ez[0];if(Math.abs(det)<0.25)return null;
+    const mx=(dx*b.ez[1]-dy*b.ez[0])/det,mz=(b.ex[0]*dy-b.ex[1]*dx)/det,r=b.r;       // gesto na tela -> deslocamento em cm no plano da bancada
+    return g.tipo==='mover'?{tipo:'recorte',indice:g.indice,x:Math.round(r.x+mx),z:Math.round(r.z+mz),w:r.w,d:r.d}
+      :{tipo:'recorte',indice:g.indice,x:r.x,z:r.z,w:lim(r.w+mx,5),d:lim(r.d+mz,5)};
+  }
+  function aplicarPendente(){
+    pend=0;const a=pendAcao;pendAcao=null;
+    if(a&&edicao.fn){const k=JSON.stringify(a);if(k!==arrastando?.ult){if(arrastando)arrastando.ult=k;edicao.fn(a)}}
+  }
+  function moverArrasto(e){
+    if(!arrastando||e.pointerId!==arrastando.pid)return;
+    const a=acaoDoGesto(e);if(!a)return;
+    pendAcao=a;if(!pend)pend=requestAnimationFrame(aplicarPendente);        // no máximo uma reconstrução por quadro
+  }
+  function fimArrasto(e){
+    if(!arrastando||e.pointerId!==arrastando.pid)return;
+    if(pend){cancelAnimationFrame(pend);aplicarPendente()}
+    const h=alcas.get(arrastando.chave);if(h)h.el.style.cursor='grab';
+    arrastando=null;
+    if(edicao.fn)edicao.fn({tipo:'fim'});
+    montarAlcas();if(modelo)garantirVisivel();pedir();
+  }
 
   /* ---------- tamanho do container ---------- */
   function ajustarTamanho(){
@@ -233,7 +333,7 @@ export function criarVisualizador(deps={}){
   function construir(){
     liberar(grupo);liberar(grupoCotas);rotulos.forEach(r=>r.el.remove());rotulos=[];
     if(grade){scene.remove(grade);grade.geometry.dispose();grade.material.dispose();grade=null}
-    if(!modelo||modelo.vazio){quadro=[];listaCotas=[];gradeCm=0;pedir();return}
+    if(!modelo||modelo.vazio){quadro=[];listaCotas=[];gradeCm=0;montarAlcas();pedir();return}
     const borda=cssVar('--fg','#15191A');
     const emenda=cssVar('--emenda','#d9480f'),dimCor=cssVar('--dim','#1d5fd1');
     modelo.solids.forEach(s=>{
@@ -255,6 +355,7 @@ export function criarVisualizador(deps={}){
     montarGrade(a,b);
     montarCotas(dimCor);
     montarQuadro(a,b);
+    montarAlcas();
     pedir();
   }
 
@@ -359,7 +460,7 @@ export function criarVisualizador(deps={}){
     nReconst++;
     liberar(grupoCotas);rotulos.forEach(r=>r.el.remove());
     montarCotas(cssVar('--dim','#1d5fd1'));
-    const [a,b]=[modelo.bbox.min,modelo.bbox.max];montarQuadro(a,b);pedir();
+    const [a,b]=[modelo.bbox.min,modelo.bbox.max];montarQuadro(a,b);montarAlcas();pedir();
   }
 
   /* textos das cotas em tela: projeção, sem sobrepor e dentro do canvas.
@@ -400,20 +501,23 @@ export function criarVisualizador(deps={}){
       if(canvas.parentElement!==container)container.appendChild(canvas);
       if(camada.parentElement!==container)container.appendChild(camada);
       if(aviso.parentElement!==container)container.appendChild(aviso);
+      if(camadaEdit.parentElement!==container)container.appendChild(camadaEdit);
       if(ro){ro.disconnect();ro.observe(container)}
       ajustarTamanho();
     },
-    soltar(){clearTimeout(tRecup);if(ro)ro.disconnect();canvas.remove();camada.remove();aviso.remove()},
+    soltar(){clearTimeout(tRecup);if(ro)ro.disconnect();canvas.remove();camada.remove();aviso.remove();camadaEdit.remove()},
     /* descarta o visualizador de vez (contexto perdido sem volta): o app cria outro na próxima abertura */
     destruir(){
       clearTimeout(tRecup);if(pedido)cancelAnimationFrame(pedido);pedido=0;
       if(mq&&mq.removeEventListener)mq.removeEventListener('change',aoMudarTema);
-      if(ro)ro.disconnect();canvas.remove();camada.remove();aviso.remove();
+      if(ro)ro.disconnect();canvas.remove();camada.remove();aviso.remove();camadaEdit.remove();
       liberar(grupo);liberar(grupoCotas);if(grade){grade.geometry.dispose();grade.material.dispose();grade=null}
       Object.values(texturas).forEach(t=>t.dispose());
       renderer.dispose();try{renderer.forceContextLoss()}catch(e){}
       modelo=null;
     },
+    /* liga/desliga as alças; fn(acao) recebe {tipo:'campo',campo,valor} | {tipo:'recorte',indice,x,z,w,d} | {tipo:'fim'} */
+    editar(ativo,fn){const m=!!ativo!==edicao.ativo;edicao={ativo:!!ativo,fn:fn||null};if(m){montarAlcas();pedir()}},
     aoPerderContexto(fn){aoPerder=fn},
     aoFalharContexto(fn){aoFalhar=fn},
     aoRecuperarContexto(fn){aoRecuperar=fn},

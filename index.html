@@ -187,8 +187,8 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=11"></script>
-<script src="model3d.js?v=11"></script>
+<script src="calc.js?v=12"></script>
+<script src="model3d.js?v=12"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -201,7 +201,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=11;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=12;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -321,7 +321,7 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'liso',equip3d:true,ed3d:false,e3m:'pecas',e3aberto:true};
+const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'liso',equip3d:true,ed3d:false,alcas3d:true,e3m:'pecas',e3aberto:true};
 const IC={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
@@ -861,7 +861,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=11');
+    const m=await import('./viewer3d.js?v=12');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({cotas:Model3D.cotas})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -929,6 +929,7 @@ function atualizar3d(){
   const q=curQ(),p=q&&q.pieces[nav.pi];if(!p)return;
   const mantem=v3Peca===p.id;v3Peca=p.id;                              // mesma peça: não reenquadra a câmera
   const m=modelo3d(q,p);
+  v3.editar(nav.ed3d&&nav.alcas3d&&!fechado(q),aoEditar3d);                // alças só no editor e fora de orçamento fechado
   v3.atualizar(m,mantem,{cotas:nav.cotas3d,textura:texDe(q),equip:nav.equip3d});
   nota3d(m);marcarVista();
 }
@@ -949,7 +950,7 @@ function e3Shell(){
     <button class="sm" data-act="cotas3d" aria-pressed="${nav.cotas3d}">Cotas</button></div>
    <div class="e3main"><div class="e3dock" id="e3dock"><nav class="e3rail" id="e3rail" role="tablist" aria-label="Menus do editor"></nav><section class="e3panel" id="e3panel" aria-live="off"></section></div>
     <div class="e3stage"><div class="draw" id="v3dbox"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
-     <div class="e3vistas bar3d" role="group" aria-label="Vistas do 3D" style="display:flex"><button class="k3d" data-act="view3d" data-v="persp" aria-pressed="true">Perspectiva</button><button class="k3d" data-act="view3d" data-v="topo" aria-pressed="false">De cima</button><button class="k3d" data-act="view3d" data-v="frente" aria-pressed="false">De frente</button><button class="k3d" data-act="enquadrar3d">Enquadrar</button></div>
+     <div class="e3vistas bar3d" role="group" aria-label="Vistas do 3D" style="display:flex"><button class="k3d" data-act="view3d" data-v="persp" aria-pressed="true">Perspectiva</button><button class="k3d" data-act="view3d" data-v="topo" aria-pressed="false">De cima</button><button class="k3d" data-act="view3d" data-v="frente" aria-pressed="false">De frente</button><button class="k3d" data-act="enquadrar3d">Enquadrar</button><button class="k3d" data-act="alcas3d" aria-pressed="${nav.alcas3d}">Alças</button></div>
      <div class="e3chip" id="e3sum" role="status"></div></div></div>`;
 }
 function e3resumo(q){
@@ -995,6 +996,7 @@ function abrirEd3d(){
   try{history.pushState({ed3d:1},'')}catch(e){}
   render();
   const b=$('#ed3d [data-act="ed3d-sair"]');if(b)b.focus({preventScroll:true});
+  if(!fechado(curQ()))toast('Arraste as bolinhas para mudar medidas. ✥ move o recorte.');
 }
 function fecharEd3d(dePop){
   if(!nav.ed3d)return;
@@ -1007,6 +1009,27 @@ function fecharEd3d(dePop){
 window.addEventListener('popstate',()=>fecharEd3d(true));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&nav.ed3d)fecharEd3d()});
 
+/* Alças do 3D: o visualizador mede o gesto; aqui o app grava na MESMA peça, valida e deixa preço/plano de corte recalcularem. */
+function sincCampo(path,val){$$('#e3panel [data-b="'+path+'"]').forEach(el=>{if(document.activeElement!==el)el.value=val})}
+function aoEditar3d(a){
+  const q=curQ();if(!q||fechado(q)||!nav.ed3d)return false;
+  const p=q.pieces[nav.pi];if(!p)return false;
+  const PP=`quotes.${q.id}.pieces.${p.id}`;
+  if(a.tipo==='fim'){save();render();return true}                       // grava uma vez, no fim do gesto
+  if(a.tipo==='campo'){
+    const topo=a.campo==='saiaH'||a.campo==='rodaH';
+    if(topo)p[a.campo]=a.valor;else{p.d=p.d||{};p.d[a.campo]=a.valor}
+    sincCampo(PP+(topo?'.':'.d.')+a.campo,a.valor);
+  }else if(a.tipo==='recorte'){
+    const r=p.recortes&&p.recortes[a.indice];if(!r)return false;
+    const ant={x:r.x,z:r.z,w:r.w,d:r.d};
+    r.x=a.x;r.z=a.z;r.w=a.w;r.d=a.d;
+    const st=modelo3d(q,p).statusRecortes[a.indice];
+    if(!st||!st.ok){Object.assign(r,ant);return false}                  // fora da bancada ou em cima de outro recorte: a alça para no último lugar válido
+    ['x','z','w','d'].forEach(k=>sincCampo(`${PP}.recortes.${a.indice}.${k}`,r[k]));
+  }
+  live();return true;
+}
 /* ===== Eventos ===== */
 const curQ=()=>nav.qid&&S.quotes.find(x=>x.id===nav.qid);
 function confirmTap(btn,fn){
@@ -1040,6 +1063,7 @@ document.addEventListener('click',async e=>{
     case 'view3d':if(v3){v3.vista(v);marcarVista()}break;
     case 'enquadrar3d':if(v3)v3.enquadrar();break;
     case 'equip3d':nav.equip3d=!nav.equip3d;b.setAttribute('aria-pressed',nav.equip3d);if(v3)v3.opcoes({equip:nav.equip3d});{const q2=curQ(),p2=q2&&q2.pieces[nav.pi];if(p2)nota3d(modelo3d(q2,p2))}break;
+    case 'alcas3d':nav.alcas3d=!nav.alcas3d;b.setAttribute('aria-pressed',nav.alcas3d);atualizar3d();break;
     case 'cotas3d':nav.cotas3d=!nav.cotas3d;b.setAttribute('aria-pressed',nav.cotas3d);if(v3)v3.opcoes({cotas:nav.cotas3d});break;
     case 'addpiece':{const t=TYPES[v],d={};t.campos.forEach(([k,,def])=>d[k]=def);if(v==='livre')d.rects=[{w:100,h:50,q:1,l:'Peça'}];
       q.pieces.push({id:uid(),type:v,name:t.nome,d,saiaH:0,rodaH:0});nav.pi=q.pieces.length-1;nav.showTypes=false;save();render();break}
