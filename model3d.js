@@ -146,23 +146,23 @@
     });
 
     /* ---- recortes: só os que vierem na peça (p.recortes) e couberem inteiros num tampo ---- */
-    const recortes=[];
+    const recortes=[],statusRecortes=[];                                    // statusRecortes[i] = {ok, motivo} do i-ésimo recorte da lista
     (Array.isArray(p.recortes)?p.recortes:[]).forEach((r,i)=>{
       const nome=(r&&r.tipo)||'recorte';
+      const nao=(motivo,frase)=>{statusRecortes[i]={ok:false,motivo};avisos.push('Recorte "'+nome+'" '+frase)};
       const num=[r&&r.x,r&&r.z,r&&r.w,r&&r.d].every(v=>typeof v==='number'&&isFinite(v));
-      if(!num||!(r.w>0)||!(r.d>0)){avisos.push('Recorte "'+nome+'" sem medidas válidas: não desenhado.');return}
+      if(!num||!(r.w>0)||!(r.d>0)){nao('Falta preencher as 4 medidas (a largura e a profundidade precisam ser maiores que 0).','sem medidas válidas: não desenhado.');return}
       const dentro=s=>r.x>s.x&&r.z>s.z&&r.x+r.w<s.x+s.sx&&r.z+r.d<s.z+s.sz;
       const hospedeira=sol.find(s=>s.kind==='tampo'&&dentro(s));
       if(!hospedeira){
-        avisos.push(sol.some(s=>s.kind!=='tampo'&&s.kind!=='saia'&&s.kind!=='roda'&&dentro(s))
-          ?'Recorte "'+nome+'" em piso ou painel não é desenhado nesta versão.'
-          :'Recorte "'+nome+'" fora da pedra (ou encostado na borda): não desenhado.');
+        if(sol.some(s=>s.kind!=='tampo'&&s.kind!=='saia'&&s.kind!=='roda'&&dentro(s)))nao('Recorte em piso ou painel não é desenhado nesta versão.','em piso ou painel não é desenhado nesta versão.');
+        else nao('Não cabe dentro da pedra: "da esquerda" e "do fundo" precisam ser maiores que 0, e a soma com a largura/profundidade não pode passar do tamanho da peça.','fora da pedra (ou encostado na borda): não desenhado.');
         return;
       }
       const ocupa=(hospedeira.furos||[]).some(f=>Math.min(f.x+f.w,r.x+r.w)>Math.max(f.x,r.x)&&Math.min(f.z+f.d,r.z+r.d)>Math.max(f.z,r.z));
-      if(ocupa){avisos.push('Recorte "'+nome+'" sobrepõe outro: não desenhado.');return}
+      if(ocupa){nao('Sobrepõe outro recorte.','sobrepõe outro: não desenhado.');return}
       const f={tipo:nome,x:r.x,z:r.z,w:r.w,d:r.d,origem:r.origem==='estimado'?'estimado':'medido',solidId:hospedeira.id};   // origem: medido (digitado) ou estimado (ex.: vindo de foto, a confirmar)
-      (hospedeira.furos=hospedeira.furos||[]).push(f);recortes.push(f);
+      (hospedeira.furos=hospedeira.furos||[]).push(f);recortes.push(f);f.indice=i;statusRecortes[i]={ok:true,motivo:''};
     });
 
     /* ---- emendas: cortes que o plano de corte faz em cada peça maior que a chapa ---- */
@@ -196,7 +196,28 @@
 
     recortes.forEach(r=>{                                                  // recorte em cima de uma emenda: continua desenhado, mas avisa
       if(emendas.some(e=>e.solidId===r.solidId&&((e.eixo==='x'&&e.pos>r.x&&e.pos<r.x+r.w)||(e.eixo==='z'&&e.pos>r.z&&e.pos<r.z+r.d))))
-        avisos.push('Recorte "'+r.tipo+'" cruza uma emenda do plano de corte.');
+        {avisos.push('Recorte "'+r.tipo+'" cruza uma emenda do plano de corte.');statusRecortes[r.indice].motivo='Desenhado, mas cruza uma emenda do plano de corte.'}
+    });
+
+    /* ---- equipamentos ILUSTRATIVOS (cuba, torneira, cooktop) ----
+       Só existem onde há um recorte VÁLIDO desenhado. A forma e a profundidade da cuba e a posição da torneira NÃO vêm de
+       medida nenhuma: são um desenho para o vendedor visualizar. Não têm cota, não entram em área, preço, corte nem emendas
+       (não são sólidos da pedra) e vêm marcados `ilustrativo`. */
+    const equipamentos=[];
+    recortes.forEach(r=>{
+      const host=sol.find(s=>s.id===r.solidId);if(!host)return;
+      if(r.tipo==='cuba'){
+        const prof=Math.min(20,Math.max(8,Math.min(r.w,r.d)*0.4));                       // profundidade ilustrativa (cm)
+        equipamentos.push({tipo:'cuba',indice:r.indice,x:r.x,z:r.z,w:r.w,d:r.d,prof,ilustrativo:true,
+          caixa:{min:[r.x,t-prof,r.z],max:[r.x+r.w,t,r.z+r.d]}});
+        const cx=r.x+r.w/2,atras=r.z-6>host.z+3,zt=atras?r.z-6:r.z+4,altura=30,alcance=18;    // torneira: atrás da cuba se houver pedra, senão na borda de trás
+        equipamentos.push({tipo:'torneira',indice:r.indice,x:cx,z:zt,altura,alcance,ilustrativo:true,
+          caixa:{min:[cx-3,t,zt-3],max:[cx+3,t+altura,zt+alcance]}});
+      }else if(r.tipo==='cooktop'){
+        const rr=Math.min(r.w,r.d)*0.17,q=(fx,fz)=>({x:r.x+r.w*fx,z:r.z+r.d*fz,r:rr});
+        equipamentos.push({tipo:'cooktop',indice:r.indice,x:r.x,z:r.z,w:r.w,d:r.d,ilustrativo:true,
+          queimadores:[q(0.27,0.27),q(0.73,0.27),q(0.27,0.73),q(0.73,0.73)],caixa:{min:[r.x,t,r.z],max:[r.x+r.w,t+0.6,r.z+r.d]}});
+      }
     });
 
     /* rede de segurança: partes que se sobrepõem indicam medidas inconsistentes (ex.: U com A < 2P) */
@@ -212,7 +233,7 @@
     const bb=caixa(sol);
     const modelo={solids:sol,espessura:t,espessuraOrigem:origem,vazio:!sol.length,
       bbox:sol.length?bb:{min:[0,0,0],max:[0,0,0]},bboxPeca:principais.length?bp:{min:[0,0,0],max:[0,0,0]},
-      area:sol.reduce((s,x)=>s+x.face,0)/1e4,emendas,emendasPlano,recortes,avisos,
+      area:sol.reduce((s,x)=>s+x.face,0)/1e4,emendas,emendasPlano,recortes,statusRecortes,equipamentos,avisos,
       peca:{type:p.type,d:JSON.parse(JSON.stringify(d)),saiaH,rodaH}};
     modelo.cotas=cotas(modelo);
     return modelo;
@@ -240,7 +261,7 @@
       out.push({id:cat+'-'+out.length,categoria:cat,tipo:'cota',valor,p1,p2,dir,off,prio:prio||0,
         texto:(rot?rot+' ':'')+fmt(valor)+' cm'});
     };
-    const rotulo=(texto,pos,prio)=>out.push({id:'rot-'+out.length,categoria:'rotulo',tipo:'rotulo',texto,pos,prio:prio||3});
+    const rotulo=(texto,pos,prio,cat)=>out.push({id:'rot-'+out.length,categoria:cat||'rotulo',tipo:'rotulo',texto,pos,prio:prio||3});
     const espTxt='e';                                        // espessura
     const espOrig=m.espessuraOrigem==='padrao'?' (padrão)':'';
     const addEsp=(p1,p2,dir)=>{add('espessura',espTxt,t,p1,p2,dir,2);const c=out[out.length-1];if(c&&espOrig)c.texto+=espOrig};
@@ -306,7 +327,7 @@
     });
 
     /* recortes: rótulo no centro da abertura, com as medidas dadas */
-    m.recortes.forEach(r=>rotulo(r.tipo+' '+fmt(r.w)+'×'+fmt(r.d)+' cm'+(r.origem==='estimado'?' (estimado)':''),[r.x+r.w/2,t,r.z+r.d/2],2));
+    m.recortes.forEach(r=>rotulo(r.tipo+' '+fmt(r.w)+'×'+fmt(r.d)+' cm'+(r.origem==='estimado'?' (estimado)':''),[r.x+r.w/2,t,r.z+r.d/2],2,'recorte'));
     return out;
   }
 

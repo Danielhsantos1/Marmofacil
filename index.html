@@ -153,8 +153,8 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=8"></script>
-<script src="model3d.js?v=8"></script>
+<script src="calc.js?v=10"></script>
+<script src="model3d.js?v=10"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -167,7 +167,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=8;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=10;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -287,7 +287,7 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'liso'};
+const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'liso',equip3d:true};
 const IC={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
@@ -507,7 +507,8 @@ function secMed(q){
    ${nav.show3d?`<div class="draw" id="v3dbox" style="padding:0;height:min(68vw,340px);min-height:260px;position:relative"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
    <div class="bar3d" role="group" aria-label="Vistas do 3D"><button class="k3d" data-act="view3d" data-v="persp" aria-pressed="true">Perspectiva</button><button class="k3d" data-act="view3d" data-v="topo" aria-pressed="false">De cima</button><button class="k3d" data-act="view3d" data-v="frente" aria-pressed="false">De frente</button><button class="k3d" data-act="enquadrar3d">Enquadrar</button></div>
    <div class="row3d"><button class="k3d" data-act="cotas3d" aria-pressed="${nav.cotas3d}">Cotas</button>
-    <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['liso','Lisa'],['material','Do material'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label></div>
+    <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['liso','Lisa'],['material','Do material'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label>
+    ${(p.recortes||[]).length?`<button class="k3d" data-act="equip3d" aria-pressed="${nav.equip3d}" style="grid-column:1/-1">Cuba, torneira e cooktop (ilustrativos)</button>`:''}</div>
    <div class="note" id="n3d">Arraste para girar e use dois dedos para aproximar.</div>`:''}
    <div class="card stack" style="padding-top:14px">
     ${fld('Nome da peça',PP+'.name')}
@@ -525,6 +526,13 @@ function secMed(q){
 /* ===== Recortes (cuba, cooktop...): só formatos com planta real; o app NÃO preenche medida nenhuma ===== */
 const RECORTAVEL=['reta','lavatorio','ilha','L','U'];
 const TIPOS_REC=[['cuba','Cuba'],['cooktop','Cooktop'],['outro','Outro']];
+/* status de UM recorte, para aparecer dentro do cartão dele (logo abaixo das medidas) */
+function rcStatus(st){
+  if(!st)return '';
+  return st.ok?(st.motivo?`<span style="color:var(--warn)">⚠ ${esc(st.motivo)}</span>`:'<span style="color:var(--ok)">✓ Desenhado na peça.</span>')
+              :`<span style="color:var(--warn)">⚠ Não desenhado: ${esc(st.motivo)}</span>`;
+}
+function rcModelo(q,p){const c=calc(q);return Model3D.buildModel(p,{espessura:matOf(q)?.thick,SL:c.SL,SW:c.SW})}
 function rcInfo(q,p){
   const L=p.recortes||[];if(!L.length)return '';
   const c=calc(q),m=Model3D.buildModel(p,{espessura:matOf(q)?.thick,SL:c.SL,SW:c.SW});
@@ -535,12 +543,13 @@ function rcInfo(q,p){
     +`<div class="small muted">${m.recortes.length} de ${L.length} desenhado${m.recortes.length===1?'':'s'} (${esc(resumo)}). Recortes não mudam a área nem o preço: confira em Serviços se o recorte de cuba e de cooktop está incluído.</div>`;
 }
 function recortesEd(q,p){
-  const PP=`quotes.${q.id}.pieces.${p.id}`;
+  const PP=`quotes.${q.id}.pieces.${p.id}`,modeloRc=rcModelo(q,p);
   const lista=(p.recortes||[]).map((r,i)=>{const R=`${PP}.recortes.${i}`;return `<div class="card stack" style="padding:12px;gap:8px">
     <div class="row between"><b>Recorte ${i+1}</b><button class="danger sm" data-act="del-recorte" data-v="${i}" aria-label="Remover recorte ${i+1}">✕</button></div>
     <div class="grid2">${sel('Tipo',R+'.tipo',TIPOS_REC)}${sel('Origem da medida',R+'.origem',[['medido','Medido'],['estimado','Estimado']])}
      ${fld('Da esquerda',R+'.x','n',{unit:'cm'})}${fld('Do fundo',R+'.z','n',{unit:'cm'})}
-     ${fld('Largura',R+'.w','n',{unit:'cm'})}${fld('Profundidade',R+'.d','n',{unit:'cm'})}</div></div>`}).join('');
+     ${fld('Largura',R+'.w','n',{unit:'cm'})}${fld('Profundidade',R+'.d','n',{unit:'cm'})}</div>
+    <div class="small" id="rcs${i}" role="status">${rcStatus(modeloRc.statusRecortes[i])}</div></div>`}).join('');
   return `<div class="lbl">Recortes (cuba, cooktop...)</div>${lista}<div id="rcinfo" class="stack" style="gap:4px">${rcInfo(q,p)}</div>
     <button class="sm" data-act="add-recorte">+ Recorte</button>
     <div class="small muted">Meça da esquerda e do fundo (lado de trás) da peça inteira, em cm. Preencha as 4 medidas para o recorte aparecer no desenho.</div>`;
@@ -812,7 +821,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=8');
+    const m=await import('./viewer3d.js?v=10');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({cotas:Model3D.cotas})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -867,6 +876,7 @@ function nota3d(m){
     'Espessura '+nf(m.espessura,1)+' cm'+(m.espessuraOrigem==='padrao'?' (padrão: o material não tem espessura cadastrada).':' (do material).')];
   const qq=curQ();
   if(fechado(qq))partes.push(typeof qq.snap.thick==='number'&&qq.snap.SL>0?'Orçamento fechado: chapa e espessura do fechamento.':'Orçamento fechado antes desta versão: o 3D usa a chapa e a espessura do cadastro de hoje.');
+  if(m.equipamentos.length&&nav.equip3d)partes.push('Cuba, torneira e cooktop são só ilustração: a forma, a profundidade da cuba e a posição da torneira não vêm de medida. Só o recorte tem medida.');
   if(m.emendasPlano>0)partes.push('Emendas do plano de corte em laranja: '+m.emendasPlano+(m.emendas.length!==m.emendasPlano?' (o desenho mostra '+m.emendas.length+' linhas de corte).':'.'));
   m.avisos.forEach(a=>partes.push(a));
   if(v3&&v3.gradeCm())partes.push('Grade de '+v3.gradeCm()+' cm.');
@@ -879,7 +889,7 @@ function atualizar3d(){
   const q=curQ(),p=q&&q.pieces[nav.pi];if(!p)return;
   const mantem=v3Peca===p.id;v3Peca=p.id;                              // mesma peça: não reenquadra a câmera
   const m=modelo3d(q,p);
-  v3.atualizar(m,mantem,{cotas:nav.cotas3d,textura:texDe(q)});
+  v3.atualizar(m,mantem,{cotas:nav.cotas3d,textura:texDe(q),equip:nav.equip3d});
   nota3d(m);marcarVista();
 }
 
@@ -912,6 +922,7 @@ document.addEventListener('click',async e=>{
     case 'retry3d':v3Promise=null;v3Falha='';render();break;
     case 'view3d':if(v3){v3.vista(v);marcarVista()}break;
     case 'enquadrar3d':if(v3)v3.enquadrar();break;
+    case 'equip3d':nav.equip3d=!nav.equip3d;b.setAttribute('aria-pressed',nav.equip3d);if(v3)v3.opcoes({equip:nav.equip3d});{const q2=curQ(),p2=q2&&q2.pieces[nav.pi];if(p2)nota3d(modelo3d(q2,p2))}break;
     case 'cotas3d':nav.cotas3d=!nav.cotas3d;b.setAttribute('aria-pressed',nav.cotas3d);if(v3)v3.opcoes({cotas:nav.cotas3d});break;
     case 'addpiece':{const t=TYPES[v],d={};t.campos.forEach(([k,,def])=>d[k]=def);if(v==='livre')d.rects=[{w:100,h:50,q:1,l:'Peça'}];
       q.pieces.push({id:uid(),type:v,name:t.nome,d,saiaH:0,rodaH:0});nav.pi=q.pieces.length-1;nav.showTypes=false;save();render();break}
@@ -954,7 +965,7 @@ document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.tar
 function live(){
   const q=curQ();if(!q)return;
   const sb=$('#sumbar');if(sb)sb.outerHTML=sumBar(q);
-  if(nav.sec==='med'){const p=q.pieces[nav.pi];if(p&&$('#pdraw')){$('#pdraw').innerHTML=drawPiece(p);$('#parea').textContent=nf(partsArea(shape(p).parts))+' m²'}const ri=$('#rcinfo');if(ri&&p)ri.innerHTML=rcInfo(q,p);atualizar3d()}
+  if(nav.sec==='med'){const p=q.pieces[nav.pi];if(p&&$('#pdraw')){$('#pdraw').innerHTML=drawPiece(p);$('#parea').textContent=nf(partsArea(shape(p).parts))+' m²'}const ri=$('#rcinfo');if(ri&&p){ri.innerHTML=rcInfo(q,p);const mr=rcModelo(q,p);(p.recortes||[]).forEach((r,i)=>{const e=$('#rcs'+i);if(e)e.innerHTML=rcStatus(mr.statusRecortes[i])})}atualizar3d()}
   if(nav.sec==='svc'){q.lines.forEach((l,i)=>{const s=S.services.find(x=>x.id===l.svcId),el=$('#ls'+i);if(el&&s)el.textContent=brl(s.price*l.qty)});const c=calc(q);$('#svcsub').textContent=brl(c.svc)}
   if(nav.sec==='cal'){const t=document.createElement('template');t.innerHTML=secCal(q);
     ['#calcbox','#aprov','#plano'].forEach(id=>{const n=t.content.querySelector(id),o=$(id);if(n&&o)o.innerHTML=n.innerHTML})}
