@@ -256,10 +256,11 @@
     const {type,d}=m.peca,t=m.espessura,bp=m.bboxPeca;
     const grande=Math.max(bp.max[0]-bp.min[0],bp.max[2]-bp.min[2]);
     const off=Math.min(24,Math.max(7,grande*0.06));
-    const add=(cat,rot,valor,p1,p2,dir,prio)=>{
+    const add=(cat,rot,valor,p1,p2,dir,prio,campo)=>{
       if(!(valor>0)||!isFinite(valor))return;
       out.push({id:cat+'-'+out.length,categoria:cat,tipo:'cota',valor,p1,p2,dir,off,prio:prio||0,
         texto:(rot?rot+' ':'')+fmt(valor)+' cm'});
+      if(campo)out[out.length-1].campo=campo;                 // campo da peça que esta cota mede (o editor 3D arrasta a ponta para mudá-lo)
     };
     const rotulo=(texto,pos,prio,cat)=>out.push({id:'rot-'+out.length,categoria:cat||'rotulo',tipo:'rotulo',texto,pos,prio:prio||3});
     const espTxt='e';                                        // espessura
@@ -271,42 +272,42 @@
 
     if(type==='reta'||type==='lavatorio'||type==='ilha'){
       const compr=d.A,prof=type==='ilha'?d.B:d.P;
-      add('plano','',compr,[bp.min[0],t,zEd],[bp.min[0]+compr,t,zEd],[0,0,dz]);
-      add('plano','',prof,[xEd,t,bp.min[2]],[xEd,t,bp.min[2]+prof],[dx,0,0]);
+      add('plano','',compr,[bp.min[0],t,zEd],[bp.min[0]+compr,t,zEd],[0,0,dz],0,'A');
+      add('plano','',prof,[xEd,t,bp.min[2]],[xEd,t,bp.min[2]+prof],[dx,0,0],0,type==='ilha'?'B':'P');
       addEsp([xOp,0,zEd],[xOp,t,zEd],[dxOp,0,0]);
     }else if(type==='L'){
-      add('plano','A',d.A,[0,t,0],[d.A,t,0],[0,0,-1]);                        // trecho A, borda de trás
+      add('plano','A',d.A,[0,t,0],[d.A,t,0],[0,0,-1],0,'A');                        // trecho A, borda de trás
       if(d.B>d.P){
-        add('plano','B',d.B,[0,t,0],[0,t,d.B],[-1,0,0]);                       // trecho B, borda da esquerda
-        add('plano','prof.',d.P,[0,t,d.B],[d.P,t,d.B],[0,0,1]);                // largura da ponta do trecho B
+        add('plano','B',d.B,[0,t,0],[0,t,d.B],[-1,0,0],0,'B');                   // trecho B, borda da esquerda
+        add('plano','prof.',d.P,[0,t,d.B],[d.P,t,d.B],[0,0,1],0,'P');            // largura da ponta do trecho B
         addEsp([d.P,0,d.B],[d.P,t,d.B],[1,0,0]);
       }else{
-        add('plano','prof.',d.P,[d.A,t,0],[d.A,t,d.P],[1,0,0]);
+        add('plano','prof.',d.P,[d.A,t,0],[d.A,t,d.P],[1,0,0],0,'P');
         addEsp([d.A,0,d.P],[d.A,t,d.P],[1,0,0]);
       }
     }else if(type==='U'){
-      add('plano','A',d.A,[0,t,0],[d.A,t,0],[0,0,-1]);
-      if(d.B>d.P)add('plano','B',d.B,[0,t,0],[0,t,d.B],[-1,0,0]);              // lateral esquerda
-      if(d.C>d.P)add('plano','C',d.C,[d.A,t,0],[d.A,t,d.C],[1,0,0]);           // lateral direita
+      add('plano','A',d.A,[0,t,0],[d.A,t,0],[0,0,-1],0,'A');
+      if(d.B>d.P)add('plano','B',d.B,[0,t,0],[0,t,d.B],[-1,0,0],0,'B');              // lateral esquerda
+      if(d.C>d.P)add('plano','C',d.C,[d.A,t,0],[d.A,t,d.C],[1,0,0],0,'C');           // lateral direita
       if(d.B>d.P){
-        add('plano','prof.',d.P,[0,t,d.B],[d.P,t,d.B],[0,0,1]);
+        add('plano','prof.',d.P,[0,t,d.B],[d.P,t,d.B],[0,0,1],0,'P');
         addEsp([d.P,0,d.B],[d.P,t,d.B],[1,0,0]);
       }else{
-        add('plano','prof.',d.P,[d.A,t,0],[d.A,t,d.P],[1,0,0]);
+        add('plano','prof.',d.P,[d.A,t,0],[d.A,t,d.P],[1,0,0],0,'P');
         addEsp([d.A,0,d.P],[d.A,t,d.P],[1,0,0]);
       }
     }else if(type==='escada'){
       const n=Math.max(1,Math.round(d.N)),zf=n*d.PI;
-      add('plano','',d.A,[0,d.ES,zf],[d.A,d.ES,zf],[0,0,1]);                    // largura
-      add('plano','piso',d.PI,[d.A,d.ES,zf-d.PI],[d.A,d.ES,zf],[1,0,0]);        // profundidade do piso
-      add('altura','esp.',d.ES,[d.A,-t,zf],[d.A,d.ES-t,zf],[1,0,0],1);          // altura do espelho
+      add('plano','',d.A,[0,d.ES,zf],[d.A,d.ES,zf],[0,0,1],0,'A');                    // largura
+      add('plano','piso',d.PI,[d.A,d.ES,zf-d.PI],[d.A,d.ES,zf],[1,0,0],0,'PI');        // profundidade do piso
+      add('altura','esp.',d.ES,[d.A,-t,zf],[d.A,d.ES-t,zf],[1,0,0],1,'ES');          // altura do espelho
       addEsp([0,d.ES-t,zf],[0,d.ES,zf],[-1,0,0]);
       rotulo(n+(n===1?' degrau':' degraus'),[d.A/2,n*d.ES,zf/2]);
     }else if(type==='nicho'){
       const z1=t+d.P;
-      add('plano','',d.A,[0,d.H,z1],[d.A,d.H,z1],[0,0,1]);                      // largura
-      add('altura','',d.H,[-t,0,z1],[-t,d.H,z1],[-1,0,0],1);                    // altura
-      add('plano','prof.',d.P,[d.A+t,d.H,t],[d.A+t,d.H,z1],[1,0,0]);            // profundidade
+      add('plano','',d.A,[0,d.H,z1],[d.A,d.H,z1],[0,0,1],0,'A');                      // largura
+      add('altura','',d.H,[-t,0,z1],[-t,d.H,z1],[-1,0,0],1,'H');                    // altura
+      add('plano','prof.',d.P,[d.A+t,d.H,t],[d.A+t,d.H,z1],[1,0,0],0,'P');            // profundidade
       addEsp([-t,d.H,z1],[0,d.H,z1],[0,0,1]);
     }else if(type==='livre'){
       m.solids.filter(s=>s.kind==='tampo').slice(0,12).forEach(s=>rotulo(fmt(s.sx)+' × '+fmt(s.sz)+' cm',[s.x+s.sx/2,t,s.z+s.sz/2],2));
@@ -318,12 +319,12 @@
     ['saia','roda'].forEach(k=>{
       const s=m.solids.find(x=>x.kind===k);if(!s)return;
       const alongX=s.fa[0]==='x',h=k==='saia'?m.peca.saiaH:m.peca.rodaH;
-      if(s.solta){add('altura',k==='saia'?'saia':'roda',h,[s.x,t,s.z],[s.x,t,s.z+s.sz],[-1,0,0],1);return}   // deitada: altura no eixo z
+      if(s.solta){add('altura',k==='saia'?'saia':'roda',h,[s.x,t,s.z],[s.x,t,s.z+s.sz],[-1,0,0],1,k==='saia'?'saiaH':'rodaH');return}   // deitada: altura no eixo z
       /* faixa ao longo de x: a altura vai para o lado oposto ao da profundidade (reta, lavatório, ilha) ou para a
          direita no L; assim as cotas não se amontoam. Nos demais formatos, para a esquerda. */
       const dirX=alongX?(['reta','lavatorio','ilha'].includes(type)?-dx:(type==='L'?1:-1)):(s.x+s.sx/2>=cx?1:-1);
       const x=alongX?(dirX>0?s.x+s.sx:s.x):longe(s.x,s.x+s.sx,cx),z=alongX?longe(s.z,s.z+s.sz,cz):s.z;
-      add('altura',k==='saia'?'saia':'roda',h,[x,s.y,z],[x,s.y+s.sy,z],[dirX,0,0],1);
+      add('altura',k==='saia'?'saia':'roda',h,[x,s.y,z],[x,s.y+s.sy,z],[dirX,0,0],1,k==='saia'?'saiaH':'rodaH');
     });
 
     /* recortes: rótulo no centro da abertura, com as medidas dadas */

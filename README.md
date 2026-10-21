@@ -64,3 +64,6 @@ Os scripts levam a versão no endereço (`calc.js?v=6`) para o celular nunca mis
 
 ## Editor 3D em tela cheia (versão 11)
 Em Medir, "Abrir editor 3D (tela cheia)". Celular: 3D em cima e menu embaixo (toque no menu ativo para recolher). Computador e celular deitado: menu lateral. Menus: Peças (trocar, adicionar formato, duplicar, remover), Medidas, Acabamento (saia e rodabanca), Recortes e Material (material, aparência, cuba ilustrativa). Usa os mesmos campos, o mesmo cálculo e a mesma peça de Medir: o preço atualiza ao digitar. Orçamento fechado abre só para ver. O botão voltar do aparelho e a tecla Esc fecham o editor. Ainda não é possível arrastar peças com o dedo (próximas etapas).
+
+### Alças no 3D (versão 12)
+No editor 3D, as bolinhas verdes nas pontas das cotas mudam a medida ao arrastar (a peça, o preço e o plano de corte recalculam na hora; a gravação é feita ao soltar). Em recortes, ✥ move e o quadrado no canto muda largura e profundidade; um recorte arrastado para fora da bancada ou por cima de outro para no último lugar válido. Limites: 5 a 1000 cm (1 a 1000 cm em saia, rodabanca e espelho). O botão "Alças" liga e desliga; orçamento fechado não mostra alças. As alças somem quando o eixo aponta para o olho (ex.: comprimento na vista de cima de um L visto de frente).
