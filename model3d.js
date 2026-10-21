@@ -146,23 +146,23 @@
     });
 
     /* ---- recortes: só os que vierem na peça (p.recortes) e couberem inteiros num tampo ---- */
-    const recortes=[];
+    const recortes=[],statusRecortes=[];                                    // statusRecortes[i] = {ok, motivo} do i-ésimo recorte da lista
     (Array.isArray(p.recortes)?p.recortes:[]).forEach((r,i)=>{
       const nome=(r&&r.tipo)||'recorte';
+      const nao=(motivo,frase)=>{statusRecortes[i]={ok:false,motivo};avisos.push('Recorte "'+nome+'" '+frase)};
       const num=[r&&r.x,r&&r.z,r&&r.w,r&&r.d].every(v=>typeof v==='number'&&isFinite(v));
-      if(!num||!(r.w>0)||!(r.d>0)){avisos.push('Recorte "'+nome+'" sem medidas válidas: não desenhado.');return}
+      if(!num||!(r.w>0)||!(r.d>0)){nao('Falta preencher as 4 medidas (a largura e a profundidade precisam ser maiores que 0).','sem medidas válidas: não desenhado.');return}
       const dentro=s=>r.x>s.x&&r.z>s.z&&r.x+r.w<s.x+s.sx&&r.z+r.d<s.z+s.sz;
       const hospedeira=sol.find(s=>s.kind==='tampo'&&dentro(s));
       if(!hospedeira){
-        avisos.push(sol.some(s=>s.kind!=='tampo'&&s.kind!=='saia'&&s.kind!=='roda'&&dentro(s))
-          ?'Recorte "'+nome+'" em piso ou painel não é desenhado nesta versão.'
-          :'Recorte "'+nome+'" fora da pedra (ou encostado na borda): não desenhado.');
+        if(sol.some(s=>s.kind!=='tampo'&&s.kind!=='saia'&&s.kind!=='roda'&&dentro(s)))nao('Recorte em piso ou painel não é desenhado nesta versão.','em piso ou painel não é desenhado nesta versão.');
+        else nao('Não cabe dentro da pedra: "da esquerda" e "do fundo" precisam ser maiores que 0, e a soma com a largura/profundidade não pode passar do tamanho da peça.','fora da pedra (ou encostado na borda): não desenhado.');
         return;
       }
       const ocupa=(hospedeira.furos||[]).some(f=>Math.min(f.x+f.w,r.x+r.w)>Math.max(f.x,r.x)&&Math.min(f.z+f.d,r.z+r.d)>Math.max(f.z,r.z));
-      if(ocupa){avisos.push('Recorte "'+nome+'" sobrepõe outro: não desenhado.');return}
+      if(ocupa){nao('Sobrepõe outro recorte.','sobrepõe outro: não desenhado.');return}
       const f={tipo:nome,x:r.x,z:r.z,w:r.w,d:r.d,origem:r.origem==='estimado'?'estimado':'medido',solidId:hospedeira.id};   // origem: medido (digitado) ou estimado (ex.: vindo de foto, a confirmar)
-      (hospedeira.furos=hospedeira.furos||[]).push(f);recortes.push(f);
+      (hospedeira.furos=hospedeira.furos||[]).push(f);recortes.push(f);f.indice=i;statusRecortes[i]={ok:true,motivo:''};
     });
 
     /* ---- emendas: cortes que o plano de corte faz em cada peça maior que a chapa ---- */
@@ -196,7 +196,7 @@
 
     recortes.forEach(r=>{                                                  // recorte em cima de uma emenda: continua desenhado, mas avisa
       if(emendas.some(e=>e.solidId===r.solidId&&((e.eixo==='x'&&e.pos>r.x&&e.pos<r.x+r.w)||(e.eixo==='z'&&e.pos>r.z&&e.pos<r.z+r.d))))
-        avisos.push('Recorte "'+r.tipo+'" cruza uma emenda do plano de corte.');
+        {avisos.push('Recorte "'+r.tipo+'" cruza uma emenda do plano de corte.');statusRecortes[r.indice].motivo='Desenhado, mas cruza uma emenda do plano de corte.'}
     });
 
     /* rede de segurança: partes que se sobrepõem indicam medidas inconsistentes (ex.: U com A < 2P) */
@@ -212,7 +212,7 @@
     const bb=caixa(sol);
     const modelo={solids:sol,espessura:t,espessuraOrigem:origem,vazio:!sol.length,
       bbox:sol.length?bb:{min:[0,0,0],max:[0,0,0]},bboxPeca:principais.length?bp:{min:[0,0,0],max:[0,0,0]},
-      area:sol.reduce((s,x)=>s+x.face,0)/1e4,emendas,emendasPlano,recortes,avisos,
+      area:sol.reduce((s,x)=>s+x.face,0)/1e4,emendas,emendasPlano,recortes,statusRecortes,avisos,
       peca:{type:p.type,d:JSON.parse(JSON.stringify(d)),saiaH,rodaH}};
     modelo.cotas=cotas(modelo);
     return modelo;

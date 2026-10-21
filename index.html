@@ -153,8 +153,8 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=8"></script>
-<script src="model3d.js?v=8"></script>
+<script src="calc.js?v=9"></script>
+<script src="model3d.js?v=9"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -167,7 +167,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=8;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=9;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -525,6 +525,13 @@ function secMed(q){
 /* ===== Recortes (cuba, cooktop...): só formatos com planta real; o app NÃO preenche medida nenhuma ===== */
 const RECORTAVEL=['reta','lavatorio','ilha','L','U'];
 const TIPOS_REC=[['cuba','Cuba'],['cooktop','Cooktop'],['outro','Outro']];
+/* status de UM recorte, para aparecer dentro do cartão dele (logo abaixo das medidas) */
+function rcStatus(st){
+  if(!st)return '';
+  return st.ok?(st.motivo?`<span style="color:var(--warn)">⚠ ${esc(st.motivo)}</span>`:'<span style="color:var(--ok)">✓ Desenhado na peça.</span>')
+              :`<span style="color:var(--warn)">⚠ Não desenhado: ${esc(st.motivo)}</span>`;
+}
+function rcModelo(q,p){const c=calc(q);return Model3D.buildModel(p,{espessura:matOf(q)?.thick,SL:c.SL,SW:c.SW})}
 function rcInfo(q,p){
   const L=p.recortes||[];if(!L.length)return '';
   const c=calc(q),m=Model3D.buildModel(p,{espessura:matOf(q)?.thick,SL:c.SL,SW:c.SW});
@@ -535,12 +542,13 @@ function rcInfo(q,p){
     +`<div class="small muted">${m.recortes.length} de ${L.length} desenhado${m.recortes.length===1?'':'s'} (${esc(resumo)}). Recortes não mudam a área nem o preço: confira em Serviços se o recorte de cuba e de cooktop está incluído.</div>`;
 }
 function recortesEd(q,p){
-  const PP=`quotes.${q.id}.pieces.${p.id}`;
+  const PP=`quotes.${q.id}.pieces.${p.id}`,modeloRc=rcModelo(q,p);
   const lista=(p.recortes||[]).map((r,i)=>{const R=`${PP}.recortes.${i}`;return `<div class="card stack" style="padding:12px;gap:8px">
     <div class="row between"><b>Recorte ${i+1}</b><button class="danger sm" data-act="del-recorte" data-v="${i}" aria-label="Remover recorte ${i+1}">✕</button></div>
     <div class="grid2">${sel('Tipo',R+'.tipo',TIPOS_REC)}${sel('Origem da medida',R+'.origem',[['medido','Medido'],['estimado','Estimado']])}
      ${fld('Da esquerda',R+'.x','n',{unit:'cm'})}${fld('Do fundo',R+'.z','n',{unit:'cm'})}
-     ${fld('Largura',R+'.w','n',{unit:'cm'})}${fld('Profundidade',R+'.d','n',{unit:'cm'})}</div></div>`}).join('');
+     ${fld('Largura',R+'.w','n',{unit:'cm'})}${fld('Profundidade',R+'.d','n',{unit:'cm'})}</div>
+    <div class="small" id="rcs${i}" role="status">${rcStatus(modeloRc.statusRecortes[i])}</div></div>`}).join('');
   return `<div class="lbl">Recortes (cuba, cooktop...)</div>${lista}<div id="rcinfo" class="stack" style="gap:4px">${rcInfo(q,p)}</div>
     <button class="sm" data-act="add-recorte">+ Recorte</button>
     <div class="small muted">Meça da esquerda e do fundo (lado de trás) da peça inteira, em cm. Preencha as 4 medidas para o recorte aparecer no desenho.</div>`;
@@ -812,7 +820,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=8');
+    const m=await import('./viewer3d.js?v=9');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({cotas:Model3D.cotas})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -954,7 +962,7 @@ document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.tar
 function live(){
   const q=curQ();if(!q)return;
   const sb=$('#sumbar');if(sb)sb.outerHTML=sumBar(q);
-  if(nav.sec==='med'){const p=q.pieces[nav.pi];if(p&&$('#pdraw')){$('#pdraw').innerHTML=drawPiece(p);$('#parea').textContent=nf(partsArea(shape(p).parts))+' m²'}const ri=$('#rcinfo');if(ri&&p)ri.innerHTML=rcInfo(q,p);atualizar3d()}
+  if(nav.sec==='med'){const p=q.pieces[nav.pi];if(p&&$('#pdraw')){$('#pdraw').innerHTML=drawPiece(p);$('#parea').textContent=nf(partsArea(shape(p).parts))+' m²'}const ri=$('#rcinfo');if(ri&&p){ri.innerHTML=rcInfo(q,p);const mr=rcModelo(q,p);(p.recortes||[]).forEach((r,i)=>{const e=$('#rcs'+i);if(e)e.innerHTML=rcStatus(mr.statusRecortes[i])})}atualizar3d()}
   if(nav.sec==='svc'){q.lines.forEach((l,i)=>{const s=S.services.find(x=>x.id===l.svcId),el=$('#ls'+i);if(el&&s)el.textContent=brl(s.price*l.qty)});const c=calc(q);$('#svcsub').textContent=brl(c.svc)}
   if(nav.sec==='cal'){const t=document.createElement('template');t.innerHTML=secCal(q);
     ['#calcbox','#aprov','#plano'].forEach(id=>{const n=t.content.querySelector(id),o=$(id);if(n&&o)o.innerHTML=n.innerHTML})}

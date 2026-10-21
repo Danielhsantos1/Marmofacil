@@ -426,3 +426,31 @@ test('o preço e o plano de corte não dependem dos recortes (mesmo orçamento c
   for(const k of ['area','price','cost','profit','nSlabs'])assert.equal(b[k],a[k],k);
   assert.equal(b.nest.emendas,a.nest.emendas);
 });
+
+/* ================= Status de cada recorte (aparece dentro do cartão dele) ================= */
+test('statusRecortes: um status por recorte da lista, no mesmo índice, com o motivo quando não é desenhado',()=>{
+  const p=pc('reta',{A:280,P:60},{recortes:[
+    {tipo:'cuba',x:100,z:10,w:80,d:45},          // 0: ok
+    {tipo:'cooktop'},                              // 1: vazio
+    {tipo:'cuba',x:0,z:10,w:80,d:45},              // 2: encostado na borda
+    {tipo:'cuba',x:250,z:10,w:80,d:45},            // 3: passa da pedra
+    {tipo:'outro',x:120,z:20,w:30,d:20}            // 4: sobrepõe o 0
+  ]});
+  const s=buildModel(p,{espessura:2,SL:400,SW:200}).statusRecortes;
+  assert.equal(s.length,5);
+  assert.deepEqual(s[0],{ok:true,motivo:''});
+  assert.equal(s[1].ok,false);assert.match(s[1].motivo,/Falta preencher/);
+  assert.equal(s[2].ok,false);assert.match(s[2].motivo,/maiores que 0/);
+  assert.equal(s[3].ok,false);assert.match(s[3].motivo,/Não cabe/);
+  assert.equal(s[4].ok,false);assert.match(s[4].motivo,/Sobrepõe/);
+});
+
+test('statusRecortes: recorte desenhado que cruza uma emenda vem marcado com aviso, sem deixar de ser desenhado',()=>{
+  const m=buildModel(pc('reta',{A:400,P:60},{recortes:[{tipo:'cuba',x:190,z:10,w:20,d:30}]}),{espessura:2,SL:310,SW:180});
+  assert.equal(m.statusRecortes[0].ok,true);assert.match(m.statusRecortes[0].motivo,/cruza uma emenda/);
+  assert.equal(m.recortes.length,1);
+});
+
+test('statusRecortes: sem recortes a lista é vazia',()=>{
+  assert.deepEqual(buildModel(pc('reta',{A:280,P:60}),2).statusRecortes,[]);
+});
