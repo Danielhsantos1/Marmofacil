@@ -109,7 +109,7 @@ export function criarVisualizador(deps={}){
   const mq=typeof matchMedia==='function'?matchMedia('(prefers-color-scheme: dark)'):null;
   const aoMudarTema=()=>{if(modelo){construir();pedir()}};            // cores de contorno, cotas e emendas seguem o tema
   if(mq&&mq.addEventListener)mq.addEventListener('change',aoMudarTema);
-  let dprAtual=0;
+  let dprAtual=0,dprForca=0;                                      // dprForca: densidade de pixels pedida só para uma captura
   let extPerdaCache=null;                                        // só para testes: depois de perdido, getExtension devolve nulo
   const extPerda=()=>extPerdaCache||(extPerdaCache=renderer.getContext().getExtension('WEBGL_lose_context'));
 
@@ -140,6 +140,7 @@ export function criarVisualizador(deps={}){
     paraInercia();
     if(nome==='topo'){est.az=0;est.pol=0}
     else if(nome==='frente'){est.az=0;est.pol=Math.PI/2}
+    else if(nome==='iso'){est.az=-Math.PI/4;est.pol=0.96}          // isométrica: 45° de lado e ~55° de altura, a vista "de catálogo"
     else{est.az=-0.6;est.pol=1.0}
     enquadrar();
   }
@@ -311,7 +312,7 @@ export function criarVisualizador(deps={}){
   function ajustarTamanho(){
     const c=canvas.parentElement;if(!c)return;
     const w=Math.max(1,c.clientWidth),h=Math.max(1,c.clientHeight);
-    const dpr=Math.min(window.devicePixelRatio||1,1.5);
+    const dpr=dprForca||Math.min(window.devicePixelRatio||1,1.5);
     if(dpr!==dprAtual){renderer.setPixelRatio(dpr);dprAtual=dpr}
     renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
     if(modelo)garantirVisivel();else pedir();
@@ -609,9 +610,12 @@ export function criarVisualizador(deps={}){
     editar(ativo,fn){const m=!!ativo!==edicao.ativo;edicao={ativo:!!ativo,fn:fn||null};if(m){montarAlcas();pedir()}},
     /* imagem JPEG (dataURL) da cena como está, com as cotas desenhadas por cima: usada pelo PDF do orçamento.
        Espera as fotos de textura chegarem (até `espera` ms). O container precisa ter tamanho (o app usa um div fora da tela). */
-    async capturar({espera=3000,qualidade=0.86}={}){
+    async capturar({espera=3000,qualidade=0.9,semGrade=false,escala=0}={}){
       for(let t=0;fotosPend>0&&t<espera;t+=50)await new Promise(r=>setTimeout(r,50));
-      ajustarTamanho();render();                                              // render síncrono: o buffer do WebGL ainda vale para a leitura
+      const grade0=grade?grade.visible:true;
+      if(grade&&semGrade)grade.visible=false;                                 // "foto": sem a grade de apoio
+      dprForca=escala>0?escala:0;                                             // mais pixels só para esta imagem; volta ao normal no fim
+      try{ajustarTamanho();render();                                          // render síncrono: o buffer do WebGL ainda vale para a leitura
       const cont=canvas.parentElement,cr=cont.getBoundingClientRect(),k=canvas.width/Math.max(1,cont.clientWidth);
       const out=document.createElement('canvas');out.width=canvas.width;out.height=canvas.height;
       const g=out.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,out.width,out.height);g.drawImage(canvas,0,0);
@@ -625,6 +629,7 @@ export function criarVisualizador(deps={}){
         g.fillText(r.txt,x+w/2,y+h/2+k*0.5);
       });
       return out.toDataURL('image/jpeg',qualidade);
+      }finally{if(grade)grade.visible=grade0;dprForca=0;if(escala>0)ajustarTamanho()}
     },
     aoPerderContexto(fn){aoPerder=fn},
     aoFalharContexto(fn){aoFalhar=fn},

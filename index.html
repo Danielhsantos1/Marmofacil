@@ -53,6 +53,7 @@ button.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--ac
 button.pri:active{filter:brightness(.92)}
 button.ghost{border-color:transparent;background:transparent;padding:8px 10px;min-height:40px}
 button.danger{color:var(--bad)} button.sm{min-height:36px;padding:6px 10px;font-size:13px}
+button.big{min-height:56px;font-size:16px;gap:10px;justify-content:center;width:100%}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.card.tap:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 label.f{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--muted);font-weight:600}
 input,select,textarea{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 11px;min-height:44px;width:100%;min-width:0}
@@ -212,9 +213,9 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=21"></script>
-<script src="catalogo.js?v=21"></script>
-<script src="model3d.js?v=21"></script>
+<script src="calc.js?v=22"></script>
+<script src="catalogo.js?v=22"></script>
+<script src="model3d.js?v=22"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -227,7 +228,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=21;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=22;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -347,13 +348,14 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',brilho3d:true,e3mq:'',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
+const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',brilho3d:true,pdf:null,e3mq:'',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
 const IC={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
   plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>',
   box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
   gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>',
+  pdf:'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M8.5 15.5h1.2a1.2 1.2 0 0 0 0-2.4H8.5v4M13 17.1v-4h1a2 2 0 0 1 0 4zM17.5 13.1h-2v4M15.5 15.2h1.6"/></svg>',
   back:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 5l-7 7 7 7"/></svg>'
 };
 function goTab(t){nav.catAberto=false;nav.tab=t;nav.qid=null;nav.edit=null;render();scrollTo(0,0)}
@@ -728,9 +730,14 @@ function secOrc(q){
    ${q.photos.length?`<div class="photos" style="margin-top:12px">${q.photos.slice(0,3).map(f=>`<img src="${f}" alt="">`).join('')}</div>`:''}
   </div>
   ${c.erro?`<div class="note" role="alert"><b>⚠ ${esc(c.erro)}</b> O PDF e o WhatsApp ficam bloqueados até corrigir em Cálculo.</div>`
-   :`<div class="grid2"><button class="pri" data-act="pdf">Baixar PDF</button><a class="btn" target="_blank" rel="noopener" href="${waUrl(q)}">Enviar no WhatsApp</a></div>`}
+   :`<button class="pri big" data-act="pdf" id="btnpdf">${IC.pdf}<span>Gerar PDF profissional</span></button>
+   ${pdfPronto(q)?`<div class="note" role="status">PDF pronto: <b>${esc(nav.pdf.nome)}</b> (${Math.max(1,Math.round(nav.pdf.blob.size/1024))} KB)</div>
+    <div class="grid2"><button class="big" data-act="pdf-abrir">Abrir PDF</button><button class="big" data-act="pdf-baixar">Baixar PDF</button></div>
+    <button class="pri big" data-act="pdf-wa">Enviar PDF no WhatsApp</button>`
+    :nav.pdf&&nav.pdf.qid===q.id?'<div class="note" role="status">O orçamento mudou depois do último PDF: gere de novo.</div>':''}
+   <a class="btn" target="_blank" rel="noopener" href="${waUrl(q)}">WhatsApp só com o texto</a>`}
   ${q.status==='Rascunho'?'<button data-act="mark-sent">Marcar como enviado</button>':''}
-  <div class="note">O WhatsApp abre com o resumo do orçamento. Anexe o PDF baixado na conversa.</div>`;
+  <div class="note">"Enviar PDF no WhatsApp" abre a lista de aplicativos do celular com o PDF anexado; escolha o WhatsApp. Em aparelhos sem essa função, o PDF é baixado e o WhatsApp abre com o texto.</div>`;
 }
 /* ===== Cadastros ===== */
 const CATS=['Granito','Mármore','Quartzo','Quartzito','Porcelanato','Outra'];
@@ -813,12 +820,12 @@ function viewCfg(){
   const s='settings';
   const ex=[...S.materials,...S.services,...S.clients,...S.quotes].some(x=>x.ex);
   return `<header class="top"><h1>Ajustes</h1></header><div class="stack">
-   <div class="card stack" style="padding-top:14px"><h3>Sua marmoraria</h3>${fld('Nome',s+'.empresa')}${fld('Telefone / WhatsApp',s+'.telefone','t',{kind:'tel'})}
+   <div class="card stack" style="padding-top:14px"><h3>Sua marmoraria</h3>${fld('Nome',s+'.empresa')}${fld('CNPJ',s+'.cnpj')}${fld('Telefone / WhatsApp',s+'.telefone','t',{kind:'tel'})}
     <div class="row">${S.settings.logo?`<img class="thumb" style="width:84px;height:56px;object-fit:contain;background:#fff" src="${S.settings.logo}" alt="Logo">`:'<div class="thumb" style="width:84px;height:56px">sem logo</div>'}
      <button data-act="logo">Logo da marmoraria</button>${S.settings.logo?'<button class="ghost danger" data-act="logo-del">Remover</button>':''}</div></div>
    <div class="card stack" style="padding-top:14px"><h3>Condições que saem no PDF</h3>
     <div class="small muted">Só aparece no PDF o que estiver preenchido.</div>
-    ${fld('Pagamento',s+'.pagamento','area')}${fld('Prazo de entrega',s+'.prazo')}${fld('Garantia',s+'.garantia','area')}</div>
+    ${fld('Pagamento',s+'.pagamento','area')}<div class="grid2">${fld('Parcelas (até)',s+'.parcelas','n',{unit:'x',min:0})}${fld('Desconto no PIX',s+'.pixDesc','n',{unit:'%',min:0})}</div>${fld('Prazo de entrega',s+'.prazo')}${fld('Garantia',s+'.garantia','area')}</div>
    <div class="card stack" style="padding-top:14px"><h3>Valores padrão de novos orçamentos</h3>
     <div class="grid2">${fld('Margem',s+'.margin','n',{unit:'%'})}${fld('Impostos',s+'.tax','n',{unit:'%'})}
     ${fld('Mão de obra',s+'.moM2','n',{unit:'R$/m²'})}${fld('Instalação',s+'.instalM2','n',{unit:'R$/m²'})}
@@ -869,27 +876,34 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=21');
+    const mod=await import('./viewer3d.js?v=22');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
-    box.style.cssText='position:fixed;left:-10000px;top:0;width:800px;height:450px;pointer-events:none';document.body.appendChild(box);
+    box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
     v=mod.criarVisualizador({brilho:mod.webglModo()==='gpu',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)});v.anexar(box);
     const ap=aparenciaPdf(q),lay=layout3d(q);
-    /* tamanho do quadro em px CSS: quanto menor, maiores ficam os textos das cotas no papel (a imagem vai a 182 mm ou 88 mm de largura) */
-    const foto=async(cena,cotas,w)=>{box.style.width=w+'px';box.style.height=Math.round(w*0.5625)+'px';
-      v.atualizar(cena,false,{cotas,textura:ap.textura,cor:ap.cor,foto:ap.foto,equip:true});v.vista('persp');return await v.capturar()};
-    if(q.pieces.length>1)sai.geral=await foto(Model3D.comporCena(lay.itens,0),false,640);
+    /* "foto": vista isométrica, sem grade, fundo branco, bem mais pixels que a tela. Quadro pequeno em px CSS = texto das cotas maior no papel. */
+    const foto=async(cena,cotas,w,h,escala)=>{box.style.width=w+'px';box.style.height=h+'px';
+      v.atualizar(cena,false,{cotas,textura:ap.textura,cor:ap.cor,foto:ap.foto,equip:true});v.vista('iso');return await v.capturar({semGrade:true,escala})};
+    const unica=q.pieces.length===1;
+    if(!unica)sai.geral=await foto(Model3D.comporCena(lay.itens,0),false,700,430,2.4);
     for(let i=0;i<Math.min(q.pieces.length,4);i++){
       const it=lay.itens[i];if(it.modelo.vazio)continue;
-      sai.pecas.push({indice:i,img:await foto(Model3D.comporCena([{modelo:it.modelo,off:[0,0],nome:it.nome}],0),true,i===0&&!sai.geral?640:420)});
+      sai.pecas.push({indice:i,img:await foto(Model3D.comporCena([{modelo:it.modelo,off:[0,0],nome:it.nome}],0),true,i===0&&unica?700:420,i===0&&unica?430:258,i===0&&unica?2.4:2)});
     }
   }catch(e){console.warn('PDF sem imagem 3D',e)}
   finally{try{v&&v.destruir()}catch(e){}if(box)box.remove()}
   return sai;
 }
+/* nome do arquivo: Orcamento-1034-Bancada-Cinza-Absoluto.pdf */
+function nomeArquivoPdf(q){
+  const sl=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  const p=q.pieces[0],m=matOf(q);
+  return ['Orcamento',q.num,sl(p&&(p.name||TYPES[p.type].nome)),sl(m&&m.name)].filter(Boolean).join('-')+'.pdf';
+}
 async function buildPdf(q){
   const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'});
-  const {c,cl,items,svcs}=quoteData(q),s=S.settings,W=210,M=14,CW=W-2*M,ACC=[14,106,91];
+  const {c,cl,items,svcs}=quoteData(q),s=S.settings,W=210,M=14,CW=W-2*M,ACC=[14,106,91],INK=[17,24,39];
   const [img3d,fotoMat,logo]=await Promise.all([imagens3dPdf(q),urlParaDataUrl(fotoDoMaterial(c.m)),urlParaDataUrl(s.logo)]);
   let y=0;
   const tam=u=>{try{const p=doc.getImageProperties(u);return p.width/p.height}catch(e){return 1.5}};
@@ -900,69 +914,97 @@ async function buildPdf(q){
   const nova=()=>{doc.addPage();y=16};
   const need=h=>{if(y+h>282)nova()};
   const titulo=t=>{need(12);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...ACC);doc.text(t.toUpperCase(),M,y);doc.setTextColor(0);y+=5.5};
-  /* faixa do topo: logo (ou nome) à esquerda, número e validade à direita */
+  /* faixa do topo: logo (ou nome) + CNPJ + telefone | número, data e validade */
   doc.setFillColor(...ACC);doc.rect(0,0,W,30,'F');
   let xt=M;
-  if(logo){const r=tam(logo),h=18,w=Math.min(46,h*r);try{doc.setFillColor(255,255,255);doc.roundedRect(M,6,w+4,h+0,2,2,'F');doc.addImage(logo,'JPEG',M+2,6,w,h);xt=M+w+9}catch(e){}}
-  doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text(s.empresa||'Marmoraria',xt,15,{maxWidth:100});
-  doc.setFont('helvetica','normal');doc.setFontSize(10);if(s.telefone)doc.text(s.telefone,xt,22);
+  if(logo){const r=tam(logo),h=18,w=Math.min(46,h*r);try{doc.setFillColor(255,255,255);doc.roundedRect(M,6,w+4,h,2,2,'F');doc.addImage(logo,'JPEG',M+2,6,w,h);xt=M+w+9}catch(e){}}
+  doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text(s.empresa||'Marmoraria',xt,14.5,{maxWidth:100});
+  doc.setFont('helvetica','normal');doc.setFontSize(9);const l2=[s.cnpj?'CNPJ '+s.cnpj:'',s.telefone].filter(Boolean).join('   ·   ');if(l2)doc.text(l2,xt,21.5,{maxWidth:105});
   doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('ORÇAMENTO #'+q.num,W-M,13,{align:'right'});
-  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.text(dateBR(q.createdAt),W-M,19,{align:'right'});doc.text('Válido por '+q.validade+' dias',W-M,24,{align:'right'});
-  doc.setTextColor(0);y=38;
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.text(dateBR(q.createdAt),W-M,19,{align:'right'});doc.text('Validade: '+q.validade+' dias',W-M,24,{align:'right'});
+  doc.setTextColor(0);y=37;
   /* cliente */
-  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text(cl.name||'Cliente não informado',M,y);y+=5.5;
-  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(90);
-  [cl.phone,cl.email,cl.address].filter(Boolean).forEach(t=>{doc.text(t,M,y);y+=4.6});doc.setTextColor(0);y+=3;
-  /* imagem principal: visão geral (várias peças) ou a própria peça */
+  doc.setFont('helvetica','bold');doc.setFontSize(11.5);doc.text(cl.name||'Cliente não informado',M,y);
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(90);const ct=[cl.phone,cl.email,cl.address].filter(Boolean).join('   ·   ');if(ct)doc.text(ct,M,y+5,{maxWidth:CW});doc.setTextColor(0);y+=ct?11:7;
+  /* hero: imagem isométrica, fundo branco, com sombra suave (retângulos cinza por trás) */
   const hero=img3d.geral||(img3d.pecas[0]&&img3d.pecas[0].img);
-  if(hero){const hh=CW*0.5625;try{doc.addImage(hero,'JPEG',M,y,CW,hh);doc.setDrawColor(210);doc.setLineWidth(0.3);doc.rect(M,y,CW,hh);y+=hh+2;
-    doc.setFontSize(7.5);doc.setTextColor(120);doc.text('Simulação 3D ilustrativa. Medidas em centímetros.',M,y+2);doc.setTextColor(0);y+=7}catch(e){}}
-  /* material */
+  if(hero){const hh=CW*430/700;try{
+    [[1.6,'#f1f3f2'],[1.0,'#e6e9e8'],[0.5,'#d9dddc']].forEach(([d,cor])=>{doc.setFillColor(cor);doc.roundedRect(M+d,y+d,CW,hh,2,2,'F')});
+    doc.setFillColor(255,255,255);doc.roundedRect(M,y,CW,hh,2,2,'F');doc.addImage(hero,'JPEG',M,y,CW,hh);doc.setDrawColor(225);doc.setLineWidth(0.2);doc.roundedRect(M,y,CW,hh,2,2);y+=hh+3;
+    doc.setFontSize(7.5);doc.setTextColor(120);doc.text('Simulação 3D ilustrativa. Medidas em centímetros.',M,y+1);doc.setTextColor(0);y+=7}catch(e){}}
+  /* tabela técnica (estilo limpo): Item | Material | Medidas | Acabamento */
+  const col=[M,M+44,M+86,M+148],cw=[42,40,60,34],matNome=c.m?c.m.name:'A definir';
+  need(26);doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(120);
+  ['ITEM','MATERIAL','MEDIDAS','ACABAMENTO'].forEach((t,i)=>doc.text(t,col[i],y));doc.setTextColor(0);y+=2;doc.setDrawColor(40);doc.setLineWidth(0.4);doc.line(M,y,W-M,y);y+=4.5;
+  q.pieces.forEach((p,i)=>{
+    const it=items[i],esp=c.m?` · esp. ${nf(c.m.thick,0)} cm`:'';
+    doc.setFont('helvetica','normal');doc.setFontSize(9);                                    // mede as quebras de linha com a fonte que vai ser usada
+    const cel=[doc.splitTextToSize(it.nome,cw[0]),doc.splitTextToSize(matNome,cw[1]),doc.splitTextToSize(it.desc+esp,cw[2]),doc.splitTextToSize(it.extra||'—',cw[3])];
+    const n=Math.max(...cel.map(x=>x.length)),h=n*4.2+3;need(h+2);
+    doc.setFontSize(9);cel.forEach((t,k)=>{doc.setFont('helvetica',k===0?'bold':'normal');doc.text(t,col[k],y)});
+    y+=h-1;doc.setDrawColor(225);doc.setLineWidth(0.2);doc.line(M,y,W-M,y);y+=4.5});
+  need(10);doc.setFont('helvetica','bold');doc.setFontSize(9);
+  doc.text('Chapas: '+c.nSlabs,col[0],y);doc.text('Área: '+nf(c.area)+' m²',col[1],y);doc.text('Aproveitamento: '+nf(c.util*100,0)+'%',col[2],y);y+=3;
+  if(svcs.length||c.frete){doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(90);
+    const t=doc.splitTextToSize('Inclui: '+[...svcs.map(i=>i.nome+(i.qtd>1?' ('+nf(i.qtd,i.qtd%1?1:0)+' '+i.un+')':'')),'instalação'+(c.frete?' e frete':'')].join(', ')+'.',CW);need(t.length*4+2);doc.text(t,M,y+3);y+=t.length*4+3;doc.setTextColor(0)}
+  y+=5;
+  /* valor em destaque: caixa escura, texto branco */
+  need(36);doc.setFillColor(...INK);doc.roundedRect(M,y,CW,30,2.5,2.5,'F');
+  doc.setTextColor(190,200,210);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('VALOR TOTAL',M+7,y+9);
+  doc.setTextColor(255);doc.setFontSize(32);doc.text(brl(c.price),M+7,y+23.5);
+  const pa=+s.parcelas||0,pd=+s.pixDesc||0,linhas=[];
+  if(pa>1)linhas.push('Em até '+pa+'x');
+  if(pd>0)linhas.push('PIX com '+nf(pd,pd%1?1:0)+'% de desconto:');
+  doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(210,218,226);
+  linhas.forEach((t,i)=>doc.text(t,W-M-7,y+11+i*5.2,{align:'right'}));
+  if(pd>0){doc.setFont('helvetica','bold');doc.setFontSize(15);doc.setTextColor(255);doc.text(brl(Math.round(c.price*(1-pd/100)*100)/100),W-M-7,y+24,{align:'right'})}
+  doc.setTextColor(0);y+=38;
+  /* material com foto */
   titulo('Material');
   {const h=24;need(h+2);let xm=M;
     if(fotoMat){try{doc.addImage(fotoMat,'JPEG',M,y,h*1.6,h);doc.setDrawColor(200);doc.rect(M,y,h*1.6,h);xm=M+h*1.6+5}catch(e){}}
-    doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text(c.m?c.m.name:'A definir',xm,y+7);
+    doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text(matNome,xm,y+7);
     doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(90);
     if(c.m)doc.text(`${c.m.cat}${c.m.color?' · '+c.m.color:''} · espessura ${nf(c.m.thick,0)} cm`,xm,y+13);
     doc.setFontSize(8);doc.text('Foto de referência: a tonalidade pode variar conforme lote e iluminação.',xm,y+19);doc.setTextColor(0);
     y+=h+6}
-  /* itens */
-  titulo('Itens');
-  doc.setFontSize(9.5);doc.setFillColor(238,240,239);doc.rect(M,y-4.2,CW,6.5,'F');doc.setFont('helvetica','bold');
-  doc.text('Item',M+2,y);doc.text('Área',W-M-2,y,{align:'right'});y+=7;doc.setFont('helvetica','normal');
-  items.forEach(i=>{
-    const t=doc.splitTextToSize(i.desc+(i.extra?' - '+i.extra:''),CW-36);need(8+t.length*4.2);
-    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text(i.nome,M+2,y);doc.setFont('helvetica','normal');doc.text(nf(i.area)+' m²',W-M-2,y,{align:'right'});
-    y+=4.6;doc.setTextColor(90);doc.setFontSize(8.5);doc.text(t,M+2,y);y+=t.length*3.9+2.5;doc.setTextColor(0)});
-  doc.setFontSize(10);
-  svcs.forEach(i=>{need(7);doc.text(i.nome,M+2,y);doc.text(nf(i.qtd,i.qtd%1?1:0)+' '+i.un,W-M-2,y,{align:'right'});y+=5.8});
-  need(7);doc.text('Instalação'+(c.frete?' e frete':''),M+2,y);doc.text('incluso',W-M-2,y,{align:'right'});y+=8;
-  /* total */
-  need(24);doc.setDrawColor(...ACC);doc.setLineWidth(0.8);doc.roundedRect(M,y,CW,16,2,2);
-  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('TOTAL',M+5,y+10);doc.setFontSize(19);doc.setTextColor(...ACC);doc.text(brl(c.price),W-M-5,y+10.8,{align:'right'});doc.setTextColor(0);y+=24;
+  /* peças com cotas (várias) */
+  const extras=img3d.pecas.filter((p,i)=>img3d.geral||i>0);
+  if(extras.length){titulo('Peças e medidas');
+    extras.forEach((p,i)=>{const w=(CW-6)/2,h=w*258/420;if(i%2===0){need(h+10)}
+      const x=M+(i%2)*(w+6);try{doc.addImage(p.img,'JPEG',x,y,w,h);doc.setDrawColor(210);doc.rect(x,y,w,h);doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.text(items[p.indice].nome,x,y+h+4)}catch(e){}
+      if(i%2===1||i===extras.length-1)y+=h+9});y+=2}
+  /* recortes e acabamentos */
+  const rec=[];q.pieces.forEach((p,i)=>(p.recortes||[]).forEach(r=>{if(r&&r.w>0&&r.d>0)rec.push([items[i].nome,({cuba:'Cuba',cooktop:'Cooktop'})[r.tipo]||'Recorte',nf(r.w,0)+' × '+nf(r.d,0)+' cm',(r.x>=0&&r.z>=0)?'a '+nf(r.x,0)+' cm da esquerda, '+nf(r.z,0)+' cm do fundo':'—'])}));
+  const acab=[];q.pieces.forEach((p,i)=>{if(p.saiaH>0)acab.push([items[i].nome,'Saia','altura '+nf(p.saiaH,0)+' cm · '+nf(p.saiaMl>0?p.saiaMl:defMl(p,'saia'),2)+' m']);if(p.rodaH>0)acab.push([items[i].nome,'Rodabanca','altura '+nf(p.rodaH,0)+' cm · '+nf(p.rodaMl>0?p.rodaMl:defMl(p,'roda'),2)+' m'])});
+  if(rec.length||acab.length){titulo('Recortes e acabamentos');doc.setFontSize(9);
+    [...rec.map(r=>[r[0],r[1],r[2]+' · '+r[3]]),...acab].forEach(r=>{const t=doc.splitTextToSize(r[2],CW-78);need(t.length*4.2+3);
+      doc.setFont('helvetica','bold');doc.text(r[0],M+1,y);doc.setFont('helvetica','normal');doc.text(r[1],M+46,y);doc.text(t,M+74,y);y+=t.length*4.2+1.8;doc.setDrawColor(235);doc.line(M,y-1.2,W-M,y-1.2)});y+=4}
   /* condições */
   const cond=[['Pagamento',s.pagamento],['Prazo de entrega',s.prazo],['Garantia',s.garantia],['Validade da proposta',q.validade+' dias a partir de '+dateBR(q.createdAt)]].filter(([,v])=>v&&String(v).trim());
   if(cond.length){titulo('Condições');
     cond.forEach(([k,v])=>{const t=doc.splitTextToSize(String(v),CW-40);need(t.length*4.6+2);doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.text(k,M+2,y);doc.setFont('helvetica','normal');doc.text(t,M+40,y);y+=t.length*4.6+1.6});y+=3}
   if(q.notes){titulo('Observações');doc.setFont('helvetica','normal');doc.setFontSize(9.5);const t=doc.splitTextToSize(q.notes,CW);need(t.length*4.6);doc.text(t,M,y);y+=t.length*4.6+4}
-  /* peças com cotas (várias) e fotos do local */
-  const extras=img3d.pecas.filter((p,i)=>img3d.geral||i>0);
-  if(extras.length){titulo('Peças e medidas');
-    extras.forEach((p,i)=>{const w=(CW-6)/2,h=w*0.5625;if(i%2===0){need(h+10)}
-      const x=M+(i%2)*(w+6);try{doc.addImage(p.img,'JPEG',x,y,w,h);doc.setDrawColor(210);doc.rect(x,y,w,h);doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.text(items[p.indice].nome,x,y+h+4)}catch(e){}
-      if(i%2===1||i===extras.length-1)y+=h+9});y+=2}
   const ph=q.photos.slice(0,3);
   if(ph.length){titulo('Fotos do local');need(46);ph.forEach((f,i)=>{try{doc.addImage(f,'JPEG',M+i*60,y,56,42)}catch(e){}});y+=48}
-  /* aceite */
-  need(38);titulo('Aceite do cliente');
-  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(90);doc.text('Declaro estar de acordo com o orçamento, o material e as condições acima.',M,y);doc.setTextColor(0);y+=22;
-  doc.setDrawColor(60);doc.setLineWidth(0.3);doc.line(M,y,M+88,y);doc.line(M+100,y,W-M,y);
-  doc.setFontSize(8.5);doc.text(cl.name||'Cliente',M,y+4.5);doc.text('Data',M+100,y+4.5);
+  /* fechamento: texto de aprovação e espaço para a assinatura */
+  need(52);titulo('Aprovação do cliente');
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(60);doc.text('Aprovado o orçamento acima, autorizo a execução conforme medidas e material.',M,y);doc.setTextColor(0);y+=28;
+  doc.setDrawColor(60);doc.setLineWidth(0.3);doc.line(M,y,M+96,y);doc.line(M+110,y,W-M,y);
+  doc.setFontSize(8.5);doc.text('Assinatura do Cliente'+(cl.name?' - '+cl.name:''),M,y+4.5,{maxWidth:96});doc.text('Data',M+110,y+4.5);
   rodape();
   return doc.output('blob');
 }
 
+/* PDF pronto para este orçamento? Vale só enquanto nada mudou (orçamento, cadastros usados e ajustes). */
+function hashPdf(q){const t=JSON.stringify([q,S.settings,matOf(q)]);let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return h+':'+t.length}
+const pdfPronto=q=>!!nav.pdf&&nav.pdf.qid===q.id&&nav.pdf.hash===hashPdf(q);
 /* ===== WhatsApp ===== */
+function resumoMedidas(q,c){const p=q.pieces[0],d=p&&p.d;return q.pieces.length===1&&d&&d.A&&(d.P||d.B)?nf(d.A,0)+'x'+nf(d.P||d.B,0)+'cm':nf(c.area)+' m²'}
+function waTexto(q){
+  const {c,cl}=quoteData(q);
+  return `Olá${cl.name?', '+cl.name.split(' ')[0]:''}! Segue o orçamento 3D da sua ${q.pieces.length>1?'obra':'bancada'} em ${c.m?c.m.name:'material a definir'} (${resumoMedidas(q,c)}) - ${brl(c.price)}. PDF com foto real anexado. Posso aprovar?`;
+}
 function waUrl(q){
   const {c,cl,items}=quoteData(q),s=S.settings;
   let t=`Olá${cl.name?', '+cl.name.split(' ')[0]:''}! Segue o orçamento #${q.num} da ${s.empresa}.\n\n`;
@@ -998,7 +1040,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=21');
+    const m=await import('./viewer3d.js?v=22');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1262,7 +1304,21 @@ document.addEventListener('click',async e=>{
     case 'del-photo':q.photos.splice(+v,1);save();render();break;
     case 'ai':runAI(q);break;
     case 'ai-apply':{(q.ai.medidas||[]).forEach(m=>{const A=num(m.comprimento_cm),P=num(m.profundidade_cm);if(A>0&&P>0)q.pieces.push({id:uid(),type:'reta',name:String(m.peca||'Peça sugerida'),d:{A,P},saiaH:0,rodaH:0})});nav.sec='med';save();render();toast('Peças adicionadas. Confirme com a trena.');break}
-    case 'pdf':if(calc(q).erro){toast('Corrija a margem e os impostos antes de gerar o PDF.');break}try{toast('Gerando o PDF…');await saveFile(`orcamento-${q.num}.pdf`,await buildPdf(q))}catch(err){toast('Não foi possível gerar o PDF.')}break;
+    case 'pdf':if(calc(q).erro){toast('Corrija a margem e os impostos antes de gerar o PDF.');break}
+      {const bt=b;bt.disabled=true;const sp=bt.querySelector('span');if(sp)sp.textContent='Gerando… (alguns segundos)';
+       try{const bl=await buildPdf(q);nav.pdf={qid:q.id,hash:hashPdf(q),blob:bl,nome:nomeArquivoPdf(q)};toast('PDF pronto.')}
+       catch(err){console.warn(err);toast('Não foi possível gerar o PDF.')}
+       render()}break;
+    case 'pdf-abrir':if(pdfPronto(q)){const u=URL.createObjectURL(nav.pdf.blob);window.open(u,'_blank');setTimeout(()=>URL.revokeObjectURL(u),60000)}break;
+    case 'pdf-baixar':if(pdfPronto(q))await saveFile(nav.pdf.nome,nav.pdf.blob);break;
+    case 'pdf-wa':if(!pdfPronto(q))break;{
+      const arq=new File([nav.pdf.blob],nav.pdf.nome,{type:'application/pdf'}),texto=waTexto(q);
+      if(navigator.canShare&&navigator.canShare({files:[arq]})){
+        try{await navigator.share({files:[arq],text:texto,title:'Orçamento #'+q.num});break}catch(err){if(err&&err.name==='AbortError')break}   // cancelou: nada a fazer; outro erro: cai no plano B
+      }
+      await saveFile(nav.pdf.nome,nav.pdf.blob);let d=((clientOf(q)||{}).phone||'').replace(/\D/g,'');if(d.length===10||d.length===11)d='55'+d;
+      window.open(`https://wa.me/${d}?text=${encodeURIComponent(texto)}`,'_blank','noopener');toast('PDF baixado. Anexe na conversa do WhatsApp.');
+    }break;
     case 'mark-sent':setStatus(q,'Enviado');render();toast('Marcado como enviado.');break;
     case 'cad':nav.cad=v;nav.catAberto=false;render();break;
     case 'cat-abrir':nav.catAberto=true;nav.catQ='';nav.catCat='todas';nav.catSel=[];render();scrollTo(0,0);break;
