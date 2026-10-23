@@ -334,16 +334,16 @@ export function criarVisualizador(deps={}){
   }
 
   /* foto da pedra como textura: carrega uma vez (cache em `texturas`); quando chega, refaz a cena. Falha = fica o tom. */
-  const fotosFalhas=new Set();
+  const fotosFalhas=new Set();let fotosPend=0;
   function texFoto(url){
     const k='foto:'+url,tx=texturas[k];
     if(tx&&tx.image)return tx;
     if(tx===undefined&&!fotosFalhas.has(url)){
-      texturas[k]=null;
-      new THREE.TextureLoader().load(url,t=>{
+      texturas[k]=null;fotosPend++;
+      new THREE.TextureLoader().load(url,t=>{fotosPend--;
         t.wrapS=t.wrapT=THREE.MirroredRepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=2;texturas[k]=t;
         if(opt.foto===url&&modelo){construir();pedir()}
-      },undefined,()=>{delete texturas[k];fotosFalhas.add(url)});
+      },undefined,()=>{fotosPend--;delete texturas[k];fotosFalhas.add(url)});
     }
     return null;
   }
@@ -549,11 +549,30 @@ export function criarVisualizador(deps={}){
       if(ro)ro.disconnect();canvas.remove();camada.remove();aviso.remove();camadaEdit.remove();
       liberar(grupo);liberar(grupoCotas);if(grade){grade.geometry.dispose();grade.material.dispose();grade=null}
       Object.values(texturas).forEach(t=>{if(t)t.dispose()});
-      renderer.dispose();try{renderer.forceContextLoss()}catch(e){}
+      renderer.dispose();setTimeout(()=>{try{renderer.forceContextLoss()}catch(e){}},500);          // adiado: o Three ainda termina verificações dos programas de shader e quebraria com o contexto já perdido
       modelo=null;
     },
     /* liga/desliga as alças; fn(acao) recebe {tipo:'campo',campo,valor} | {tipo:'recorte',indice,x,z,w,d} | {tipo:'fim'} */
     editar(ativo,fn){const m=!!ativo!==edicao.ativo;edicao={ativo:!!ativo,fn:fn||null};if(m){montarAlcas();pedir()}},
+    /* imagem JPEG (dataURL) da cena como está, com as cotas desenhadas por cima: usada pelo PDF do orçamento.
+       Espera as fotos de textura chegarem (até `espera` ms). O container precisa ter tamanho (o app usa um div fora da tela). */
+    async capturar({espera=3000,qualidade=0.86}={}){
+      for(let t=0;fotosPend>0&&t<espera;t+=50)await new Promise(r=>setTimeout(r,50));
+      ajustarTamanho();render();                                              // render síncrono: o buffer do WebGL ainda vale para a leitura
+      const cont=canvas.parentElement,cr=cont.getBoundingClientRect(),k=canvas.width/Math.max(1,cont.clientWidth);
+      const out=document.createElement('canvas');out.width=canvas.width;out.height=canvas.height;
+      const g=out.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,out.width,out.height);g.drawImage(canvas,0,0);
+      if(opt.cotas)rotulos.forEach(r=>{
+        if(!r.el||r.el.style.display==='none')return;
+        const b=r.el.getBoundingClientRect(),cs=getComputedStyle(r.el),x=(b.left-cr.left)*k,y=(b.top-cr.top)*k,w=b.width*k,h=b.height*k,rad=6*k;
+        g.beginPath();g.moveTo(x+rad,y);g.arcTo(x+w,y,x+w,y+h,rad);g.arcTo(x+w,y+h,x,y+h,rad);g.arcTo(x,y+h,x,y,rad);g.arcTo(x,y,x+w,y,rad);g.closePath();
+        g.fillStyle='rgba(255,255,255,0.92)';g.fill();g.strokeStyle=cs.color;g.lineWidth=Math.max(1,k);
+        if(r.cat==='rotulo'||r.cat==='recorte')g.setLineDash([3*k,2*k]);else g.setLineDash([]);
+        g.stroke();g.setLineDash([]);g.fillStyle=cs.color;g.font='600 '+(12*k)+'px ui-monospace,Menlo,monospace';g.textBaseline='middle';g.textAlign='center';
+        g.fillText(r.txt,x+w/2,y+h/2+k*0.5);
+      });
+      return out.toDataURL('image/jpeg',qualidade);
+    },
     aoPerderContexto(fn){aoPerder=fn},
     aoFalharContexto(fn){aoFalhar=fn},
     aoRecuperarContexto(fn){aoRecuperar=fn},

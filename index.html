@@ -166,6 +166,7 @@ input[type=file]{display:none}
 <input type="file" id="fileImport" accept="application/json">
 <input type="file" id="filePhoto" accept="image/*" capture="environment">
 <input type="file" id="fileMat" accept="image/*">
+<input type="file" id="fileLogo" accept="image/*">
 <script>
 /* Rede de segurança de abertura. Se o app não conseguir abrir (por exemplo, arquivos de versões diferentes
    no cache do celular), limpa SÓ o cache do app e tenta de novo uma vez; se ainda falhar, mostra uma tela
@@ -211,9 +212,9 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=19"></script>
-<script src="catalogo.js?v=19"></script>
-<script src="model3d.js?v=19"></script>
+<script src="calc.js?v=20"></script>
+<script src="catalogo.js?v=20"></script>
+<script src="model3d.js?v=20"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -226,7 +227,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=19;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=20;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -812,7 +813,12 @@ function viewCfg(){
   const s='settings';
   const ex=[...S.materials,...S.services,...S.clients,...S.quotes].some(x=>x.ex);
   return `<header class="top"><h1>Ajustes</h1></header><div class="stack">
-   <div class="card stack" style="padding-top:14px"><h3>Sua marmoraria</h3>${fld('Nome',s+'.empresa')}${fld('Telefone / WhatsApp',s+'.telefone','t',{kind:'tel'})}</div>
+   <div class="card stack" style="padding-top:14px"><h3>Sua marmoraria</h3>${fld('Nome',s+'.empresa')}${fld('Telefone / WhatsApp',s+'.telefone','t',{kind:'tel'})}
+    <div class="row">${S.settings.logo?`<img class="thumb" style="width:84px;height:56px;object-fit:contain;background:#fff" src="${S.settings.logo}" alt="Logo">`:'<div class="thumb" style="width:84px;height:56px">sem logo</div>'}
+     <button data-act="logo">Logo da marmoraria</button>${S.settings.logo?'<button class="ghost danger" data-act="logo-del">Remover</button>':''}</div></div>
+   <div class="card stack" style="padding-top:14px"><h3>Condições que saem no PDF</h3>
+    <div class="small muted">Só aparece no PDF o que estiver preenchido.</div>
+    ${fld('Pagamento',s+'.pagamento','area')}${fld('Prazo de entrega',s+'.prazo')}${fld('Garantia',s+'.garantia','area')}</div>
    <div class="card stack" style="padding-top:14px"><h3>Valores padrão de novos orçamentos</h3>
     <div class="grid2">${fld('Margem',s+'.margin','n',{unit:'%'})}${fld('Impostos',s+'.tax','n',{unit:'%'})}
     ${fld('Mão de obra',s+'.moM2','n',{unit:'R$/m²'})}${fld('Instalação',s+'.instalM2','n',{unit:'R$/m²'})}
@@ -846,37 +852,113 @@ async function saveFile(filename,data){
   try{await dl.save({filename,data});toast('Arquivo pronto.')}catch(e){if(e&&e.code!=='declined')toast('Não foi possível salvar o arquivo.')}
 }
 
-/* ===== PDF ===== */
-function buildPdf(q){
+/* ===== PDF que vende ===== */
+async function urlParaDataUrl(url){
+  if(!url)return null;if(url.startsWith('data:'))return url;
+  try{const r=await fetch(url);if(!r.ok)return null;const bl=await r.blob();
+    return await new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(fr.result);fr.onerror=no;fr.readAsDataURL(bl)})}catch(e){return null}
+}
+/* aparência do material para o PDF (sempre "do material": não depende do que está escolhido na tela) */
+function aparenciaPdf(q){
+  const m=matOf(q);
+  return {textura:{'Granito':'granito','Mármore':'marmore','Quartzo':'quartzo'}[m&&m.cat]||'liso',cor:corDaPedra(m&&m.color),foto:fotoDoMaterial(m)};
+}
+/* imagens 3D das peças (com cotas), tiradas com um visualizador próprio fora da tela. Sem WebGL ou com erro: o PDF sai sem imagem. */
+async function imagens3dPdf(q){
+  const sai={geral:null,pecas:[]};
+  if(!q.pieces.length)return sai;
+  let box=null,v=null;
+  try{
+    const mod=await import('./viewer3d.js?v=20');
+    if(!mod.webglModo())return sai;
+    box=document.createElement('div');box.setAttribute('aria-hidden','true');
+    box.style.cssText='position:fixed;left:-10000px;top:0;width:800px;height:450px;pointer-events:none';document.body.appendChild(box);
+    v=mod.criarVisualizador({cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)});v.anexar(box);
+    const ap=aparenciaPdf(q),lay=layout3d(q);
+    /* tamanho do quadro em px CSS: quanto menor, maiores ficam os textos das cotas no papel (a imagem vai a 182 mm ou 88 mm de largura) */
+    const foto=async(cena,cotas,w)=>{box.style.width=w+'px';box.style.height=Math.round(w*0.5625)+'px';
+      v.atualizar(cena,false,{cotas,textura:ap.textura,cor:ap.cor,foto:ap.foto,equip:true});v.vista('persp');return await v.capturar()};
+    if(q.pieces.length>1)sai.geral=await foto(Model3D.comporCena(lay.itens,0),false,640);
+    for(let i=0;i<Math.min(q.pieces.length,4);i++){
+      const it=lay.itens[i];if(it.modelo.vazio)continue;
+      sai.pecas.push({indice:i,img:await foto(Model3D.comporCena([{modelo:it.modelo,off:[0,0],nome:it.nome}],0),true,i===0&&!sai.geral?640:420)});
+    }
+  }catch(e){console.warn('PDF sem imagem 3D',e)}
+  finally{try{v&&v.destruir()}catch(e){}if(box)box.remove()}
+  return sai;
+}
+async function buildPdf(q){
   const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'});
-  const {c,cl,items,svcs}=quoteData(q),s=S.settings,W=210,M=16;let y=18;
-  const need=h=>{if(y+h>285){doc.addPage();y=18}};
-  doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text(s.empresa||'Marmoraria',M,y);
-  doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(90);
-  if(s.telefone)doc.text(s.telefone,M,y+6);
-  doc.setTextColor(0);doc.setFont('helvetica','bold');doc.text('Orçamento #'+q.num,W-M,y,{align:'right'});
-  doc.setFont('helvetica','normal');doc.setTextColor(90);
-  doc.text(dateBR(q.createdAt)+'  |  válido por '+q.validade+' dias',W-M,y+6,{align:'right'});doc.setTextColor(0);
-  y+=16;doc.setDrawColor(200);doc.line(M,y,W-M,y);y+=8;
-  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text(cl.name||'Cliente não informado',M,y);y+=5.5;
-  doc.setFont('helvetica','normal');doc.setFontSize(10);
-  [cl.phone,cl.email,cl.address].filter(Boolean).forEach(t=>{doc.text(t,M,y);y+=5});
-  y+=3;doc.setFont('helvetica','bold');doc.text('Material',M,y);doc.setFont('helvetica','normal');
-  doc.text(c.m?`${c.m.name} (${c.m.cat}, ${nf(c.m.thick,0)} cm)`:'a definir',M+22,y);y+=9;
-  doc.setFillColor(238,240,239);doc.rect(M,y-5,W-2*M,7,'F');doc.setFont('helvetica','bold');
+  const {c,cl,items,svcs}=quoteData(q),s=S.settings,W=210,M=14,CW=W-2*M,ACC=[14,106,91];
+  const [img3d,fotoMat,logo]=await Promise.all([imagens3dPdf(q),urlParaDataUrl(fotoDoMaterial(c.m)),urlParaDataUrl(s.logo)]);
+  let y=0;
+  const tam=u=>{try{const p=doc.getImageProperties(u);return p.width/p.height}catch(e){return 1.5}};
+  const rodape=()=>{const n=doc.getNumberOfPages();for(let i=1;i<=n;i++){doc.setPage(i);doc.setDrawColor(200);doc.setLineWidth(0.2);doc.line(M,286,W-M,286);
+    doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(120);
+    doc.text('Valores sujeitos a conferência das medidas no local. Imagens 3D e fotos de materiais são ilustrativas; a tonalidade da pedra pode variar entre chapas.',M,290.5,{maxWidth:CW-18});
+    doc.text(i+' / '+n,W-M,290.5,{align:'right'})}doc.setTextColor(0)};
+  const nova=()=>{doc.addPage();y=16};
+  const need=h=>{if(y+h>282)nova()};
+  const titulo=t=>{need(12);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...ACC);doc.text(t.toUpperCase(),M,y);doc.setTextColor(0);y+=5.5};
+  /* faixa do topo: logo (ou nome) à esquerda, número e validade à direita */
+  doc.setFillColor(...ACC);doc.rect(0,0,W,30,'F');
+  let xt=M;
+  if(logo){const r=tam(logo),h=18,w=Math.min(46,h*r);try{doc.setFillColor(255,255,255);doc.roundedRect(M,6,w+4,h+0,2,2,'F');doc.addImage(logo,'JPEG',M+2,6,w,h);xt=M+w+9}catch(e){}}
+  doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text(s.empresa||'Marmoraria',xt,15,{maxWidth:100});
+  doc.setFont('helvetica','normal');doc.setFontSize(10);if(s.telefone)doc.text(s.telefone,xt,22);
+  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('ORÇAMENTO #'+q.num,W-M,13,{align:'right'});
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.text(dateBR(q.createdAt),W-M,19,{align:'right'});doc.text('Válido por '+q.validade+' dias',W-M,24,{align:'right'});
+  doc.setTextColor(0);y=38;
+  /* cliente */
+  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text(cl.name||'Cliente não informado',M,y);y+=5.5;
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(90);
+  [cl.phone,cl.email,cl.address].filter(Boolean).forEach(t=>{doc.text(t,M,y);y+=4.6});doc.setTextColor(0);y+=3;
+  /* imagem principal: visão geral (várias peças) ou a própria peça */
+  const hero=img3d.geral||(img3d.pecas[0]&&img3d.pecas[0].img);
+  if(hero){const hh=CW*0.5625;try{doc.addImage(hero,'JPEG',M,y,CW,hh);doc.setDrawColor(210);doc.setLineWidth(0.3);doc.rect(M,y,CW,hh);y+=hh+2;
+    doc.setFontSize(7.5);doc.setTextColor(120);doc.text('Simulação 3D ilustrativa. Medidas em centímetros.',M,y+2);doc.setTextColor(0);y+=7}catch(e){}}
+  /* material */
+  titulo('Material');
+  {const h=24;need(h+2);let xm=M;
+    if(fotoMat){try{doc.addImage(fotoMat,'JPEG',M,y,h*1.6,h);doc.setDrawColor(200);doc.rect(M,y,h*1.6,h);xm=M+h*1.6+5}catch(e){}}
+    doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text(c.m?c.m.name:'A definir',xm,y+7);
+    doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(90);
+    if(c.m)doc.text(`${c.m.cat}${c.m.color?' · '+c.m.color:''} · espessura ${nf(c.m.thick,0)} cm`,xm,y+13);
+    doc.setFontSize(8);doc.text('Foto de referência: a tonalidade pode variar conforme lote e iluminação.',xm,y+19);doc.setTextColor(0);
+    y+=h+6}
+  /* itens */
+  titulo('Itens');
+  doc.setFontSize(9.5);doc.setFillColor(238,240,239);doc.rect(M,y-4.2,CW,6.5,'F');doc.setFont('helvetica','bold');
   doc.text('Item',M+2,y);doc.text('Área',W-M-2,y,{align:'right'});y+=7;doc.setFont('helvetica','normal');
   items.forEach(i=>{
-    const t=doc.splitTextToSize(i.desc+(i.extra?' - '+i.extra:''),W-2*M-40);need(8+t.length*4.5);
-    doc.setFont('helvetica','bold');doc.text(i.nome,M+2,y);doc.setFont('helvetica','normal');doc.text(nf(i.area)+' m²',W-M-2,y,{align:'right'});
-    y+=4.8;doc.setTextColor(90);doc.setFontSize(9);doc.text(t,M+2,y);y+=t.length*4.2+2.5;doc.setTextColor(0);doc.setFontSize(10)});
-  svcs.forEach(i=>{need(7);doc.text(i.nome,M+2,y);doc.text(nf(i.qtd,i.qtd%1?1:0)+' '+i.un,W-M-2,y,{align:'right'});y+=6});
+    const t=doc.splitTextToSize(i.desc+(i.extra?' - '+i.extra:''),CW-36);need(8+t.length*4.2);
+    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text(i.nome,M+2,y);doc.setFont('helvetica','normal');doc.text(nf(i.area)+' m²',W-M-2,y,{align:'right'});
+    y+=4.6;doc.setTextColor(90);doc.setFontSize(8.5);doc.text(t,M+2,y);y+=t.length*3.9+2.5;doc.setTextColor(0)});
+  doc.setFontSize(10);
+  svcs.forEach(i=>{need(7);doc.text(i.nome,M+2,y);doc.text(nf(i.qtd,i.qtd%1?1:0)+' '+i.un,W-M-2,y,{align:'right'});y+=5.8});
   need(7);doc.text('Instalação'+(c.frete?' e frete':''),M+2,y);doc.text('incluso',W-M-2,y,{align:'right'});y+=8;
-  need(20);doc.setDrawColor(20);doc.setLineWidth(0.6);doc.line(M,y,W-M,y);y+=8;
-  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('Total',M+2,y);doc.setFontSize(16);doc.text(brl(c.price),W-M-2,y,{align:'right'});y+=10;
-  if(q.notes){doc.setFont('helvetica','normal');doc.setFontSize(10);const t=doc.splitTextToSize(q.notes,W-2*M);need(t.length*5);doc.text(t,M,y);y+=t.length*5+4}
+  /* total */
+  need(24);doc.setDrawColor(...ACC);doc.setLineWidth(0.8);doc.roundedRect(M,y,CW,16,2,2);
+  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('TOTAL',M+5,y+10);doc.setFontSize(19);doc.setTextColor(...ACC);doc.text(brl(c.price),W-M-5,y+10.8,{align:'right'});doc.setTextColor(0);y+=24;
+  /* condições */
+  const cond=[['Pagamento',s.pagamento],['Prazo de entrega',s.prazo],['Garantia',s.garantia],['Validade da proposta',q.validade+' dias a partir de '+dateBR(q.createdAt)]].filter(([,v])=>v&&String(v).trim());
+  if(cond.length){titulo('Condições');
+    cond.forEach(([k,v])=>{const t=doc.splitTextToSize(String(v),CW-40);need(t.length*4.6+2);doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.text(k,M+2,y);doc.setFont('helvetica','normal');doc.text(t,M+40,y);y+=t.length*4.6+1.6});y+=3}
+  if(q.notes){titulo('Observações');doc.setFont('helvetica','normal');doc.setFontSize(9.5);const t=doc.splitTextToSize(q.notes,CW);need(t.length*4.6);doc.text(t,M,y);y+=t.length*4.6+4}
+  /* peças com cotas (várias) e fotos do local */
+  const extras=img3d.pecas.filter((p,i)=>img3d.geral||i>0);
+  if(extras.length){titulo('Peças e medidas');
+    extras.forEach((p,i)=>{const w=(CW-6)/2,h=w*0.5625;if(i%2===0){need(h+10)}
+      const x=M+(i%2)*(w+6);try{doc.addImage(p.img,'JPEG',x,y,w,h);doc.setDrawColor(210);doc.rect(x,y,w,h);doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.text(items[p.indice].nome,x,y+h+4)}catch(e){}
+      if(i%2===1||i===extras.length-1)y+=h+9});y+=2}
   const ph=q.photos.slice(0,3);
-  if(ph.length){need(52);ph.forEach((f,i)=>{try{doc.addImage(f,'JPEG',M+i*58,y,54,40)}catch(e){}});y+=46}
-  doc.setFontSize(8);doc.setTextColor(120);doc.text('Valores sujeitos a conferência das medidas no local.',M,288);
+  if(ph.length){titulo('Fotos do local');need(46);ph.forEach((f,i)=>{try{doc.addImage(f,'JPEG',M+i*60,y,56,42)}catch(e){}});y+=48}
+  /* aceite */
+  need(38);titulo('Aceite do cliente');
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(90);doc.text('Declaro estar de acordo com o orçamento, o material e as condições acima.',M,y);doc.setTextColor(0);y+=22;
+  doc.setDrawColor(60);doc.setLineWidth(0.3);doc.line(M,y,M+88,y);doc.line(M+100,y,W-M,y);
+  doc.setFontSize(8.5);doc.text(cl.name||'Cliente',M,y+4.5);doc.text('Data',M+100,y+4.5);
+  rodape();
   return doc.output('blob');
 }
 
@@ -916,7 +998,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=19');
+    const m=await import('./viewer3d.js?v=20');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1178,7 +1260,7 @@ document.addEventListener('click',async e=>{
     case 'del-photo':q.photos.splice(+v,1);save();render();break;
     case 'ai':runAI(q);break;
     case 'ai-apply':{(q.ai.medidas||[]).forEach(m=>{const A=num(m.comprimento_cm),P=num(m.profundidade_cm);if(A>0&&P>0)q.pieces.push({id:uid(),type:'reta',name:String(m.peca||'Peça sugerida'),d:{A,P},saiaH:0,rodaH:0})});nav.sec='med';save();render();toast('Peças adicionadas. Confirme com a trena.');break}
-    case 'pdf':if(calc(q).erro){toast('Corrija a margem e os impostos antes de gerar o PDF.');break}try{await saveFile(`orcamento-${q.num}.pdf`,buildPdf(q))}catch(err){toast('Não foi possível gerar o PDF.')}break;
+    case 'pdf':if(calc(q).erro){toast('Corrija a margem e os impostos antes de gerar o PDF.');break}try{toast('Gerando o PDF…');await saveFile(`orcamento-${q.num}.pdf`,await buildPdf(q))}catch(err){toast('Não foi possível gerar o PDF.')}break;
     case 'mark-sent':setStatus(q,'Enviado');render();toast('Marcado como enviado.');break;
     case 'cad':nav.cad=v;nav.catAberto=false;render();break;
     case 'cat-abrir':nav.catAberto=true;nav.catQ='';nav.catCat='todas';nav.catSel=[];render();scrollTo(0,0);break;
@@ -1200,6 +1282,8 @@ document.addEventListener('click',async e=>{
     case 'edit':nav.edit={kind:b.dataset.k,id:v};render();scrollTo(0,0);break;
     case 'edit-close':nav.edit=null;render();break;
     case 'del-cad':confirmTap(b,()=>{const {kind,id}=nav.edit;S[kind]=S[kind].filter(x=>x.id!==id);nav.edit=null;save();render()});break;
+    case 'logo':$('#fileLogo').click();break;
+    case 'logo-del':S.settings.logo='';save();render();break;
     case 'mat-photo':pendingMat=v;$('#fileMat').click();break;
     case 'mat-photo-del':S.materials.find(x=>x.id===v).photo='';save();render();break;
     case 'theme':S.settings.theme=v;applyTheme();save();render();break;
@@ -1240,6 +1324,7 @@ document.addEventListener('change',e=>{
     const q=curQ();if(q&&/\.materialId$/.test(el.dataset.b)){const m=matOf(q);if(m)q.params.charge=m.priceSlab>0?'chapa':'m2'}
     save();render();return}
   if(el.id==='filePhoto'&&el.files[0]){const q=curQ();readImg(el.files[0]).then(u=>{q.photos.push(u);save();render();toast('Foto salva no orçamento.')}).catch(()=>toast('Não foi possível ler a foto.'));el.value='';return}
+  if(el.id==='fileLogo'&&el.files[0]){readImg(el.files[0],360).then(u=>{S.settings.logo=u;save();render();toast('Logo salvo.')}).catch(()=>toast('Não foi possível ler a imagem.'));el.value='';return}
   if(el.id==='fileMat'&&el.files[0]&&pendingMat){const m=S.materials.find(x=>x.id===pendingMat);readImg(el.files[0],600).then(u=>{m.photo=u;save();render()}).catch(()=>toast('Não foi possível ler a foto.'));el.value='';return}
   if(el.id==='fileImport'&&el.files[0]){
     el.files[0].text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.quotes)||!Array.isArray(d.materials))throw 0;S=d;garantirSnapshots();save();applyTheme();nav.qid=null;nav.edit=null;render();toast('Backup restaurado.')}catch(x){toast('Arquivo de backup inválido.')}});el.value='';
