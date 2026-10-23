@@ -125,6 +125,8 @@ input[type=file]{display:none}
 .e3opcoes{position:absolute;right:8px;top:calc(100% + 4px);z-index:30;min-width:230px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(15,25,23,.16);padding:6px;display:flex;flex-direction:column}
 .e3opcoes button{justify-content:flex-start;border:0;background:none;min-height:46px;padding:8px 12px;border-radius:8px;font-weight:600}.e3opcoes button:hover{background:var(--surface2)}
 .tbundo{display:none}
+.alca-dot{transition:transform .12s}
+@media (pointer:fine){.alca-dot{transform:scale(.7)}[role=button]:hover>.alca-dot{transform:scale(.95)}}   /* mouse: pontos de seleção discretos (a área de clique continua grande) */
 .e3main{flex:1;min-height:0;display:flex;flex-direction:column}
 .e3stage{flex:1;min-height:150px;position:relative;order:1}
 #ed3d #v3dbox{position:absolute;inset:0;height:100%!important;min-height:0!important;border:0;border-radius:0}
@@ -243,9 +245,9 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=24"></script>
-<script src="catalogo.js?v=24"></script>
-<script src="model3d.js?v=24"></script>
+<script src="calc.js?v=25"></script>
+<script src="catalogo.js?v=25"></script>
+<script src="model3d.js?v=25"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -258,7 +260,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=24;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=25;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -927,7 +929,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=24');
+    const mod=await import('./viewer3d.js?v=25');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1091,7 +1093,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=24');
+    const m=await import('./viewer3d.js?v=25');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão

@@ -132,3 +132,9 @@ O orçamento agora tem **uma tela por etapa**: Cliente → Medir → Material �
 - **Formatos** em duas colunas, com ícone de cada um (Reta, Em L, Em U, Ilha, Escada, Nicho, Lavatório, Livre, Duplicar); o formato da peça selecionada fica em destaque.
 - **Cartão de resumo** branco e discreto (área, chapas, valor) que expande com material, aproveitamento, número de peças e forma de cobrança.
 - Cálculo, salvamento e dados não mudaram. O visualizador agora tolera a perda do contexto WebGL no meio de um quadro sem lançar erro.
+
+### Editor 3D: área de desenho e cotas, etapa 2 (versão 25)
+- **Digitar a medida clicando no valor da cota**: com as Alças ligadas, os valores de comprimento, profundidade, saia, rodabanca, altura do nicho etc. viram campo; Enter grava, Esc cancela, perder o foco grava. Passa pelo mesmo caminho das alças e do painel (a peça, o preço e o plano de corte recalculam; entra no Desfazer). Limites: 5 a 1000 cm (1 a 1000 em saia, rodabanca e espelho). A espessura vem do material e não é editável pela cota. Orçamento fechado não edita.
+- **Grade** de linhas finas e baixo contraste, na cor do tema (claro ou escuro); contorno das peças um pouco mais firme.
+- **Cotas** com texto menor com mouse e maior no toque; linhas e marcadores discretos; mais folga no enquadramento do editor para não ficar atrás da coluna de ferramentas e do cartão de resumo.
+- **Pontos de seleção** discretos com mouse (a área de clique continua grande) e realce ao passar o mouse.
