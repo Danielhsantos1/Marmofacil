@@ -135,7 +135,7 @@ export function criarVisualizador(deps={}){
   }
   function distIdeal(az,pol){
     if(!quadro.length)return est.dist;
-    return distanciaIdeal({pontos:quadro.map(p=>[p.x,p.y,p.z]),alvo:[alvo.x,alvo.y,alvo.z],az,pol,fov:camera.fov,aspecto:camera.aspect,min:dMin});
+    return distanciaIdeal({pontos:quadro.map(p=>[p.x,p.y,p.z]),alvo:[alvo.x,alvo.y,alvo.z],az,pol,fov:camera.fov,aspecto:camera.aspect,min:dMin,folga:edicao.ativo?0.8:0.86});   // no editor (0,8) sobra espaço para a coluna de ferramentas e o cartão de resumo
   }
   function enquadrar(){paraInercia();zoomManual=false;est.dist=distIdeal(est.az,est.pol);posicionar()}
   function vista(nome){
@@ -216,7 +216,7 @@ export function criarVisualizador(deps={}){
     const d=document.createElement('span'),bg=cota?'var(--accent,#0e6a5b)':a.tipo==='peca'?'var(--fg,#15191a)':'var(--warn,#a8620b)';
     d.style.cssText='display:flex;align-items:center;justify-content:center;color:#fff;font:700 15px/1 sans-serif;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45);background:'+bg+';'+
       (cota?'width:22px;height:22px;border-radius:50%':mover?'width:30px;height:30px;border-radius:50%':'width:22px;height:22px;border-radius:5px');
-    if(mover)d.textContent='✥';
+    d.className='alca-dot';if(mover)d.textContent='✥';
     el.appendChild(d);el.setAttribute('role','button');
     el.setAttribute('aria-label',cota?'Arrastar para mudar '+a.rot:a.tipo==='peca'?'Arrastar para mover a peça':mover?'Arrastar para mover o recorte':'Arrastar para mudar o tamanho do recorte');
     el.addEventListener('pointerdown',e=>iniciarArrasto(alcas.get(a.chave),e));
@@ -269,6 +269,26 @@ export function criarVisualizador(deps={}){
         h.el.style.transform='translate('+(h.x-h.el.offsetWidth/2).toFixed(1)+'px,'+(h.y-h.el.offsetHeight-6).toFixed(1)+'px)';
       }else if(vis)h.el.style.transform='translate('+(h.x-22).toFixed(1)+'px,'+(h.y-22).toFixed(1)+'px)';
     });
+  }
+  /* digitar a medida: clicar no valor da cota abre um campo; Enter grava (pelo mesmo caminho das alças: peça, preço e plano de corte recalculam), Esc cancela */
+  let campoCota=null;
+  function editarCota(r){
+    if(!edicao.ativo||!r.campo||!edicao.fn||campoCota||arrastando)return;
+    const b=r.el.getBoundingClientRect(),c=canvas.parentElement.getBoundingClientRect(),inp=document.createElement('input');
+    inp.type='number';inp.inputMode='decimal';inp.step='1';inp.value=String(r.valor);inp.setAttribute('aria-label','Nova medida em centímetros');
+    inp.style.cssText='position:absolute;left:'+Math.round(b.left-c.left+b.width/2-46)+'px;top:'+Math.round(b.top-c.top+b.height/2-20)+'px;width:92px;height:40px;z-index:7;pointer-events:auto;text-align:center;font:700 15px var(--mono,monospace);border:2px solid #60a5fa;border-radius:10px;background:#fff;color:#111;box-shadow:0 4px 14px rgba(0,0,0,.28)';
+    camadaEdit.appendChild(inp);campoCota=inp;inp.focus();inp.select();
+    let feito=false;
+    const fechar=aplicar=>{
+      if(feito)return;feito=true;
+      const v=parseFloat(String(inp.value).replace(',','.'));inp.remove();campoCota=null;
+      if(aplicar&&isFinite(v)&&Math.round(v)!==Math.round(r.valor)&&edicao.fn){
+        const min=/^(saia|roda)H$|^ES$/.test(r.campo)?1:5;
+        edicao.fn({tipo:'campo',campo:r.campo,valor:Math.min(1000,Math.max(min,Math.round(v)))});edicao.fn({tipo:'fim'});
+      }
+    };
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();fechar(true)}else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();fechar(false)}});
+    inp.addEventListener('blur',()=>fechar(true));
   }
   function iniciarArrasto(h,e){
     if(!h||!edicao.ativo||arrastando)return;
@@ -419,7 +439,7 @@ export function criarVisualizador(deps={}){
       const {g,extrudado}=geometria(s);
       const m=new THREE.Mesh(g,material(s.kind));m.castShadow=m.receiveShadow=!!opt.brilho;
       if(!extrudado)m.position.set((s.x+s.sx/2)*CM,(s.y+s.sy/2)*CM,(s.z+s.sz/2)*CM);
-      m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g,25),new THREE.LineBasicMaterial({color:borda,transparent:true,opacity:0.5})));
+      m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g,25),new THREE.LineBasicMaterial({color:borda,transparent:true,opacity:0.62})));
       grupo.add(m);
     });
     /* emendas do plano de corte: contorno do corte em laranja, um pouco para fora para não brigar com a face */
@@ -481,8 +501,10 @@ export function criarVisualizador(deps={}){
   function montarGrade(a,b){
     const maior=Math.max(b[0]-a[0],b[2]-a[2]),esp=[10,20,50,100,200,500].find(e=>maior/e<=12)||500;
     const tam=Math.ceil(maior*1.5/esp)*esp,n=Math.max(2,Math.round(tam/esp));
-    grade=new THREE.GridHelper(tam*CM,n,0x9aa5a2,0xbcc5c2);
-    grade.material.transparent=true;grade.material.opacity=0.35;grade.material.depthWrite=false;
+    const escuro=document.documentElement.dataset.theme==='dark'||(document.documentElement.dataset.theme!=='light'&&mq&&mq.matches);
+    const fina=cssVar('--line','#cdd3d1'),eixo=fina.clone().offsetHSL(0,0,escuro?0.06:-0.07);     // linhas finas, de baixo contraste, na cor do tema; as do centro um pouco mais firmes
+    grade=new THREE.GridHelper(tam*CM,n,eixo,fina);
+    grade.material.transparent=true;grade.material.opacity=0.8;grade.material.depthWrite=false;
     grade.position.set(alvo.x,a[1]*CM-0.0004,alvo.z);scene.add(grade);
     gradeCm=esp;
   }
@@ -504,7 +526,7 @@ export function criarVisualizador(deps={}){
         seg(add(c.p2,c.dir,folga),add(c.p2,c.dir,c.off+alem));
         const tk=Math.min(1.6,Math.max(0.6,c.off*0.2)),t=[u[0]+c.dir[0],u[1]+c.dir[1],u[2]+c.dir[2]],n=Math.hypot(...t)||1;
         [q1,q2].forEach(q=>seg(add(q,t,-tk/n),add(q,t,tk/n)));            // traços oblíquos
-        rotulos.push({txt:c.texto,pos:new THREE.Vector3(...V(add(q1,[q2[0]-q1[0],q2[1]-q1[1],q2[2]-q1[2]],0.5))),prio:c.prio,cat:c.categoria,
+        rotulos.push({txt:c.texto,pos:new THREE.Vector3(...V(add(q1,[q2[0]-q1[0],q2[1]-q1[1],q2[2]-q1[2]],0.5))),prio:c.prio,cat:c.categoria,campo:c.campo,valor:c.valor,
           a:new THREE.Vector3(...V(q1)),b:new THREE.Vector3(...V(q2))});
       }else rotulos.push({txt:c.texto,pos:new THREE.Vector3(...V(c.pos)),prio:c.prio,cat:c.categoria==='recorte'?'recorte':'rotulo'});
     });
@@ -513,8 +535,10 @@ export function criarVisualizador(deps={}){
     grupoCotas.renderOrder=10;grupoCotas.visible=opt.cotas;
     rotulos.forEach(r=>{
       const el=document.createElement('span');el.textContent=r.txt;
-      el.style.cssText='position:absolute;left:0;top:0;white-space:nowrap;padding:3px 8px;border-radius:99px;border:1.5px solid #60a5fa;color:#fff;background:rgba(8,12,20,0.9)';   // pílula escura com borda azul: boa leitura no sol e em qualquer fundo
+      const fino=typeof matchMedia==='function'&&matchMedia('(pointer:fine)').matches;            // mouse: texto um pouco menor; toque: maior e mais fácil de acertar
+      el.style.cssText='position:absolute;left:0;top:0;white-space:nowrap;padding:'+(fino?'2px 7px':'4px 10px')+';border-radius:99px;border:1.5px solid #60a5fa;color:#fff;background:rgba(8,12,20,0.88);font-size:'+(fino?'11px':'12.5px')+';pointer-events:none';   // pílula escura com borda azul: boa leitura no sol e em qualquer fundo
       if(r.cat==='rotulo'||r.cat==='recorte')el.style.borderStyle='dashed';
+      if(r.campo){el.addEventListener('click',()=>editarCota(r));el.title='Clique para digitar a medida';if(edicao.ativo){el.style.pointerEvents='auto';el.style.cursor='text'}}
       camada.appendChild(el);r.el=el;r.w=0;r.h=0;
     });
     camada.style.display=opt.cotas?'block':'none';
@@ -610,7 +634,7 @@ export function criarVisualizador(deps={}){
       modelo=null;
     },
     /* liga/desliga as alças; fn(acao) recebe {tipo:'campo',campo,valor} | {tipo:'recorte',indice,x,z,w,d} | {tipo:'fim'} */
-    editar(ativo,fn){const m=!!ativo!==edicao.ativo;edicao={ativo:!!ativo,fn:fn||null};if(m){montarAlcas();pedir()}},
+    editar(ativo,fn){const m=!!ativo!==edicao.ativo;edicao={ativo:!!ativo,fn:fn||null};if(m){montarAlcas();rotulos.forEach(r=>{if(r.el&&r.campo){r.el.style.pointerEvents=edicao.ativo?'auto':'none';r.el.style.cursor=edicao.ativo?'text':''}});pedir()}},
     /* imagem JPEG (dataURL) da cena como está, com as cotas desenhadas por cima: usada pelo PDF do orçamento.
        Espera as fotos de textura chegarem (até `espera` ms). O container precisa ter tamanho (o app usa um div fora da tela). */
     async capturar({espera=3000,qualidade=0.9,semGrade=false,escala=0}={}){
