@@ -114,7 +114,9 @@ export function criarVisualizador(deps={}){
   const extPerda=()=>extPerdaCache||(extPerdaCache=renderer.getContext().getExtension('WEBGL_lose_context'));
 
   /* ---------- desenho sob demanda ---------- */
-  const render=()=>{pedido=0;if(perdido)return;renderer.render(scene,camera);posicionarRotulos();posicionarAlcas()};
+  /* se o aparelho derrubar o contexto no meio de um quadro, o Three.js lança erro de shader antes de o evento de perda chegar: isso não é falha do app (a recuperação é tratada no evento) */
+  const desenhar=()=>{try{renderer.render(scene,camera);return true}catch(e){if(renderer.getContext().isContextLost())return false;throw e}};
+  const render=()=>{pedido=0;if(perdido)return;if(!desenhar())return;posicionarRotulos();posicionarAlcas()};
   const pedir=()=>{if(!pedido)pedido=requestAnimationFrame(render)};
 
   /* ---------- câmera: ângulos, base própria (vista de cima e de frente exatas) e enquadramento ---------- */
@@ -402,6 +404,7 @@ export function criarVisualizador(deps={}){
   let contaTampos={};
   const unicoTampo=s=>contaTampos[s.peca==null?-1:s.peca]===1;
   function construir(){
+    if(perdido)return;                                          // sem contexto WebGL não dá para criar nada; ao restaurar o contexto a cena é refeita
     liberar(grupo);liberar(grupoCotas);rotulos.forEach(r=>r.el.remove());rotulos=[];
     if(grade){scene.remove(grade);grade.geometry.dispose();grade.material.dispose();grade=null}
     if(!modelo||modelo.vazio){quadro=[];listaCotas=[];gradeCm=0;montarAlcas();pedir();return}

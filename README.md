@@ -124,3 +124,11 @@ O orçamento agora tem **uma tela por etapa**: Cliente → Medir → Material �
 - Material: quadradinhos com foto dos seus materiais e do catálogo (o mesmo do editor 3D), com busca.
 - Orçamento novo já vem com o **último material usado**.
 - A barra de preço mostra área e chapas; o lucro continua na etapa Preço.
+
+### Editor 3D: interface moderna, etapa 1 (versão 24)
+- **Cabeçalho baixo** (~46 px) com Voltar, orçamento e cliente, nome da peça selecionada, indicador de **salvamento automático** ("✓ Salvo hh:mm"), **Desfazer**, **Refazer** (Ctrl+Z / Ctrl+Y) e **Opções do projeto** (Preço e envio; Fechar o editor). No celular deitado o cabeçalho some e Desfazer/Refazer vão para a coluna de ferramentas.
+- **Desfazer e refazer de verdade**: guardam peças, medidas, recortes, material e forma de cobrança do orçamento aberto (até 80 passos, em memória; digitação seguida vira um passo só). Orçamento fechado não desfaz.
+- **Menu lateral** com a categoria ativa em verde-petróleo e fundo suave.
+- **Formatos** em duas colunas, com ícone de cada um (Reta, Em L, Em U, Ilha, Escada, Nicho, Lavatório, Livre, Duplicar); o formato da peça selecionada fica em destaque.
+- **Cartão de resumo** branco e discreto (área, chapas, valor) que expande com material, aproveitamento, número de peças e forma de cobrança.
+- Cálculo, salvamento e dados não mudaram. O visualizador agora tolera a perda do contexto WebGL no meio de um quadro sem lançar erro.

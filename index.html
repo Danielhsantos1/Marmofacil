@@ -118,8 +118,13 @@ input[type=file]{display:none}
 
 /* Editor 3D em tela cheia: celular = 3D em cima e menu embaixo; computador/celular deitado = menu lateral */
 #ed3d{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
-.e3top{display:flex;align-items:center;gap:8px;padding:4px 8px;background:var(--surface);border-bottom:1px solid var(--line)}
-.e3top .tt{flex:1;min-width:0}.e3top b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.e3top small{color:var(--muted)}
+.e3top{position:relative;display:flex;align-items:center;gap:4px;min-height:46px;padding:2px 8px;background:var(--surface);border-bottom:1px solid var(--line)}
+.e3top .tt{flex:1;min-width:0;line-height:1.2}.e3top b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.e3top small{display:block;color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.e3salvo{flex:none;font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap;padding:0 6px}.e3salvo.ok{color:var(--ok)}
+.e3ib{flex:none;width:44px;min-width:44px;height:44px;padding:0;justify-content:center;color:var(--fg)}.e3ib svg{width:22px;height:22px}.e3ib:disabled{opacity:.32}
+.e3opcoes{position:absolute;right:8px;top:calc(100% + 4px);z-index:30;min-width:230px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(15,25,23,.16);padding:6px;display:flex;flex-direction:column}
+.e3opcoes button{justify-content:flex-start;border:0;background:none;min-height:46px;padding:8px 12px;border-radius:8px;font-weight:600}.e3opcoes button:hover{background:var(--surface2)}
+.tbundo{display:none}
 .e3main{flex:1;min-height:0;display:flex;flex-direction:column}
 .e3stage{flex:1;min-height:150px;position:relative;order:1}
 #ed3d #v3dbox{position:absolute;inset:0;height:100%!important;min-height:0!important;border:0;border-radius:0}
@@ -128,12 +133,17 @@ input[type=file]{display:none}
 .e3vistas button{flex:none;padding:6px 12px;gap:6px;box-shadow:0 1px 4px rgba(0,0,0,.18)}
 .e3vistas svg{width:22px;height:22px;flex:none;display:none}
 .e3vistas button[aria-pressed=true]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
-.e3chip{position:absolute;right:8px;bottom:8px;z-index:5;background:var(--fg);color:var(--bg);border-radius:10px;padding:6px 12px;font-size:12.5px;line-height:1.3;text-align:right;box-shadow:0 2px 8px rgba(0,0,0,.25)}
-.e3chip b{font-family:var(--mono);font-size:15px}
+.e3chip{position:absolute;right:8px;bottom:8px;z-index:5;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:8px 12px;cursor:pointer;min-width:176px;font-size:12.5px;line-height:1.3;text-align:right;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.e3chip b{font-family:var(--mono);font-size:16px}
+.e3chip .res{display:flex;justify-content:space-between;align-items:baseline;gap:14px}.e3chip .res small{color:var(--muted)}
+.e3chip .ext{margin-top:6px;padding-top:6px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted)}
+.e3chip .ext b{font-family:var(--font);font-size:12px;color:var(--fg)}
+.e3chip .aviso{margin-top:4px;color:var(--warn);font-size:11.5px;font-weight:600}
+.e3chip .seta{display:inline-block;transition:transform .15s;margin-left:4px}.e3chip[aria-expanded=true] .seta{transform:rotate(180deg)}
 .e3dock{order:2;background:var(--surface);border-top:1px solid var(--line);display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px)}
 .e3rail{display:flex;overflow-x:auto;scrollbar-width:none}.e3rail::-webkit-scrollbar{display:none}
 .e3rail button{flex:1 0 auto;flex-direction:column;gap:2px;border:0;border-radius:0;background:none;color:var(--muted);font-size:11.5px;min-width:64px;min-height:52px;padding:6px 8px}
-.e3rail button[aria-selected=true]{color:var(--accent);box-shadow:inset 0 2px 0 var(--accent)}
+.e3rail button[aria-selected=true]{color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 2px 0 var(--accent)}
 .e3rail svg{width:22px;height:22px}
 .e3voltar{display:none!important}
 .e3tt{display:none}
@@ -148,17 +158,18 @@ input[type=file]{display:none}
 .e3sw img{width:100%;height:100%;object-fit:cover;display:block}
 .e3sw i{position:absolute;right:2px;top:2px;font-style:normal;background:var(--warn);color:#fff;border-radius:99px;font-size:10px;padding:1px 5px}
 .e3nm{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.e3tipos{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:6px}
+.e3tipos{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.e3tipos button{flex-direction:column;gap:4px;min-height:64px;padding:8px 4px;font-size:12.5px;line-height:1.1}
+.e3tipos button svg{width:30px;height:30px;color:var(--muted)}
+.e3tipos button[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}.e3tipos button[aria-pressed=true] svg{color:var(--accent)}
 @media (min-width:820px),(max-height:500px) and (orientation:landscape){
   /* tela larga ou celular deitado: sem faixa de cima. Voltar fica no menu lateral, as ferramentas viram uma coluna de ícones sobre o 3D
      e o painel recolhe para o 3D ocupar a tela toda */
   #ed3d{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-  .e3top{display:none}
   .e3main{flex-direction:row}
   .e3dock{order:0;flex-direction:row;border-top:0;border-right:1px solid var(--line);padding-bottom:0}
   .e3rail{flex-direction:column;overflow-y:auto;width:72px;border-right:1px solid var(--line)}
   .e3rail button{flex:none;min-width:0;width:100%;min-height:58px;padding:4px 2px;font-size:10.5px}
-  .e3rail .e3voltar{display:flex!important}
   .e3rail button[aria-selected=true]{box-shadow:inset 3px 0 0 var(--accent)}
   .e3panel{max-height:none;width:min(320px,42vw)}
   .e3vistas{left:auto;right:8px;top:8px;flex-direction:column;overflow-x:visible;overflow-y:auto;max-height:calc(100% - 16px);width:50px}
@@ -166,6 +177,13 @@ input[type=file]{display:none}
   .e3vistas .tx{display:none}
   .e3vistas svg{display:block}
   .e3tt{display:block;position:absolute;left:8px;top:8px;z-index:5;max-width:calc(100% - 70px);padding:4px 10px;border-radius:99px;background:color-mix(in srgb,var(--surface) 88%,transparent);border:1px solid var(--line);font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+@media (min-width:820px) and (min-height:501px){.e3tt{display:none}}
+@media (max-height:500px) and (orientation:landscape){
+  .e3top{display:none}
+  .e3rail .e3voltar{display:flex!important}
+  .tbundo{display:flex}
+  .e3chip{right:auto;left:8px;min-width:150px}                  /* a coluna de ferramentas ocupa a direita: o resumo vai para a esquerda */
 }
 @media (max-height:420px) and (orientation:landscape){
   .e3rail button{min-height:46px}.e3rail svg{width:20px;height:20px}.e3rail span{font-size:9.5px}
@@ -225,9 +243,9 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=23"></script>
-<script src="catalogo.js?v=23"></script>
-<script src="model3d.js?v=23"></script>
+<script src="calc.js?v=24"></script>
+<script src="catalogo.js?v=24"></script>
+<script src="model3d.js?v=24"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -240,7 +258,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=23;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=24;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -300,12 +318,13 @@ function load(){
   try{const raw=localStorage.getItem(KEY);if(raw){S=JSON.parse(raw);return}}catch(e){}
   S=seed();
 }
-let saveTimer=0,saveWarned=false;
+let saveTimer=0,saveWarned=false,salvoEm=0;
 function save(){
   clearTimeout(saveTimer);
+  if(typeof histRegistrar==='function'){histRegistrar();salvoUI('salvando')}
   saveTimer=setTimeout(()=>{
-    try{localStorage.setItem(KEY,JSON.stringify(S))}
-    catch(e){if(!saveWarned){saveWarned=true;toast('Memória do navegador cheia. Exporte um backup e remova fotos.')}}
+    try{localStorage.setItem(KEY,JSON.stringify(S));salvoEm=Date.now();if(typeof salvoUI==='function')salvoUI('ok')}
+    catch(e){if(!saveWarned){saveWarned=true;toast('Memória do navegador cheia. Exporte um backup e remova fotos.')}if(typeof salvoUI==='function')salvoUI('erro')}
   },250);
 }
 /* ===== Desenho SVG (cotas em cm, escala automática) ===== */
@@ -908,7 +927,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=23');
+    const mod=await import('./viewer3d.js?v=24');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1072,7 +1091,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=23');
+    const m=await import('./viewer3d.js?v=24');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1166,19 +1185,48 @@ const MENUS3D=[
   ['itens','Recortes',E3I('<rect x="3" y="5" width="18" height="14" rx="2"/><rect x="8" y="9" width="8" height="6" rx="1"/>')],
   ['mat','Material',E3I('<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18" opacity=".5"/>')]
 ];
+const FORM_ICON={
+  reta:'<rect x="3" y="9" width="18" height="6" rx="1"/>',
+  L:'<path d="M4 4h6v10h10v6H4z"/>',
+  U:'<path d="M4 4h5v11h6V4h5v16H4z"/>',
+  ilha:'<rect x="4" y="7" width="16" height="10" rx="1.5"/><path d="M8 20h8" opacity=".5"/>',
+  escada:'<path d="M4 20v-4h4v-4h4V8h4V4h4v16z"/>',
+  nicho:'<rect x="4" y="5" width="16" height="14" rx="1"/><rect x="8" y="9" width="8" height="10" opacity=".55"/>',
+  lavatorio:'<rect x="3" y="8" width="18" height="9" rx="1"/><ellipse cx="12" cy="12.5" rx="4" ry="2.4"/>',
+  livre:'<path d="M5 18l3-9 6 3 5-7 0 13z"/>',
+  duplicar:'<rect x="4" y="4" width="11" height="11" rx="1.5"/><rect x="9" y="9" width="11" height="11" rx="1.5"/>'
+};
+const e3i=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${FORM_ICON[k]||''}</svg>`;
+const E3ICO={
+  desfazer:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>',
+  refazer:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg>',
+  mais:'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>'
+};
 function e3Shell(){
-  $('#ed3d').innerHTML=`<div class="e3top"><button class="ghost" data-act="ed3d-sair" aria-label="Sair do editor 3D">${IC.back}</button>
-    <div class="tt"><b id="e3t"></b><small id="e3s"></small></div></div>
+  $('#ed3d').innerHTML=`<div class="e3top"><button class="ghost e3ib" data-act="ed3d-sair" aria-label="Voltar ao orçamento" title="Voltar ao orçamento">${IC.back}</button>
+    <div class="tt"><b id="e3t"></b><small id="e3s"></small></div>
+    <span class="e3salvo" id="e3salvo" role="status" aria-live="polite"></span>
+    <button class="ghost e3ib" data-act="ed-desfazer" aria-label="Desfazer" title="Desfazer (Ctrl+Z)">${E3ICO.desfazer}</button>
+    <button class="ghost e3ib" data-act="ed-refazer" aria-label="Refazer" title="Refazer (Ctrl+Y)">${E3ICO.refazer}</button>
+    <button class="ghost e3ib" data-act="ed-opcoes" aria-label="Opções do projeto" title="Opções do projeto" aria-haspopup="menu" aria-expanded="false">${E3ICO.mais}</button>
+    <div class="e3opcoes" id="e3opcoes" role="menu" hidden>
+     <button role="menuitem" data-act="ed-enviar">Preço e envio do orçamento</button>
+     <button role="menuitem" data-act="ed3d-sair">Fechar o editor</button></div></div>
    <div class="e3main"><div class="e3dock" id="e3dock"><nav class="e3rail" id="e3rail" role="tablist" aria-label="Menus do editor"></nav><section class="e3panel" id="e3panel" aria-live="off"></section></div>
     <div class="e3stage"><div class="draw" id="v3dbox"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
      <div class="e3tt" id="e3tt"></div>
      <div class="e3vistas bar3d" role="group" aria-label="Ferramentas do 3D" style="display:flex"><button class="k3d" data-act="view3d" data-v="persp" aria-pressed="true" aria-label="Perspectiva" title="Perspectiva"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg><span class="tx">Perspectiva</span></button><button class="k3d" data-act="view3d" data-v="topo" aria-pressed="false" aria-label="De cima" title="De cima"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 12h16M12 4v16" opacity=".5"/></svg><span class="tx">De cima</span></button><button class="k3d" data-act="view3d" data-v="frente" aria-pressed="false" aria-label="De frente" title="De frente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="8" rx="1.5"/><path d="M3 20h18" opacity=".5"/></svg><span class="tx">De frente</span></button><button class="k3d" data-act="enquadrar3d" aria-label="Enquadrar" title="Enquadrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg><span class="tx">Enquadrar</span></button><button class="k3d" data-act="alcas3d" aria-pressed="${nav.alcas3d}" aria-label="Alças" title="Alças"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/></svg><span class="tx">Alças</span></button><button class="k3d" data-act="cotas3d" aria-pressed="${nav.cotas3d}" aria-label="Cotas" title="Cotas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8v8M20 8v8M4 12h16M7 10l-3 2 3 2M17 10l3 2-3 2"/></svg><span class="tx">Cotas</span></button></div>
-     <div class="e3chip" id="e3sum" role="status"></div></div></div>`;
+     <div class="e3chip" id="e3sum" role="button" tabindex="0" aria-expanded="false" aria-label="Resumo da peça: toque para ver mais"></div></div></div>`;
+  const tb=$('#ed3d .e3vistas');
+  if(tb)tb.insertAdjacentHTML('afterbegin',`<button class="k3d tbundo" data-act="ed-desfazer" aria-label="Desfazer" title="Desfazer">${E3ICO.desfazer}<span class="tx">Desfazer</span></button><button class="k3d tbundo" data-act="ed-refazer" aria-label="Refazer" title="Refazer">${E3ICO.refazer}<span class="tx">Refazer</span></button>`);
 }
 function e3resumo(q){
   const el=$('#e3sum');if(!el||!q)return;
-  const c=calc(q);
-  el.innerHTML=`<small>Área ${nf(c.area)} m² · ${c.nSlabs} chapa${c.nSlabs===1?'':'s'}</small><br><b>${brl(c.price)}</b>${c.erro?'<br><small>⚠ '+esc(c.erro)+'</small>':''}${materialSemPreco(matOf(q),q.params.charge)?'<br><small>⚠ pedra sem preço: o total não inclui o material</small>':''}`;
+  const c=calc(q),m=matOf(q),aberto=!!nav.e3sumAberto;
+  el.setAttribute('aria-expanded',String(aberto));
+  el.innerHTML=`<div class="res"><small>${nf(c.area)} m² · ${c.nSlabs} chapa${c.nSlabs===1?'':'s'}</small><small class="seta" aria-hidden="true">▴</small></div><b>${brl(c.price)}</b>
+   ${aberto?`<div class="ext"><span>Material: <b>${esc(m?m.name:'—')}</b></span><span>Aproveitamento da chapa: <b>${nf(c.util*100,0)}%</b></span><span>Peças: <b>${q.pieces.length}</b></span><span>Cobrança: <b>${q.params.charge==='m2'?'por m²':'por chapa'}</b></span></div>`:''}
+   ${c.erro?'<div class="aviso">⚠ '+esc(c.erro)+'</div>':''}${materialSemPreco(m,q.params.charge)?'<div class="aviso">⚠ pedra sem preço: o total não inclui o material</div>':''}`;
 }
 /* Material no 3D: primeiro os cadastrados; depois o catálogo (quadradinhos). Tocar numa pedra do catálogo adiciona ao cadastro com preço em branco e já usa no orçamento. */
 function e3Quad(q,{id,nome,cor,foto,acao,v,on,semPreco}){
@@ -1201,8 +1249,9 @@ function e3Painel(q,p){
   if(m==='pecas')return trava+`<div class="lbl">Peças do orçamento</div>
     <div class="seg" role="tablist">${q.pieces.map((x,i)=>`<button data-act="piece" data-v="${i}" aria-pressed="${i===nav.pi}">${esc(x.name||TYPES[x.type].nome)}</button>`).join('')}</div>
     <div class="lbl">Adicionar formato</div>
-    <div class="e3tipos">${Object.entries(TYPES).map(([k,t])=>`<button data-act="addpiece" data-v="${k}">${t.nome}</button>`).join('')}</div>
-    <div class="row"><button class="grow" data-act="dup-piece" data-v="${p.id}">Duplicar</button>${q.pieces.length>1?`<button class="danger" data-act="del-piece" data-v="${p.id}">Remover</button>`:''}</div>`;
+    <div class="e3tipos">${Object.entries(TYPES).map(([k,t])=>`<button data-act="addpiece" data-v="${k}" aria-pressed="${p.type===k}" title="Adicionar peça ${t.nome}">${e3i(k)}<span>${t.nome}</span></button>`).join('')}
+     <button data-act="dup-piece" data-v="${p.id}" title="Duplicar a peça selecionada">${e3i('duplicar')}<span>Duplicar</span></button></div>
+    ${q.pieces.length>1?`<button class="danger" data-act="del-piece" data-v="${p.id}">Remover peça selecionada</button>`:''}`;
   if(m==='med')return trava+`<div class="lbl">${TYPES[p.type].nome} · medidas em cm</div>${fld('Nome da peça',PP+'.name')}
     <div class="grid2">${TYPES[p.type].campos.map(([k,l])=>fld(l,PP+'.d.'+k,'n',{unit:k==='N'?'un':'cm'})).join('')}</div>${p.type==='livre'?livreEd(q,p):''}`;
   if(m==='acab')return trava+acabEd(p,PP);
@@ -1220,7 +1269,8 @@ function renderEd3d(){
   const p=q.pieces[nav.pi];
   const cl=clientOf(q);
   $('#e3t').textContent=p?(p.name||TYPES[p.type].nome):'Sem peça';
-  $('#e3s').textContent='#'+q.num+' '+(cl?.name||'Novo orçamento')+(fechado(q)?' · fechado':'');
+  $('#e3s').textContent='Orçamento #'+q.num+' · '+(cl?.name||'Novo orçamento')+(fechado(q)?' · fechado':'');
+  salvoUI();histUI();
   $('#e3rail').innerHTML=`<button class="e3voltar" data-act="ed3d-sair" aria-label="Sair do editor 3D">${IC.back}<span>Voltar</span></button>`+MENUS3D.map(([k,l,i])=>`<button role="tab" data-act="e3menu" data-v="${k}" aria-selected="${nav.e3m===k&&nav.e3aberto}">${i}<span>${l}</span></button>`).join('');
   const tt=$('#e3tt');if(tt)tt.textContent='#'+q.num+' · '+(p?(p.name||TYPES[p.type].nome):'Sem peça');
   $('#e3dock').classList.toggle('fechado',!nav.e3aberto);
@@ -1228,11 +1278,57 @@ function renderEd3d(){
   if(fechado(q))$$('#e3panel input,#e3panel select,#e3panel textarea,#e3panel button').forEach(el=>{if(!el.matches('.k3d,[data-act="piece"]'))el.disabled=true});
   e3resumo(q);
 }
+/* ===== Desfazer e refazer do editor: só medidas, peças, recortes e material (o resto do orçamento não entra) ===== */
+const HIST={qid:null,pilha:[],i:-1,t:0,aplicando:false};
+const snapEd=q=>JSON.stringify({p:q.pieces,m:q.materialId,c:q.params&&q.params.charge});
+function histIniciar(q){HIST.qid=q.id;HIST.pilha=[snapEd(q)];HIST.i=0;HIST.t=0}
+function histRegistrar(){
+  if(!nav.ed3d||HIST.aplicando)return;
+  const q=curQ();if(!q||q.id!==HIST.qid)return;
+  const sn=snapEd(q);if(sn===HIST.pilha[HIST.i])return;
+  const agora=Date.now();HIST.pilha.length=HIST.i+1;
+  if(HIST.i>0&&agora-HIST.t<700)HIST.pilha[HIST.i]=sn;                        // digitação seguida vira um passo só
+  else{HIST.pilha.push(sn);HIST.i++}
+  HIST.t=agora;if(HIST.pilha.length>80){HIST.pilha.shift();HIST.i--}
+  histUI();
+}
+function histUI(){
+  const q=curQ(),trava=!q||fechado(q);
+  $$('#ed3d [data-act="ed-desfazer"]').forEach(b=>b.disabled=trava||HIST.i<=0);
+  $$('#ed3d [data-act="ed-refazer"]').forEach(b=>b.disabled=trava||HIST.i>=HIST.pilha.length-1);
+}
+function histIr(d){
+  const q=curQ();if(!q||fechado(q)||!nav.ed3d)return;
+  const j=HIST.i+d;if(j<0||j>=HIST.pilha.length)return;
+  const o=JSON.parse(HIST.pilha[j]);HIST.i=j;HIST.t=0;
+  q.pieces=o.p;q.materialId=o.m;if(q.params&&o.c)q.params.charge=o.c;
+  if(nav.pi>=q.pieces.length)nav.pi=Math.max(0,q.pieces.length-1);
+  HIST.aplicando=true;save();HIST.aplicando=false;render();
+}
+function salvoUI(estado){
+  const el=$('#e3salvo');if(!el)return;
+  if(estado==='salvando'){el.textContent='Salvando…';el.className='e3salvo';return}
+  if(estado==='erro'){el.textContent='⚠ Não salvou';el.className='e3salvo';return}
+  if(salvoEm){const d=new Date(salvoEm);el.textContent='✓ Salvo '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');el.className='e3salvo ok'}else{el.textContent='Salvamento automático';el.className='e3salvo'}
+}
+function fecharOpcoes(){const m=$('#e3opcoes');if(m)m.hidden=true;const b=$('#ed3d [data-act="ed-opcoes"]');if(b)b.setAttribute('aria-expanded','false')}
+document.addEventListener('keydown',e=>{
+  if(!nav.ed3d)return;
+  if((e.ctrlKey||e.metaKey)&&!/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)){
+    if(e.key==='z'||e.key==='Z'){e.preventDefault();histIr(e.shiftKey?1:-1)}else if(e.key==='y'||e.key==='Y'){e.preventDefault();histIr(1)}
+  }
+  if(e.key==='Enter'||e.key===' '){const t=e.target.closest&&e.target.closest('#e3sum');if(t){e.preventDefault();nav.e3sumAberto=!nav.e3sumAberto;e3resumo(curQ())}}
+});
+document.addEventListener('click',e=>{
+  if(!nav.ed3d)return;
+  if(e.target.closest('#e3sum')){nav.e3sumAberto=!nav.e3sumAberto;e3resumo(curQ());return}
+  if(!e.target.closest('#e3opcoes')&&!e.target.closest('[data-act="ed-opcoes"]'))fecharOpcoes();
+});
 function abrirEd3d(){
   const q=curQ();if(!q)return;
   if(!q.pieces.length){toast('Adicione uma peça em Medir primeiro.');return}
   nav.ed3d=true;nav.show3d=true;nav.rolar3d=false;nav.e3m='pecas';nav.e3aberto=LADO3D()&&!CURTA3D();
-  e3Shell();$('#ed3d').hidden=false;document.body.style.overflow='hidden';
+  histIniciar(q);e3Shell();$('#ed3d').hidden=false;document.body.style.overflow='hidden';
   try{history.pushState({ed3d:1},'')}catch(e){}
   render();
   const b=$('#ed3d [data-act="ed3d-sair"]');if(b)b.focus({preventScroll:true});
@@ -1311,6 +1407,10 @@ document.addEventListener('click',async e=>{
       if(!m){m=materialDoCatalogo(pd,uid());S.materials.push(m)}
       q.materialId=m.id;q.params.charge=m.priceSlab>0?'chapa':'m2';save();render();
       if(materialSemPreco(m,q.params.charge))toast(pd.nome+' adicionada. Preencha o preço em Cadastros.');break}
+    case 'ed-desfazer':histIr(-1);break;
+    case 'ed-refazer':histIr(1);break;
+    case 'ed-opcoes':{const m=$('#e3opcoes'),abre=m.hidden;m.hidden=!abre;b.setAttribute('aria-expanded',String(abre));break}
+    case 'ed-enviar':fecharOpcoes();nav.sec='orc';fecharEd3d();scrollTo(0,0);break;
     case 'ed3d-abrir':abrirEd3d();break;
     case 'ed3d-sair':fecharEd3d();break;
     case 'e3menu':if(v===nav.e3m)nav.e3aberto=!nav.e3aberto;else{nav.e3m=v;nav.e3aberto=true}renderEd3d();if(v3&&nav.e3m==='mat')nota3d(modelo3d(q,q.pieces[nav.pi]));break;
