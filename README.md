@@ -92,3 +92,13 @@ Em tela larga (computador, tablet) e no celular deitado, a faixa de cima some: *
 
 ### Catálogo direto no menu Material do 3D (versão 19)
 No editor 3D, menu Material: "Seus materiais" (cadastrados) e, abaixo, o **catálogo** em quadradinhos com foto, com busca por nome ou cor. Tocar numa pedra do catálogo a adiciona ao cadastro (preço e chapa em branco), usa no orçamento e some da seção do catálogo. Sem preço, o 3D e a barra de preço avisam que o total não inclui o material.
+
+### PDF que fecha venda (versão 20)
+O PDF do orçamento foi refeito (continua em jsPDF, gerado no aparelho, sem internet):
+- faixa com **logo** (Ajustes > Sua marmoraria > Logo) ou nome da marmoraria, número, data e validade;
+- **imagem 3D da bancada** com as cotas desenhadas (visão geral quando há várias peças, e uma imagem por peça), tirada por um visualizador próprio fora da tela (`capturar` em `viewer3d.js`); sem WebGL, o PDF sai sem as imagens;
+- **material com foto** de referência;
+- itens, serviços e **total** em destaque;
+- **condições** (pagamento, prazo de entrega, garantia: Ajustes > Condições que saem no PDF; só sai o que estiver preenchido) e validade;
+- observações, fotos do local e **bloco de aceite** com linhas de assinatura e data.
+Imagens 3D e fotos são ilustrativas (o rodapé avisa). Preço e cálculo não mudaram.
