@@ -102,3 +102,10 @@ O PDF do orçamento foi refeito (continua em jsPDF, gerado no aparelho, sem inte
 - **condições** (pagamento, prazo de entrega, garantia: Ajustes > Condições que saem no PDF; só sai o que estiver preenchido) e validade;
 - observações, fotos do local e **bloco de aceite** com linhas de assinatura e data.
 Imagens 3D e fotos são ilustrativas (o rodapé avisa). Preço e cálculo não mudaram.
+
+### 3D mais profissional (versão 21)
+- **Chanfro sutil** (0,2 cm, dentro das medidas) na borda das peças de um tampo só (reta, ilha, lavatório). Em L/U o chanfro não é usado: viraria um falso rasgo nas juntas dos tampos.
+- **Pedra polida (brilho)**: material PBR (`MeshStandardMaterial`, rugosidade 0,3, metal 0,05), reflexo de um ambiente de estúdio criado por código (sem arquivo), sombra suave (PCF, recalculada só quando a cena muda) e tom neutro para não estourar pedra clara. Botão "Brilho de pedra polida" em Material; desligado sozinho em aparelho sem aceleração gráfica. Inox e torneira ficam metálicos.
+- **Cotas** em pílula escura com borda azul `#60A5FA` (também no PDF), legíveis no sol.
+- **Inércia (damping)**: o giro continua e para suave ao soltar o dedo depois de um arrasto rápido; calculada por tempo, não por quadro.
+- Ferramentas do 3D com 48 px. Gestos mantidos: 1 dedo gira, 2 dedos aproximam e inclinam.
