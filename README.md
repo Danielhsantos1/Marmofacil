@@ -117,3 +117,10 @@ Aba Orçamento: **Gerar PDF profissional** (botão grande) monta o PDF no aparel
 - Arquivo: `Orcamento-1034-Bancada-Cinza-Absoluto.pdf` (número, primeira peça e material).
 - Ajustes novos: CNPJ, parcelas (até) e desconto no PIX. **Sem QR Code de PIX**: um QR de mentira num orçamento levaria o cliente a pagar para lugar nenhum; o QR de verdade precisa da chave PIX da marmoraria.
 - Pendente: assinatura do cliente desenhada com o dedo (o espaço já existe).
+
+### Caminho guiado do orçamento (versão 23)
+O orçamento agora tem **uma tela por etapa**: Cliente → Medir → Material → Serviços → Preço → Enviar (Fotos e IA é opcional, ao lado dos passos). Uma barra de passos mostra onde você está e permite pular direto; a barra de preço de baixo tem o botão grande **Próximo** (e ‹ para voltar).
+- Cliente: "+ Novo cliente" cria o cliente ali mesmo (nome, telefone, endereço), sem sair do orçamento.
+- Material: quadradinhos com foto dos seus materiais e do catálogo (o mesmo do editor 3D), com busca.
+- Orçamento novo já vem com o **último material usado**.
+- A barra de preço mostra área e chapas; o lucro continua na etapa Preço.

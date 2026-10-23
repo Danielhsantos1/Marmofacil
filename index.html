@@ -53,6 +53,18 @@ button.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--ac
 button.pri:active{filter:brightness(.92)}
 button.ghost{border-color:transparent;background:transparent;padding:8px 10px;min-height:40px}
 button.danger{color:var(--bad)} button.sm{min-height:36px;padding:6px 10px;font-size:13px}
+/* passos do orçamento */
+.steps{display:flex;gap:2px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}.steps::-webkit-scrollbar{display:none}
+.steps button{flex:1 1 0;min-width:44px;min-height:62px;flex-direction:column;gap:4px;border:0;background:none;padding:2px 1px;font-size:10.5px;font-weight:700;color:var(--muted)}
+.steps .dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--surface);transition:transform .15s,background .15s}
+.steps .dot svg{width:17px;height:17px}
+.steps button.feito .dot{border-color:var(--accent);color:var(--accent)}
+.steps button[aria-current=step]{color:var(--fg)}
+.steps button[aria-current=step] .dot{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);transform:scale(1.14)}
+.sum .nextb{min-height:52px;padding:8px 18px;font-size:16px;white-space:nowrap;flex:none}
+.sum .voltarb{min-height:52px;min-width:48px;font-size:26px;color:var(--bg);flex:none;padding:0 12px}
+.e3mats.grande,.grande .e3mats{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+@media (prefers-reduced-motion:no-preference){.stepin{animation:stepin .2s ease-out}@keyframes stepin{from{opacity:0;transform:translateY(8px)}}}
 button.big{min-height:56px;font-size:16px;gap:10px;justify-content:center;width:100%}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.card.tap:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 label.f{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--muted);font-weight:600}
@@ -88,7 +100,7 @@ input[type=file]{display:none}
 .bar{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
 .note{font-size:12.5px;color:var(--muted);border-left:3px solid var(--line);padding:2px 0 2px 10px}
 .ex{font-size:11px;font-weight:700;color:var(--warn);letter-spacing:.04em}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;z-index:40;max-width:90%;font-size:14px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(168px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;z-index:40;max-width:90%;font-size:14px}
 .bar3d{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .bar3d button{padding:4px 2px;font-size:12.5px}
 @media (max-width:350px){.bar3d{grid-template-columns:repeat(2,1fr)}.bar3d button{font-size:13px}}
@@ -213,9 +225,9 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=22"></script>
-<script src="catalogo.js?v=22"></script>
-<script src="model3d.js?v=22"></script>
+<script src="calc.js?v=23"></script>
+<script src="catalogo.js?v=23"></script>
+<script src="model3d.js?v=23"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -228,7 +240,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=22;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=23;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -348,7 +360,7 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',brilho3d:true,pdf:null,e3mq:'',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
+const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',brilho3d:true,pdf:null,novoCli:false,animar:false,e3mq:'',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
 const IC={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
@@ -356,6 +368,7 @@ const IC={
   box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
   gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>',
   pdf:'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M8.5 15.5h1.2a1.2 1.2 0 0 0 0-2.4H8.5v4M13 17.1v-4h1a2 2 0 0 1 0 4zM17.5 13.1h-2v4M15.5 15.2h1.6"/></svg>',
+  cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg>',
   back:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 5l-7 7 7 7"/></svg>'
 };
 function goTab(t){nav.catAberto=false;nav.tab=t;nav.qid=null;nav.edit=null;render();scrollTo(0,0)}
@@ -372,7 +385,7 @@ function render(){
   else if(nav.tab==='quotes')h=viewQuotes();
   else if(nav.tab==='cad')h=viewCad();
   else if(nav.tab==='cfg')h=viewCfg();
-  $('#app').innerHTML=h;
+  $('#app').innerHTML=h;nav.animar=false;
   if(q&&nav.tab!=='cad')aplicarTrava(q);
   if(nav.show3d&&nav.sec==='med'&&q&&nav.tab!=='cad')montar3d();
   if(nav.ed3d)renderEd3d();
@@ -400,13 +413,13 @@ function toast(m){$$('.toast').forEach(e=>e.remove());const e=document.createEle
 const clientOf=q=>S.clients.find(c=>c.id===q.clientId);
 function newQuote(clientId){
   const s=S.settings;
-  const q={id:uid(),num:s.nextNum++,clientId:clientId||'',materialId:S.materials[0]?.id||'',status:'Rascunho',
+  const q={id:uid(),num:s.nextNum++,clientId:clientId||'',materialId:(S.materials.find(m=>m.id===(S.quotes[0]&&S.quotes[0].materialId))||S.materials[0]||{}).id||'',status:'Rascunho',
     pieces:[{id:uid(),type:'reta',name:'Bancada',d:{A:280,P:60},saiaH:0,rodaH:0}],lines:[],
     params:{margin:s.margin,tax:s.tax,moM2:s.moM2,instalM2:s.instalM2,instalFixo:0,frete:s.frete,charge:(S.materials[0]?.priceSlab>0?'chapa':'m2'),lossPct:12},
     photos:[],notes:'',validade:s.validade,createdAt:Date.now(),closedAt:null};
   S.quotes.unshift(q);save();return q;
 }
-function openQuote(id,sec){nav.tab='quotes';nav.qid=id;nav.sec=sec||'cli';nav.pi=0;nav.showTypes=false;nav.show3d=false;render();scrollTo(0,0)}
+function openQuote(id,sec){nav.novoCli=false;nav.tab='quotes';nav.qid=id;nav.sec=sec||'cli';nav.pi=0;nav.showTypes=false;nav.show3d=false;render();scrollTo(0,0)}
 /* Chapa e espessura de hoje, para o 3D do orçamento fechado desenhar o mesmo que foi cobrado (espessura 0 = padrão). */
 const chapaDoFechamento=(q,c)=>({SL:c.SL,SW:c.SW,thick:matOf(q)?.thick>0?matOf(q).thick:0});
 /* Fechar congela os valores (q.snap); qualquer outra etapa descongela. Devolve false se não puder fechar. */
@@ -509,17 +522,29 @@ function sel(label,path,options,opt={}){
 }
 
 /* ===== Editor do orçamento ===== */
-const SECS=[['cli','Cliente'],['med','Medir'],['svc','Serviços'],['cal','Cálculo'],['fot','Fotos e IA'],['orc','Orçamento']];
+/* Caminho guiado: uma tela por etapa. "Fotos e IA" é opcional e fica ao lado dos passos. */
+const STEPS=[['cli','Cliente'],['med','Medir'],['mat','Material'],['svc','Serviços'],['cal','Preço'],['orc','Enviar']];
+function passoVizinho(dir){
+  let i=STEPS.findIndex(x=>x[0]===nav.sec);const fora=i<0;if(fora)i=1;                  // Fotos e IA: conta como depois de Medir
+  const j=dir==='next'?i+1:(fora?i:i-1);return STEPS[j]||null;
+}
+function stepper(){
+  const at=Math.max(0,STEPS.findIndex(x=>x[0]===nav.sec));
+  return `<nav class="steps" aria-label="Etapas do orçamento">${STEPS.map(([k,l],i)=>`<button data-act="sec" data-v="${k}" ${nav.sec===k?'aria-current="step"':''} class="${i<at&&STEPS.findIndex(x=>x[0]===nav.sec)>=0?'feito':''}"><span class="dot">${i<at&&STEPS.findIndex(x=>x[0]===nav.sec)>=0?'✓':i+1}</span><span>${l}</span></button>`).join('')}
+   <button data-act="sec" data-v="fot" ${nav.sec==='fot'?'aria-current="step"':''} aria-label="Fotos e IA (opcional)"><span class="dot" style="border-style:dashed">${IC.cam||'+'}</span><span>Fotos</span></button></nav>`;
+}
 function sumBar(q){
-  const c=calc(q);
-  return `<div class="sum" id="sumbar"><div class="grow"><small>Preço final</small><b>${brl(c.price)}</b>${c.erro?`<small style="color:#FFC9BF;opacity:1" role="alert">⚠ ${esc(c.erro)}</small>`:''}${materialSemPreco(matOf(q),q.params.charge)?`<small style="color:#FFC9BF;opacity:1" role="alert">⚠ Material sem preço: o orçamento não cobra a pedra. Preencha em Cadastros.</small>`:''}</div>
-   <div style="text-align:right"><small>${nf(c.area)} m² · ${c.nSlabs} chapa${c.nSlabs===1?'':'s'}</small><small>lucro ${brl(c.profit)}</small></div></div>`;
+  const c=calc(q),prox=passoVizinho('next'),ant=passoVizinho('prev');
+  return `<div class="sum" id="sumbar"><div class="grow"><small>Preço final · ${nf(c.area)} m² · ${c.nSlabs} chapa${c.nSlabs===1?'':'s'}</small><b>${brl(c.price)}</b>${c.erro?`<small style="color:#FFC9BF;opacity:1" role="alert">⚠ ${esc(c.erro)}</small>`:''}${materialSemPreco(matOf(q),q.params.charge)?`<small style="color:#FFC9BF;opacity:1" role="alert">⚠ Material sem preço: o orçamento não cobra a pedra. Preencha em Cadastros.</small>`:''}</div>
+   ${ant?`<button class="ghost voltarb" data-act="passo" data-v="prev" aria-label="Etapa anterior: ${ant[1]}">‹</button>`:''}
+   ${prox?`<button class="pri nextb" data-act="passo" data-v="next">${prox[1]} ›</button>`:''}</div>`;
 }
 function viewEditor(q){
   const cl=clientOf(q);
   let body='';
   if(nav.sec==='cli')body=secCli(q);
   else if(nav.sec==='med')body=secMed(q);
+  else if(nav.sec==='mat')body=secMat(q);
   else if(nav.sec==='svc')body=secSvc(q);
   else if(nav.sec==='cal')body=secCal(q);
   else if(nav.sec==='fot')body=secFot(q);
@@ -527,33 +552,40 @@ function viewEditor(q){
   return `<header class="top"><button class="ghost" data-act="close" aria-label="Voltar">${IC.back}</button>
    <h1>#${q.num} ${esc(cl?.name||'Novo orçamento')}</h1><span class="chip c-${q.status}">${q.status}</span></header>
   <div class="stack">
-   <div class="seg" role="tablist">${SECS.map(([k,l])=>`<button data-act="sec" data-v="${k}" aria-pressed="${nav.sec===k}">${l}</button>`).join('')}</div>
+   ${stepper()}
    ${fechado(q)?`<div class="card lock" role="status"><b>Orçamento fechado.</b> Valores congelados em ${dateBR(q.snap.em)}${q.snap.migrado?' (guardados na primeira abertura desta versão)':''}. Mudar preços no cadastro não altera este orçamento.
     <button class="sm" style="margin-top:8px" data-act="reopen">Reabrir para editar</button></div>`:''}
-   <div id="secbody" class="stack" style="padding-top:0">${body}</div>
+   <div id="secbody" class="stack${nav.animar?' stepin':''}" style="padding-top:0">${body}</div>
    ${sumBar(q)}
   </div>`;
 }
 
 function secCli(q){
   const P=`quotes.${q.id}`;
-  const m=matOf(q);
   return `<div class="card stack" style="padding-top:14px">
     ${sel('Cliente',P+'.clientId',S.clients.map(c=>[c.id,c.name]),{blank:'Selecione...'})}
-    <button class="sm" data-act="quick-client">+ Novo cliente</button></div>
+    ${nav.novoCli?`<div class="stack" style="gap:8px;border-top:1px solid var(--line);padding-top:12px">
+      <label class="f">Nome do cliente<input id="ncNome" autocomplete="off" placeholder="Ex.: Marina Alves"></label>
+      <label class="f">Telefone / WhatsApp<input id="ncFone" type="tel" inputmode="tel" autocomplete="off" placeholder="(11) 99999-0000"></label>
+      <label class="f">Endereço da obra<input id="ncEnd" autocomplete="off"></label>
+      <div class="grid2"><button class="pri big" data-act="cli-salvar">Salvar cliente</button><button class="big" data-act="cli-novo">Cancelar</button></div></div>`
+     :`<button class="big" data-act="cli-novo">+ Novo cliente</button>`}</div>
    <div class="card stack" style="padding-top:14px">
-    ${sel('Material',P+'.materialId',S.materials.map(x=>[x.id,`${x.name} (${x.cat})`]),{blank:'Selecione...'})}
-    ${m?`<div class="row">${fotoDoMaterial(m)?`<img class="thumb" src="${esc(fotoDoMaterial(m))}" alt="" loading="lazy">`:`<div class="thumb">sem foto</div>`}
-     <div class="small"><div><b>${esc(m.cat)}</b> · ${esc(m.color)} · ${nf(m.thick,0)} cm</div>
-     <div class="mono muted">${nf(m.slabL,0)}×${nf(m.slabW,0)} cm · ${brl(m.priceSlab)}/chapa · ${brl(m.priceM2)}/m²</div>
-     <div class="muted">${esc(m.supplier)} · estoque ${m.stock}</div></div></div>`:''}</div>
-   <div class="card stack" style="padding-top:14px">
-    ${sel('Etapa do funil',P+'.status',STATUS.map(s=>[s,s]))}
     ${fld('Validade da proposta','quotes.'+q.id+'.validade','n',{unit:'dias'})}
-    ${fld('Observações do orçamento',P+'.notes','area')}</div>
+    ${fld('Observações do orçamento',P+'.notes','area')}
+    ${sel('Etapa do funil',P+'.status',STATUS.map(s=>[s,s]))}</div>
    <button class="danger" data-act="del-quote" data-v="${q.id}">Excluir orçamento</button>`;
 }
-
+/* Material: toque numa foto para escolher; o catálogo está logo abaixo */
+function secMat(q){
+  const m=matOf(q);
+  return `<div class="card stack" style="padding-top:14px">
+    ${m?`<div class="row">${fotoDoMaterial(m)?`<img class="thumb" style="width:72px;height:48px" src="${esc(fotoDoMaterial(m))}" alt="" loading="lazy">`:`<div class="thumb" style="width:72px;height:48px">sem foto</div>`}
+      <div class="grow"><b>${esc(m.name)}</b><div class="small muted">${esc(m.cat)} · ${esc(m.color)} · ${nf(m.thick,0)} cm · ${brl(m.priceSlab)}/chapa</div></div></div>`
+     :'<div class="note">Escolha o material para calcular o preço.</div>'}
+    <input type="search" id="e3matq" value="${esc(nav.e3mq)}" placeholder="Buscar pedra por nome ou cor" aria-label="Buscar pedra" autocomplete="off" style="min-height:48px">
+    <div id="e3matgrid" class="stack grande" style="padding-top:0">${e3MatGrade(q)}</div></div>`;
+}
 function secMed(q){
   if(nav.ed3d)return '<div class="card muted" role="status">O editor 3D está aberto em tela cheia.</div>';
   if(nav.pi>=q.pieces.length)nav.pi=Math.max(0,q.pieces.length-1);
@@ -876,7 +908,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=22');
+    const mod=await import('./viewer3d.js?v=23');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1040,7 +1072,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=22');
+    const m=await import('./viewer3d.js?v=23');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1255,7 +1287,7 @@ function confirmTap(btn,fn){
   setTimeout(()=>{if(btn.isConnected){delete btn.dataset.armed;btn.textContent=btn.dataset.txt}},3000);
 }
 let pendingMat=null;
-const EDITA=new Set(['e3mat','e3cat','add-recorte','del-recorte','addpiece','dup-piece','del-piece','add-rect','del-rect','del-line','quick-client','del-quote','addphoto','del-photo','ai','ai-apply','mark-sent']);
+const EDITA=new Set(['cli-salvar','cli-novo','e3mat','e3cat','add-recorte','del-recorte','addpiece','dup-piece','del-piece','add-rect','del-rect','del-line','quick-client','del-quote','addphoto','del-photo','ai','ai-apply','mark-sent']);
 document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
   const a=b.dataset.act,v=b.dataset.v,q=curQ();
@@ -1267,7 +1299,7 @@ document.addEventListener('click',async e=>{
     case 'newq':{const n=newQuote();openQuote(n.id,'cli');break}
     case 'open':openQuote(v);break;
     case 'close':nav.qid=null;render();break;
-    case 'sec':nav.sec=v;render();break;
+    case 'sec':if(nav.sec!==v){nav.sec=v;nav.animar=true;render();scrollTo(0,0)}break;
     case 'qmode':nav.qmode=v;render();break;
     case 'move':{const x=S.quotes.find(o=>o.id===v);const i=STATUS.indexOf(x.status)+(+b.dataset.d);if(STATUS[i]){setStatus(x,STATUS[i]);render()}break}
     case 'piece':nav.pi=+v;nav.showTypes=false;render();break;
@@ -1298,6 +1330,11 @@ document.addEventListener('click',async e=>{
     case 'add-recorte':{const p=q.pieces[nav.pi];(p.recortes=p.recortes||[]).push({id:uid(),tipo:'cuba',origem:'medido'});save();render();break}   // nasce vazio: nenhuma medida inventada
     case 'del-recorte':{const p=q.pieces[nav.pi];if(p.recortes)p.recortes.splice(+v,1);save();render();break}
     case 'del-line':q.lines.splice(+v,1);save();render();break;
+    case 'passo':{const p=passoVizinho(v);if(p){nav.sec=p[0];nav.animar=true;render();scrollTo(0,0)}break}
+    case 'cli-novo':nav.novoCli=!nav.novoCli;render();if(nav.novoCli){const n=$('#ncNome');if(n)n.focus()}break;
+    case 'cli-salvar':{const nome=($('#ncNome').value||'').trim();if(!nome){toast('Digite o nome do cliente.');$('#ncNome').focus();break}
+      const c={id:uid(),name:nome,phone:($('#ncFone').value||'').trim(),email:'',address:($('#ncEnd').value||'').trim(),notes:''};
+      S.clients.unshift(c);q.clientId=c.id;nav.novoCli=false;save();render();toast('Cliente salvo e escolhido.');break}
     case 'quick-client':{const c={id:uid(),name:'Novo cliente',phone:'',email:'',address:'',notes:''};S.clients.unshift(c);q.clientId=c.id;save();nav.tab='cad';nav.cad='cli';nav.edit={kind:'clients',id:c.id};nav.qid=null;render();break}
     case 'del-quote':confirmTap(b,()=>{S.quotes=S.quotes.filter(x=>x.id!==v);nav.qid=null;save();render()});break;
     case 'addphoto':$('#filePhoto').click();break;
