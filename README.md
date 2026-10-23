@@ -109,3 +109,11 @@ Imagens 3D e fotos são ilustrativas (o rodapé avisa). Preço e cálculo não m
 - **Cotas** em pílula escura com borda azul `#60A5FA` (também no PDF), legíveis no sol.
 - **Inércia (damping)**: o giro continua e para suave ao soltar o dedo depois de um arrasto rápido; calculada por tempo, não por quadro.
 - Ferramentas do 3D com 48 px. Gestos mantidos: 1 dedo gira, 2 dedos aproximam e inclinam.
+
+### PDF profissional (versão 22)
+Aba Orçamento: **Gerar PDF profissional** (botão grande) monta o PDF no aparelho; depois aparecem **Abrir PDF**, **Baixar PDF** e **Enviar PDF no WhatsApp** (Web Share com o arquivo; sem essa função, baixa o PDF e abre o wa.me com o texto). O PDF pronto vale só enquanto nada muda no orçamento, nos cadastros usados ou nos ajustes.
+- Página 1: faixa com logo/nome, CNPJ e telefone, número, data e validade; **foto 3D isométrica** (fundo branco, sem grade, ~1700 px, com as cotas) com sombra suave; tabela técnica (Item, Material, Medidas, Acabamento), chapas, área e aproveitamento reais do cálculo; **caixa escura com o valor total** e, se configurados em Ajustes, "Em até Nx" e "PIX com D% de desconto: valor".
+- Página seguinte: material com foto, uma imagem por peça com cotas (se houver várias), recortes (cuba, cooktop) com medidas e posição, saia/rodabanca, condições, observações, fotos do local e **Aprovação do cliente** com espaço para assinatura.
+- Arquivo: `Orcamento-1034-Bancada-Cinza-Absoluto.pdf` (número, primeira peça e material).
+- Ajustes novos: CNPJ, parcelas (até) e desconto no PIX. **Sem QR Code de PIX**: um QR de mentira num orçamento levaria o cliente a pagar para lugar nenhum; o QR de verdade precisa da chave PIX da marmoraria.
+- Pendente: assinatura do cliente desenhada com o dedo (o espaço já existe).
