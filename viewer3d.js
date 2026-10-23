@@ -93,14 +93,16 @@ export function criarVisualizador(deps={}){
   aviso.setAttribute('role','status');
   const scene=new THREE.Scene();
   const camera=new THREE.PerspectiveCamera(35,1,0.05,80);
-  scene.add(new THREE.HemisphereLight(0xffffff,0x8d9996,1.0));
-  scene.add(new THREE.AmbientLight(0xffffff,0.35));
-  const sol=new THREE.DirectionalLight(0xffffff,1.25);sol.position.set(-2,4,3);scene.add(sol);
+  const hemi=new THREE.HemisphereLight(0xffffff,0x8d9996,1.0),amb=new THREE.AmbientLight(0xffffff,0.35);scene.add(hemi,amb);
+  const sol=new THREE.DirectionalLight(0xffffff,1.25);sol.position.set(-2,4,3);scene.add(sol);scene.add(sol.target);
+  sol.shadow.mapSize.set(1024,1024);sol.shadow.bias=-0.0006;sol.shadow.normalBias=0.004;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;                 // sombra suave, recalculada só quando a cena muda
+  let ambiente=null,pmrem=null,chao=null;
   const grupo=new THREE.Group(),grupoCotas=new THREE.Group();scene.add(grupo,grupoCotas);
   let grade=null;
 
   const alvo=new THREE.Vector3(),est={az:-0.6,pol:1.0,dist:3};
-  const opt={cotas:true,textura:'liso',equip:true,cor:null,foto:null};      // cor: tom da pedra (0xRRGGBB) vindo do cadastro; null = padrão
+  const opt={cotas:true,textura:'liso',equip:true,cor:null,foto:null,brilho:deps.brilho!==false};   // brilho: pedra polida (material PBR, reflexo e sombra suave); o app desliga em aparelho sem aceleração      // cor: tom da pedra (0xRRGGBB) vindo do cadastro; null = padrão
   let modelo=null,quadro=[],raioQ=1,dMin=0.3,dMax=20,zoomManual=false,pedido=0,perdido=false,aoPerder=null,aoFalhar=null,aoRecuperar=null,tRecup=0;
   let ladoCotas={x:'esq',z:'frente'},rotulos=[],listaCotas=[];
   const texturas={};
@@ -133,8 +135,9 @@ export function criarVisualizador(deps={}){
     if(!quadro.length)return est.dist;
     return distanciaIdeal({pontos:quadro.map(p=>[p.x,p.y,p.z]),alvo:[alvo.x,alvo.y,alvo.z],az,pol,fov:camera.fov,aspecto:camera.aspect,min:dMin});
   }
-  function enquadrar(){zoomManual=false;est.dist=distIdeal(est.az,est.pol);posicionar()}
+  function enquadrar(){paraInercia();zoomManual=false;est.dist=distIdeal(est.az,est.pol);posicionar()}
   function vista(nome){
+    paraInercia();
     if(nome==='topo'){est.az=0;est.pol=0}
     else if(nome==='frente'){est.az=0;est.pol=Math.PI/2}
     else{est.az=-0.6;est.pol=1.0}
@@ -150,14 +153,20 @@ export function criarVisualizador(deps={}){
 
   /* toque e mouse: 1 ponteiro gira, 2 ponteiros aproximam, roda do mouse aproxima */
   const ptr=new Map();let d0=0;
-  canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});if(ptr.size===2){const [a,b]=[...ptr.values()];d0=Math.hypot(a.x-b.x,a.y-b.y)}canvas.style.cursor='grabbing'});
-  const solta=e=>{ptr.delete(e.pointerId);d0=0;if(!ptr.size)canvas.style.cursor='grab'};
+  /* inércia (damping): ao soltar o dedo depois de um arrasto rápido, o giro continua e para suave */
+  const vel={az:0,pol:0};let tMov=0,rafIn=0;
+  const paraInercia=()=>{if(rafIn)cancelAnimationFrame(rafIn);rafIn=0;tIn=0;vel.az=vel.pol=0};
+  let tIn=0;                                                       // por tempo, não por quadro: aparelho lento freia igual ao rápido
+  function inercia(t){rafIn=0;const k=tIn?Math.min(6,(t-tIn)/16.7):1;tIn=t;est.az+=vel.az*k;est.pol+=vel.pol*k;const f=Math.pow(0.9,k);vel.az*=f;vel.pol*=f;posicionar();if(Math.abs(vel.az)+Math.abs(vel.pol)>0.0004)rafIn=requestAnimationFrame(inercia);else tIn=0}
+  canvas.addEventListener('pointerdown',e=>{paraInercia();canvas.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});if(ptr.size===2){const [a,b]=[...ptr.values()];d0=Math.hypot(a.x-b.x,a.y-b.y)}canvas.style.cursor='grabbing'});
+  const solta=e=>{const era=ptr.size;if(!era)return;ptr.delete(e.pointerId);d0=0;if(!ptr.size){canvas.style.cursor='grab';
+    if(era===1&&e.type==='pointerup'&&performance.now()-tMov<90&&Math.abs(vel.az)+Math.abs(vel.pol)>0.002){vel.az*=0.5;vel.pol*=0.5;rafIn=requestAnimationFrame(inercia)}else vel.az=vel.pol=0}};
   canvas.addEventListener('pointerup',solta);canvas.addEventListener('pointercancel',solta);canvas.addEventListener('lostpointercapture',solta);
   canvas.addEventListener('pointermove',e=>{
     const p=ptr.get(e.pointerId);if(!p)return;
     if(ptr.size===1){
-      est.az-=(e.clientX-p.x)*0.008;
-      if(e.pointerType==='mouse')est.pol-=(e.clientY-p.y)*0.008;    // com o mouse gira nos dois eixos; no toque a vertical é da página
+      const dAz=-(e.clientX-p.x)*0.008,dPol=e.pointerType==='mouse'?-(e.clientY-p.y)*0.008:0;
+      est.az+=dAz;est.pol+=dPol;vel.az=dAz;vel.pol=dPol;tMov=performance.now();    // com o mouse gira nos dois eixos; no toque a vertical é da página
       p.x=e.clientX;p.y=e.clientY;
     }else if(ptr.size===2){                                         // dois dedos: aproxima/afasta e inclina juntos
       const antes=[...ptr.values()],my0=(antes[0].y+antes[1].y)/2;
@@ -168,7 +177,7 @@ export function criarVisualizador(deps={}){
     }
     posicionar();
   });
-  canvas.addEventListener('wheel',e=>{e.preventDefault();est.dist*=Math.exp(e.deltaY*0.0012);zoomManual=true;posicionar()},{passive:false});
+  canvas.addEventListener('wheel',e=>{e.preventDefault();paraInercia();est.dist*=Math.exp(e.deltaY*0.0012);zoomManual=true;posicionar()},{passive:false});
 
   /* ---------- contexto WebGL: tenta recuperar antes de desistir ---------- */
   canvas.addEventListener('webglcontextlost',e=>{
@@ -179,6 +188,7 @@ export function criarVisualizador(deps={}){
   canvas.addEventListener('webglcontextrestored',()=>{
     perdido=false;clearTimeout(tRecup);camada.style.visibility='visible';mostrarAviso('');
     Object.values(texturas).forEach(t=>{if(t)t.needsUpdate=true});
+    ambiente=null;pmrem=null;if(modelo)construir();                       // o ambiente de reflexo (alvo de renderização) se perde junto com o contexto: refaz
     aoRecuperar&&aoRecuperar();pedir();
   });
   function mostrarAviso(t){aviso.textContent=t;aviso.style.display=t?'block':'none'}
@@ -321,16 +331,30 @@ export function criarVisualizador(deps={}){
     const v=getComputedStyle(document.documentElement).getPropertyValue(nome).trim();
     try{return new THREE.Color(v||fallback)}catch(e){return new THREE.Color(fallback)}
   }
+  /* material da pedra: PBR (rugosidade 0,3 e metal 0,05: pedra polida) quando o brilho está ligado; senão Lambert, mais leve */
+  function mat(par){return opt.brilho?new THREE.MeshStandardMaterial({...par,roughness:0.3,metalness:0.05,envMapIntensity:0.3}):new THREE.MeshLambertMaterial(par)}
+  /* reflexo suave: ambiente de estúdio feito na hora (sem arquivo): sala clara com duas luminárias grandes */
+  function criarAmbiente(){
+    if(ambiente)return ambiente;
+    const es=new THREE.Scene();
+    es.add(new THREE.Mesh(new THREE.BoxGeometry(14,8,14),new THREE.MeshBasicMaterial({color:0x6b7572,side:THREE.BackSide})));
+    const luz=(w,h,x,y,z,rx,ry,k)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color(k,k,k),side:THREE.DoubleSide}));m.position.set(x,y,z);m.rotation.set(rx,ry,0);es.add(m)};
+    luz(3,2,0,3.9,0,Math.PI/2,0,1.6);luz(2.5,4,-6.9,2,1,0,Math.PI/2,2.2);luz(2,3,6.9,2,-2,0,-Math.PI/2,1.0);
+    pmrem=pmrem||new THREE.PMREMGenerator(renderer);
+    ambiente=pmrem.fromScene(es,0.04).texture;
+    es.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()});
+    return ambiente;
+  }
   function material(kind){
     const nome=opt.textura;
     if(opt.foto){                                                                           // foto da pedra (catálogo ou da marmoraria); enquanto carrega, vale o tom
       const tf=texFoto(opt.foto),k=({tampo:1,degrau:1,saia:0.85,roda:0.95,espelho:0.9,painel:1})[kind]||1;
-      if(tf)return new THREE.MeshLambertMaterial({color:new THREE.Color(0xffffff).multiplyScalar(k),map:tf});
+      if(tf)return mat({color:new THREE.Color(0xffffff).multiplyScalar(k),map:tf});
     }
     const fator={tampo:1,degrau:1,saia:0.85,roda:0.95,espelho:0.9,painel:1}[kind]||1;     // saia e peças de apoio um pouco mais escuras que o tampo
-    if(nome==='liso')return new THREE.MeshLambertMaterial({color:opt.cor!=null?new THREE.Color(opt.cor).multiplyScalar(fator):(LISO[kind]||LISO.tampo)});
+    if(nome==='liso')return mat({color:opt.cor!=null?new THREE.Color(opt.cor).multiplyScalar(fator):(LISO[kind]||LISO.tampo)});
     const tx=texturas[nome]||(texturas[nome]=textura(nome));
-    return new THREE.MeshLambertMaterial({color:opt.cor!=null?new THREE.Color(opt.cor).multiplyScalar(fator):(TINTA[kind]||0xffffff),map:tx});
+    return mat({color:opt.cor!=null?new THREE.Color(opt.cor).multiplyScalar(fator):(TINTA[kind]||0xffffff),map:tx});
   }
 
   /* foto da pedra como textura: carrega uma vez (cache em `texturas`); quando chega, refaz a cena. Falha = fica o tom. */
@@ -362,19 +386,34 @@ export function criarVisualizador(deps={}){
       if(opt.textura!=='liso'||opt.foto){const uv=g.attributes.uv,[tu,tv]=opt.foto?TILE_FOTO:[TILE,TILE];for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)/tu,uv.getY(i)/tv);uv.needsUpdate=true}
       return {g,extrudado:true};
     }
+    if(s.kind==='tampo'&&unicoTampo(s)){                       // peça de um tampo só: borda com chanfro sutil (nas peças de vários tampos o chanfro viraria um falso rasgo na junta)
+      const b=Math.min(0.2,s.sy/4,s.sx/10,s.sz/10)*CM,sx=s.sx*CM,sz=s.sz*CM,sh=new THREE.Shape();
+      sh.moveTo(b,-b);sh.lineTo(sx-b,-b);sh.lineTo(sx-b,-(sz-b));sh.lineTo(b,-(sz-b));sh.closePath();
+      const g=new THREE.ExtrudeGeometry(sh,{depth:s.sy*CM-2*b,bevelEnabled:true,bevelThickness:b,bevelSize:b,bevelOffset:0,bevelSegments:1});
+      g.rotateX(-Math.PI/2);g.translate(s.x*CM,s.y*CM+b,s.z*CM);                // as medidas finais continuam as do sólido: o chanfro fica dentro delas
+      if(opt.textura!=='liso'||opt.foto){const uv=g.attributes.uv,[tu,tv]=opt.foto?TILE_FOTO:[TILE,TILE];for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)/tu,uv.getY(i)/tv);uv.needsUpdate=true}
+      return {g,extrudado:true};
+    }
     const g=new THREE.BoxGeometry(s.sx*CM,s.sy*CM,s.sz*CM);
     if(opt.textura!=='liso'||opt.foto)escalarUV(g,s.sx,s.sy,s.sz,...(opt.foto?TILE_FOTO:[TILE,TILE]));
     return {g,extrudado:false};
   }
+  let contaTampos={};
+  const unicoTampo=s=>contaTampos[s.peca==null?-1:s.peca]===1;
   function construir(){
     liberar(grupo);liberar(grupoCotas);rotulos.forEach(r=>r.el.remove());rotulos=[];
     if(grade){scene.remove(grade);grade.geometry.dispose();grade.material.dispose();grade=null}
     if(!modelo||modelo.vazio){quadro=[];listaCotas=[];gradeCm=0;montarAlcas();pedir();return}
+    contaTampos={};modelo.solids.forEach(x=>{if(x.kind==='tampo'){const k=x.peca==null?-1:x.peca;contaTampos[k]=(contaTampos[k]||0)+1}});
+    renderer.shadowMap.enabled=!!opt.brilho;sol.castShadow=!!opt.brilho;
+    renderer.toneMapping=opt.brilho?THREE.NeutralToneMapping:THREE.NoToneMapping;renderer.toneMappingExposure=0.95;      // tom neutro: não estoura pedra clara e mantém as cores
+    hemi.intensity=opt.brilho?0.5:1.0;amb.intensity=opt.brilho?0.05:0.35;sol.intensity=opt.brilho?1.0:1.25;      // com o ambiente de estúdio (reflexo) a luz direta precisa ser menor, senão a pedra clara estoura
+    scene.environment=opt.brilho?criarAmbiente():null;
     const borda=cssVar('--fg','#15191A');
-    const emenda=cssVar('--emenda','#d9480f'),dimCor=cssVar('--dim','#1d5fd1');
+    const emenda=cssVar('--emenda','#d9480f'),dimCor=new THREE.Color(0x60a5fa);
     modelo.solids.forEach(s=>{
       const {g,extrudado}=geometria(s);
-      const m=new THREE.Mesh(g,material(s.kind));
+      const m=new THREE.Mesh(g,material(s.kind));m.castShadow=m.receiveShadow=!!opt.brilho;
       if(!extrudado)m.position.set((s.x+s.sx/2)*CM,(s.y+s.sy/2)*CM,(s.z+s.sz/2)*CM);
       m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g,25),new THREE.LineBasicMaterial({color:borda,transparent:true,opacity:0.5})));
       grupo.add(m);
@@ -391,8 +430,21 @@ export function criarVisualizador(deps={}){
     montarGrade(a,b);
     montarCotas(dimCor);
     montarQuadro(a,b);
+    ajustarSombra(a,b);
     montarAlcas();
     pedir();
+  }
+
+  /* sombra suave: chão que só recebe sombra e luz direcional enquadrada na cena */
+  function ajustarSombra(a,b){
+    if(chao){scene.remove(chao);chao.geometry.dispose();chao.material.dispose();chao=null}
+    if(!opt.brilho)return;
+    const r=Math.max(0.5,raioQ)*1.7,d=Math.max(4,raioQ*3);
+    sol.position.copy(alvo).add(new THREE.Vector3(-2,4,3).normalize().multiplyScalar(d));sol.target.position.copy(alvo);
+    const c=sol.shadow.camera;c.left=-r;c.right=r;c.top=r;c.bottom=-r;c.near=0.1;c.far=d*2.5;c.updateProjectionMatrix();
+    chao=new THREE.Mesh(new THREE.PlaneGeometry(r*2.4,r*2.4),new THREE.ShadowMaterial({opacity:0.2}));
+    chao.rotation.x=-Math.PI/2;chao.position.set(alvo.x,a[1]*CM-0.0007,alvo.z);chao.receiveShadow=true;scene.add(chao);
+    renderer.shadowMap.needsUpdate=true;
   }
 
   /* cuba, torneira e cooktop ILUSTRATIVOS (vindos só dos recortes válidos); formas simples, sem textura */
@@ -401,7 +453,7 @@ export function criarVisualizador(deps={}){
     const lamb=c=>new THREE.MeshLambertMaterial({color:c});
     const caixa=(w,h,d,x,y,z,mat)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w*CM,h*CM,d*CM),mat);o.position.set(x*CM,y*CM,z*CM);grupo.add(o)};
     const cil=(r1,r2,h,x,y,z,mat,rotX)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(r1*CM,r2*CM,h*CM,18),mat);o.position.set(x*CM,y*CM,z*CM);if(rotX)o.rotation.x=Math.PI/2;grupo.add(o)};
-    const t=modelo.espessura,inox=lamb(0xaeb4ba),fundo=lamb(0x7f868c),cromo=lamb(0x8d949a),vidro=lamb(0x1b1e22),anel=lamb(0x5a6068);
+    const t=modelo.espessura,met=(c,m)=>opt.brilho?new THREE.MeshStandardMaterial({color:c,roughness:0.3,metalness:m}):lamb(c),inox=met(0xaeb4ba,0.85),fundo=lamb(0x7f868c),cromo=met(0x8d949a,0.9),vidro=met(0x1b1e22,0.1),anel=lamb(0x5a6068);
     modelo.equipamentos.forEach(e=>{
       if(e.tipo==='cuba'){
         const topo=t,base=t-e.prof,meio=(topo+base)/2,esp=0.5,cx=e.x+e.w/2,cz=e.z+e.d/2;
@@ -457,7 +509,7 @@ export function criarVisualizador(deps={}){
     grupoCotas.renderOrder=10;grupoCotas.visible=opt.cotas;
     rotulos.forEach(r=>{
       const el=document.createElement('span');el.textContent=r.txt;
-      el.style.cssText='position:absolute;left:0;top:0;white-space:nowrap;padding:2px 5px;border-radius:6px;border:1px solid var(--dim,#1d5fd1);color:var(--dim,#1d5fd1);background:color-mix(in srgb,var(--surface,#fff) 88%,transparent)';
+      el.style.cssText='position:absolute;left:0;top:0;white-space:nowrap;padding:3px 8px;border-radius:99px;border:1.5px solid #60a5fa;color:#fff;background:rgba(8,12,20,0.9)';   // pílula escura com borda azul: boa leitura no sol e em qualquer fundo
       if(r.cat==='rotulo'||r.cat==='recorte')el.style.borderStyle='dashed';
       camada.appendChild(el);r.el=el;r.w=0;r.h=0;
     });
@@ -495,7 +547,7 @@ export function criarVisualizador(deps={}){
   function reconstruirCotas(){
     nReconst++;
     liberar(grupoCotas);rotulos.forEach(r=>r.el.remove());
-    montarCotas(cssVar('--dim','#1d5fd1'));
+    montarCotas(new THREE.Color(0x60a5fa));
     const [a,b]=[modelo.bbox.min,modelo.bbox.max];montarQuadro(a,b);montarAlcas();pedir();
   }
 
@@ -541,13 +593,14 @@ export function criarVisualizador(deps={}){
       if(ro){ro.disconnect();ro.observe(container)}
       ajustarTamanho();
     },
-    soltar(){clearTimeout(tRecup);if(ro)ro.disconnect();canvas.remove();camada.remove();aviso.remove();camadaEdit.remove()},
+    soltar(){paraInercia();clearTimeout(tRecup);if(ro)ro.disconnect();canvas.remove();camada.remove();aviso.remove();camadaEdit.remove()},
     /* descarta o visualizador de vez (contexto perdido sem volta): o app cria outro na próxima abertura */
     destruir(){
       clearTimeout(tRecup);if(pedido)cancelAnimationFrame(pedido);pedido=0;
       if(mq&&mq.removeEventListener)mq.removeEventListener('change',aoMudarTema);
       if(ro)ro.disconnect();canvas.remove();camada.remove();aviso.remove();camadaEdit.remove();
       liberar(grupo);liberar(grupoCotas);if(grade){grade.geometry.dispose();grade.material.dispose();grade=null}
+      paraInercia();if(chao){chao.geometry.dispose();chao.material.dispose();chao=null}if(ambiente){ambiente.dispose();ambiente=null}if(pmrem){pmrem.dispose();pmrem=null}
       Object.values(texturas).forEach(t=>{if(t)t.dispose()});
       renderer.dispose();setTimeout(()=>{try{renderer.forceContextLoss()}catch(e){}},500);          // adiado: o Three ainda termina verificações dos programas de shader e quebraria com o contexto já perdido
       modelo=null;
@@ -566,7 +619,7 @@ export function criarVisualizador(deps={}){
         if(!r.el||r.el.style.display==='none')return;
         const b=r.el.getBoundingClientRect(),cs=getComputedStyle(r.el),x=(b.left-cr.left)*k,y=(b.top-cr.top)*k,w=b.width*k,h=b.height*k,rad=6*k;
         g.beginPath();g.moveTo(x+rad,y);g.arcTo(x+w,y,x+w,y+h,rad);g.arcTo(x+w,y+h,x,y+h,rad);g.arcTo(x,y+h,x,y,rad);g.arcTo(x,y,x+w,y,rad);g.closePath();
-        g.fillStyle='rgba(255,255,255,0.92)';g.fill();g.strokeStyle=cs.color;g.lineWidth=Math.max(1,k);
+        g.fillStyle=cs.backgroundColor;g.fill();g.strokeStyle=cs.borderTopColor;g.lineWidth=Math.max(1.5,1.5*k);
         if(r.cat==='rotulo'||r.cat==='recorte')g.setLineDash([3*k,2*k]);else g.setLineDash([]);
         g.stroke();g.setLineDash([]);g.fillStyle=cs.color;g.font='600 '+(12*k)+'px ui-monospace,Menlo,monospace';g.textBaseline='middle';g.textAlign='center';
         g.fillText(r.txt,x+w/2,y+h/2+k*0.5);
@@ -585,7 +638,7 @@ export function criarVisualizador(deps={}){
     },
     /* atualiza modelo e opções numa construção só: o = {cotas, textura} */
     atualizar(m,mantem,o){
-      if(o){if('cor' in o)opt.cor=o.cor==null?null:o.cor;if('foto' in o)opt.foto=o.foto||null;if(o.cotas!=null)opt.cotas=!!o.cotas;if(o.textura!=null)opt.textura=o.textura;if(o.equip!=null)opt.equip=!!o.equip}
+      if(o){if('cor' in o)opt.cor=o.cor==null?null:o.cor;if('foto' in o)opt.foto=o.foto||null;if('brilho' in o)opt.brilho=!!o.brilho;if(o.cotas!=null)opt.cotas=!!o.cotas;if(o.textura!=null)opt.textura=o.textura;if(o.equip!=null)opt.equip=!!o.equip}
       const novo=!mantem||!modelo;
       modelo=m;construir();
       if(novo){zoomManual=false;est.dist=distIdeal(est.az,est.pol);posicionar()}else garantirVisivel();
@@ -595,7 +648,8 @@ export function criarVisualizador(deps={}){
       const mudouCor='cor' in o&&(o.cor==null?null:o.cor)!==opt.cor;
       if('cor' in o)opt.cor=o.cor==null?null:o.cor;
       const mudouFoto='foto' in o&&(o.foto||null)!==opt.foto;if('foto' in o)opt.foto=o.foto||null;
-      const mudouTx=mudouCor||mudouFoto||o.textura!=null&&o.textura!==opt.textura,mudouCotas=o.cotas!=null&&o.cotas!==opt.cotas,mudouEq=o.equip!=null&&!!o.equip!==opt.equip;
+      const mudouBrilho='brilho' in o&&!!o.brilho!==opt.brilho;if('brilho' in o)opt.brilho=!!o.brilho;
+      const mudouTx=mudouCor||mudouFoto||mudouBrilho||o.textura!=null&&o.textura!==opt.textura,mudouCotas=o.cotas!=null&&o.cotas!==opt.cotas,mudouEq=o.equip!=null&&!!o.equip!==opt.equip;
       if(o.cotas!=null)opt.cotas=!!o.cotas;
       if(o.equip!=null)opt.equip=!!o.equip;
       if(o.textura!=null)opt.textura=o.textura;

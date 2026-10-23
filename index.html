@@ -148,8 +148,8 @@ input[type=file]{display:none}
   .e3rail .e3voltar{display:flex!important}
   .e3rail button[aria-selected=true]{box-shadow:inset 3px 0 0 var(--accent)}
   .e3panel{max-height:none;width:min(320px,42vw)}
-  .e3vistas{left:auto;right:8px;top:8px;flex-direction:column;overflow-x:visible;overflow-y:auto;max-height:calc(100% - 16px);width:46px}
-  .e3vistas button{width:44px;height:44px;min-height:44px;padding:0;justify-content:center}
+  .e3vistas{left:auto;right:8px;top:8px;flex-direction:column;overflow-x:visible;overflow-y:auto;max-height:calc(100% - 16px);width:50px}
+  .e3vistas button{width:48px;height:48px;min-height:48px;padding:0;justify-content:center}
   .e3vistas .tx{display:none}
   .e3vistas svg{display:block}
   .e3tt{display:block;position:absolute;left:8px;top:8px;z-index:5;max-width:calc(100% - 70px);padding:4px 10px;border-radius:99px;background:color-mix(in srgb,var(--surface) 88%,transparent);border:1px solid var(--line);font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -212,9 +212,9 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=20"></script>
-<script src="catalogo.js?v=20"></script>
-<script src="model3d.js?v=20"></script>
+<script src="calc.js?v=21"></script>
+<script src="catalogo.js?v=21"></script>
+<script src="model3d.js?v=21"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -227,7 +227,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=20;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=21;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -347,7 +347,7 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',e3mq:'',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
+const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',brilho3d:true,e3mq:'',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
 const IC={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
@@ -869,11 +869,11 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=20');
+    const mod=await import('./viewer3d.js?v=21');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:800px;height:450px;pointer-events:none';document.body.appendChild(box);
-    v=mod.criarVisualizador({cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)});v.anexar(box);
+    v=mod.criarVisualizador({brilho:mod.webglModo()==='gpu',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)});v.anexar(box);
     const ap=aparenciaPdf(q),lay=layout3d(q);
     /* tamanho do quadro em px CSS: quanto menor, maiores ficam os textos das cotas no papel (a imagem vai a 182 mm ou 88 mm de largura) */
     const foto=async(cena,cotas,w)=>{box.style.width=w+'px';box.style.height=Math.round(w*0.5625)+'px';
@@ -998,10 +998,10 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=20');
+    const m=await import('./viewer3d.js?v=21');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
-    try{v3=m.criarVisualizador({cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
+    try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
     v3.aoFalharContexto(conectado=>{                                       // só depois de 4 s sem recuperar
       if(v3)v3.destruir();v3=null;v3Promise=null;v3Peca='';                // descarta o visualizador morto: a próxima abertura cria outro
       if(conectado){nav.show3d=false;render();toast('O aparelho interrompeu o 3D. Toque em Ver em 3D para abrir de novo.')}
@@ -1077,7 +1077,7 @@ function atualizar3d(){
   const chave=q.id+':'+q.pieces.length,mantem=v3Peca===chave;v3Peca=chave;   // mesmo orçamento e mesmas peças: não reenquadra a câmera (trocar a peça selecionada não mexe na cena)
   const lay=layout3d(q),m=Model3D.comporCena(lay.itens,nav.pi);
   v3.editar(nav.ed3d&&nav.alcas3d&&!fechado(q),aoEditar3d);                // alças só no editor e fora de orçamento fechado
-  v3.atualizar(m,mantem,{cotas:nav.cotas3d,textura:texDe(q),cor:corDe(q),foto:fotoDe(q),equip:nav.equip3d});
+  v3.atualizar(m,mantem,{cotas:nav.cotas3d,textura:texDe(q),cor:corDe(q),foto:fotoDe(q),brilho:nav.brilho3d&&v3Modo!=='software',equip:nav.equip3d});
   nota3d(lay.itens[nav.pi].modelo);marcarVista();
 }
 
@@ -1138,6 +1138,7 @@ function e3Painel(q,p){
     <div id="e3matgrid" class="stack" style="padding-top:0">${e3MatGrade(q)}</div>
     <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['material','Do material (nome e cor do cadastro)'],['liso','Lisa'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label>
     ${(p.recortes||[]).length?`<button class="k3d" data-act="equip3d" aria-pressed="${nav.equip3d}">Cuba, torneira e cooktop (ilustrativos)</button>`:''}
+    <button class="k3d" data-act="brilho3d" aria-pressed="${nav.brilho3d}"${v3Modo==='software'?' disabled':''}>Brilho de pedra polida${v3Modo==='software'?' (indisponível neste aparelho)':''}</button>
     <details><summary class="small muted" style="min-height:44px;display:flex;align-items:center">Sobre este 3D</summary><div class="note" id="n3d"></div></details>`;
 }
 function renderEd3d(){
@@ -1243,6 +1244,7 @@ document.addEventListener('click',async e=>{
     case 'view3d':if(v3){v3.vista(v);marcarVista()}break;
     case 'enquadrar3d':if(v3)v3.enquadrar();break;
     case 'equip3d':nav.equip3d=!nav.equip3d;b.setAttribute('aria-pressed',nav.equip3d);if(v3)v3.opcoes({equip:nav.equip3d});{const q2=curQ(),p2=q2&&q2.pieces[nav.pi];if(p2)nota3d(modelo3d(q2,p2))}break;
+    case 'brilho3d':nav.brilho3d=!nav.brilho3d;b.setAttribute('aria-pressed',nav.brilho3d);atualizar3d();break;
     case 'alcas3d':nav.alcas3d=!nav.alcas3d;b.setAttribute('aria-pressed',nav.alcas3d);atualizar3d();break;
     case 'cotas3d':nav.cotas3d=!nav.cotas3d;b.setAttribute('aria-pressed',nav.cotas3d);if(v3)v3.opcoes({cotas:nav.cotas3d});break;
     case 'addpiece':{const t=TYPES[v],d={};t.campos.forEach(([k,,def])=>d[k]=def);if(v==='livre')d.rects=[{w:100,h:50,q:1,l:'Peça'}];
