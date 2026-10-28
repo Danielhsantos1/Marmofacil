@@ -1,7 +1,7 @@
 /* Ao mudar qualquer arquivo do app: suba o número em V, em APP_V (index.html) e nos ?v= dos scripts.
    tests/versao.test.js confere que os números batem. */
-const V='marmofacil-v25';
-const CORE=['./','index.html','calc.js?v=25','catalogo.js?v=25','model3d.js?v=25','viewer3d.js?v=25','vendor/three.module.min.js','manifest.webmanifest','icon-192.png','icon-512.png','vendor/jspdf.umd.min.js'];
+const V='marmofacil-v26';
+const CORE=['./','index.html','calc.js?v=26','catalogo.js?v=26','model3d.js?v=26','viewer3d.js?v=26','vendor/three.module.min.js','manifest.webmanifest','icon-192.png','icon-512.png','vendor/jspdf.umd.min.js'];
 const MEUS=/^(marmofacil|pedra-facil)-/;
 
 /* Instala tudo de uma vez (sem usar o cache HTTP): uma versão nunca fica pela metade. */
@@ -14,6 +14,7 @@ self.addEventListener('fetch',e=>{
   const u=new URL(r.url);
   const fonte=u.host==='fonts.googleapis.com'||u.host==='fonts.gstatic.com';
   if(u.origin!==location.origin&&!fonte)return;
+  if(u.pathname.includes('/vendas/'))return;                       // página de vendas: sempre da rede (senão a navegação sobrescreveria a cópia guardada do app)
   e.respondWith(r.mode==='navigate'?pagina(r):arquivo(r));
 });
 

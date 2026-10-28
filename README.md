@@ -138,3 +138,6 @@ O orçamento agora tem **uma tela por etapa**: Cliente → Medir → Material �
 - **Grade** de linhas finas e baixo contraste, na cor do tema (claro ou escuro); contorno das peças um pouco mais firme.
 - **Cotas** com texto menor com mouse e maior no toque; linhas e marcadores discretos; mais folga no enquadramento do editor para não ficar atrás da coluna de ferramentas e do cartão de resumo.
 - **Pontos de seleção** discretos com mouse (a área de clique continua grande) e realce ao passar o mouse.
+
+### Página de vendas (versão 26)
+`vendas/index.html` (https://danielhsantos1.github.io/Marmofacil/vendas/): página estática, só para marmorarias, com texto que descreve o que o app faz hoje (e uma seção "em breve" para nuvem, CRM, link 3D do cliente e outros segmentos). Imagens reais do app em `vendas/img/` (dados de exemplo). **Contatos:** o bloco `CONFIG` no fim do arquivo define para onde vai o formulário (`whatsapp` = DDI+DDD+número só dígitos; `endpoint` = https que recebe POST em JSON). Com os dois vazios (estado atual) o formulário fica escondido e a página mostra "cadastro em breve". `tests/vendas.test.js` barra frases que o app não sustenta (clientes, e-mail, "horas para minutos"...). O service worker ignora `/vendas/` para não sobrescrever a cópia guardada do app.
