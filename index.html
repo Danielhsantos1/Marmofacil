@@ -273,12 +273,12 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=31"></script>
-<script src="catalogo.js?v=31"></script>
-<script src="model3d.js?v=31"></script>
-<script src="motor/ambiente.js?v=31"></script>
-<script src="nucleo/registro-modulos.js?v=31"></script>
-<script src="nucleo/orcamento.js?v=31"></script>
+<script src="calc.js?v=32"></script>
+<script src="catalogo.js?v=32"></script>
+<script src="model3d.js?v=32"></script>
+<script src="motor/ambiente.js?v=32"></script>
+<script src="nucleo/registro-modulos.js?v=32"></script>
+<script src="nucleo/orcamento.js?v=32"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -291,7 +291,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=31;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=32;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -447,6 +447,7 @@ function render(){
   if(q&&nav.tab!=='cad')aplicarTrava(q);
   if(nav.show3d&&nav.sec==='med'&&q&&nav.tab!=='cad')montar3d();
   if(nav.ed3d)renderEd3d();
+  if(nav.tab==='amb'&&nav.amb)aplicarTravaAmb();
   if(nav.tab==='amb'&&nav.amb&&nav.amb3d)montarAmb();
   if(nav.tab==='cfg'&&!q)mostrarVersao();
 }
@@ -514,7 +515,7 @@ function abrirModulo(id){
   else if(m.destino==='novo-orcamento'){const n=newQuote();openQuote(n.id,'cli')}
 }
 function viewHome(){
-  const Q=S.quotes.map(q=>({q,c:calc(q)}));
+  const Q=todosOrcamentos();
   const by=st=>Q.filter(x=>x.q.status===st);
   const fech=by('Fechado'),aberto=[...by('Enviado'),...by('Negociação')];
   const fat=fech.reduce((t,x)=>t+x.c.price,0),luc=fech.reduce((t,x)=>t+x.c.profit,0);
@@ -555,21 +556,38 @@ function viewHome(){
 
 function quoteList(Q){
   if(!Q.length)return '<div class="card muted" style="text-align:center">Nenhum orçamento ainda. Toque em Novo.</div>';
-  return `<div class="sheet">${Q.map(({q,c})=>{const cl=clientOf(q);return `<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="open" data-v="${q.id}">
-   <div class="grow"><div class="row wrap" style="gap:6px"><b>${esc(cl?.name||'Sem cliente')}</b>${q.ex?'<span class="ex">EXEMPLO</span>':''}</div>
-   <div class="small muted">#${q.num} · ${esc(c.m?.name||'sem material')} · ${nf(c.area)} m²</div></div>
+  return `<div class="sheet">${Q.map(({q,c})=>{const cl=clientOf(q);return `<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="${dataAct(q)}" data-v="${q.id}">
+   <div class="grow"><div class="row wrap" style="gap:6px"><b>${esc(cl?.name||'Sem cliente')}</b>${q.ex?'<span class="ex">EXEMPLO</span>':''}${q.kind==='ambiente'?'<span class="chip">Ambiente</span>':''}</div>
+   <div class="small muted">#${q.num} · ${q.kind==='ambiente'?esc(q.nome||'Ambiente'):esc(c.m?.name||'sem material')} · ${nf(c.area)} m²</div></div>
    <div style="text-align:right"><div class="num"><b>${brl(c.price)}</b></div><span class="chip c-${q.status}">${q.status}</span></div></div>`}).join('')}</div>`;
 }
 
-function viewQuotes(){
+/* Orçamentos de Ambiente entram no funil junto com os de marmoraria: o adaptador devolve o mesmo formato {q,c} que o painel e a lista já usam. */
+function garantirAmbientes(){
+  let mudou=false;
+  (S.ambientes||[]).forEach(a=>{if(a.num==null){a.num=S.settings.nextNum++;a.status=a.status||'Rascunho';a.createdAt=a.createdAt||Date.now();a.clientId=a.clientId||'';mudou=true}});
+  if(mudou)save();
+}
+const fechadoAmb=a=>!!a&&a.status==='Fechado'&&!!a.snap;
+function todosOrcamentos(){
   const Q=S.quotes.map(q=>({q,c:calc(q)}));
+  (S.ambientes||[]).forEach(a=>{
+    const r=ambOrc(a),sn=fechadoAmb(a)?a.snap:null,m=r&&medidasAmbiente(a);
+    Q.push({q:{id:a.id,num:a.num,status:a.status||'Rascunho',clientId:a.clientId||'',kind:'ambiente',nome:a.nome,createdAt:a.createdAt||0,closedAt:a.closedAt||null},
+      c:{price:sn?sn.preco:(r&&r.res.ok?r.res.preco:0),profit:sn?sn.lucro:(r&&r.res.ok?r.res.lucro:0),area:m&&m.ok?m.areaPiso:0,m:null}});
+  });
+  return (S.ambientes||[]).length?Q.sort((x,y)=>(y.q.createdAt||0)-(x.q.createdAt||0)):Q;      // sem ambientes, a ordem é exatamente a de antes
+}
+const dataAct=q=>q.kind==='ambiente'?'open-amb':'open';
+function viewQuotes(){
+  const Q=todosOrcamentos();
   let body='';
   if(nav.qmode==='list')body=quoteList(Q);
   else{
     body=`<div class="board">${STATUS.map((st,i)=>{
       const col=Q.filter(x=>x.q.status===st);const tot=col.reduce((t,x)=>t+x.c.price,0);
       return `<div class="col"><div class="row between"><span class="chip c-${st}">${st} · ${col.length}</span><span class="mono small muted">${brl(tot)}</span></div>
-      ${col.map(({q,c})=>{const cl=clientOf(q);return `<div class="card"><div class="tap" tabindex="0" data-act="open" data-v="${q.id}"><b>${esc(cl?.name||'Sem cliente')}</b><div class="small muted">#${q.num} · ${nf(c.area)} m²</div><div class="num"><b>${brl(c.price)}</b></div></div>
+      ${col.map(({q,c})=>{const cl=clientOf(q);return `<div class="card"><div class="tap" tabindex="0" data-act="${dataAct(q)}" data-v="${q.id}"><b>${esc(cl?.name||'Sem cliente')}</b><div class="small muted">#${q.num}${q.kind==='ambiente'?' · Ambiente '+esc(q.nome||''):''} · ${nf(c.area)} m²</div><div class="num"><b>${brl(c.price)}</b></div></div>
        <div class="row between" style="margin-top:8px">${i>0?`<button class="sm" data-act="move" data-v="${q.id}" data-d="-1" aria-label="Mover para ${STATUS[i-1]}">◀</button>`:'<span></span>'}${i<STATUS.length-1?`<button class="sm" data-act="move" data-v="${q.id}" data-d="1" aria-label="Mover para ${STATUS[i+1]}">▶</button>`:'<span></span>'}</div></div>`}).join('')||'<div class="small muted" style="padding:6px">Vazio</div>'}
       </div>`}).join('')}</div>`;
   }
@@ -981,7 +999,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=31');
+    const mod=await import('./viewer3d.js?v=32');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1004,7 +1022,7 @@ async function imagens3dPdf(q){
 async function imagem3dAmbiente(a){
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=31');
+    const mod=await import('./viewer3d.js?v=32');
     if(!mod.webglModo())return null;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1028,11 +1046,12 @@ async function buildPdfAmbiente(a){
   if(logo){try{const p=doc.getImageProperties(logo),h=18,w=Math.min(46,h*p.width/p.height);doc.setFillColor(255,255,255);doc.roundedRect(M,6,w+4,h,2,2,'F');doc.addImage(logo,'JPEG',M+2,6,w,h);xt=M+w+9}catch(e){}}
   doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text(s.empresa||'Empresa',xt,14.5,{maxWidth:100});
   doc.setFont('helvetica','normal');doc.setFontSize(9);const l2=[s.cnpj?'CNPJ '+s.cnpj:'',s.telefone].filter(Boolean).join('   ·   ');if(l2)doc.text(l2,xt,21.5,{maxWidth:105});
-  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('ORÇAMENTO',W-M,13,{align:'right'});
+  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('ORÇAMENTO #'+(a.num||''),W-M,13,{align:'right'});
   doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.text(dateBR(Date.now()),W-M,19,{align:'right'});doc.text('Validade: '+(s.validade||15)+' dias',W-M,24,{align:'right'});
   doc.setTextColor(0);y=38;
   doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text(a.nome||'Ambiente',M,y);y+=6;
   doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(90);doc.text(`${nf(a.largura,0)} × ${nf(a.comprimento,0)} cm · pé-direito ${nf(a.altura,0)} cm`,M,y);doc.setTextColor(0);y+=6;
+  const cli=S.clients.find(c=>c.id===a.clientId);if(cli){doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('Cliente: '+cli.name,M,y);doc.setFont('helvetica','normal');doc.setTextColor(90);const ct=[cli.phone,cli.email,cli.address].filter(Boolean).join('   ·   ');if(ct)doc.text(ct,M,y+5,{maxWidth:CW});doc.setTextColor(0);y+=ct?11:6}
   if(img){const hh=CW*430/700;try{doc.setFillColor(255,255,255);doc.roundedRect(M,y,CW,hh,2,2,'F');doc.addImage(img,'JPEG',M,y,CW,hh);doc.setDrawColor(225);doc.setLineWidth(0.2);doc.roundedRect(M,y,CW,hh,2,2);y+=hh+3;
     doc.setFontSize(7.5);doc.setTextColor(120);doc.text('Simulação 3D ilustrativa. Medidas em centímetros.',M,y+1);doc.setTextColor(0);y+=7}catch(e){}}
   titulo('Medidas');
@@ -1198,7 +1217,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=31');
+    const m=await import('./viewer3d.js?v=32');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1286,7 +1305,7 @@ function atualizar3d(){
 const ambs=()=>S.ambientes||(S.ambientes=[]);
 const AMB_PAREDE_OPC=AMB_PAREDES.map(p=>[p,AMB_NOME_PAREDE[p]]);
 function ambNovo(){
-  const a={id:uid(),nome:'Ambiente '+(ambs().length+1),largura:400,comprimento:500,altura:270,aberturas:[]};
+  const a={id:uid(),nome:'Ambiente '+(ambs().length+1),num:S.settings.nextNum++,status:'Rascunho',clientId:'',createdAt:Date.now(),closedAt:null,largura:400,comprimento:500,altura:270,aberturas:[]};
   ambs().push(a);save();nav.amb=a.id;nav.amb3d=false;render();scrollTo(0,0);
 }
 function ambMedHtml(a){
@@ -1297,11 +1316,30 @@ function ambMedHtml(a){
    ${c('Paredes (líquida)',nf(m.areaParedesLiquida)+' m²')}${c('Aberturas',nf(m.areaAberturas)+' m² · '+m.portas+' porta(s) · '+m.janelas+' janela(s)')}</div>
    <div class="sheet" style="margin-top:8px">${m.paredes.map(p=>`<div class="li" style="display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-top:1px solid var(--line)"><span>${p.nome} · ${nf(p.comprimento,0)} cm</span><span class="num">${nf(p.areaLiquida)} m² <span class="muted small">(bruta ${nf(p.areaBruta)})</span></span></div>`).join('')}</div>`;
 }
+const nomePdfAmb=a=>'Orcamento-'+(a.num||'')+'-Ambiente-'+String(a.nome||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-+|-+$/g,'')+'.pdf';
+function waTextoAmb(a,r){
+  const cl=S.clients.find(c=>c.id===a.clientId)||{},s=S.settings,m=medidasAmbiente(a);
+  return `Olá${cl.name?', '+cl.name.split(' ')[0]:''}! Segue o orçamento #${a.num} da ${s.empresa}.\n\nAmbiente: ${a.nome} (${nf(m.areaPiso)} m² de piso)\nTotal: ${brl(r.res.preco)}\nValidade: ${s.validade||15} dias.`;
+}
+/* Fechar congela o preço (a.snap); qualquer outra etapa descongela. Só fecha com medidas válidas e todos os preços preenchidos. */
+function setStatusAmb(a,st){
+  if(st==='Fechado'){
+    if(a.status!=='Fechado'||!a.snap){
+      const r=ambOrc(a);
+      if(!r||!r.res.ok){toast('Corrija as medidas e os valores antes de fechar.');return false}
+      if(!r.res.completo){toast('Preencha todos os preços antes de fechar o orçamento.');return false}
+      a.snap={preco:r.res.preco,lucro:r.res.lucro,custo:r.res.custo,cfg:{margem:r.cfg.margem,impostos:r.cfg.impostos},em:Date.now()};
+    }
+    if(a.status!=='Fechado')a.closedAt=Date.now();
+  }else{delete a.snap;a.closedAt=null}
+  a.status=st;save();return true;
+}
 /* Orçamento do Ambiente: preços por unidade informados pela pessoa; margem e impostos em branco usam os do Ajustes. */
 function ambOrc(a){
   const o=a.orc||{},q=quantitativoAmbiente(a);if(!q.ok)return null;
   const itens=q.itens.map(i=>({...i,precoUnit:(o.precos&&o.precos[i.codigo]||{}).preco,maoObraUnit:(o.precos&&o.precos[i.codigo]||{}).mo}));
   const cfg={margem:o.margem===''||o.margem==null?S.settings.margin:o.margem,impostos:o.impostos===''||o.impostos==null?S.settings.tax:o.impostos,frete:o.frete,instalacao:o.instalacao};
+  if(fechadoAmb(a)){cfg.margem=a.snap.cfg.margem;cfg.impostos=a.snap.cfg.impostos}      // fechado: a margem e os impostos do fechamento, não os do Ajustes de hoje
   return {q,res:orcarItens(itens,cfg),cfg};
 }
 function ambOrcHtml(a){
@@ -1340,8 +1378,10 @@ function viewAmbEdit(a){
     return `<div class="card stack" style="padding:12px"><div class="row between"><b>${o.tipo==='janela'?'Janela':'Porta'}</b><button class="ghost danger sm" data-act="amb-del-ab" data-v="${o.id}">Remover</button></div>
      <div class="grid2">${sel('Parede',Q+'.parede',AMB_PAREDE_OPC,{blank:'Escolha…'})}${fld('Distância do canto esquerdo',Q+'.x','n',{unit:'cm'})}
      ${fld('Largura',Q+'.largura','n',{unit:'cm'})}${fld('Altura',Q+'.altura','n',{unit:'cm'})}${o.tipo==='janela'?fld('Altura do peitoril',Q+'.peitoril','n',{unit:'cm'}):''}</div></div>`}).join('');
-  return `<header class="top"><button class="ghost" data-act="amb-voltar" aria-label="Voltar">${IC.back}</button><h1>${esc(a.nome||'Ambiente')}</h1></header>
-   <div class="stack"><div class="card stack" style="padding-top:14px">${fld('Nome',P+'.nome')}
+  return `<header class="top"><button class="ghost" data-act="amb-voltar" aria-label="Voltar">${IC.back}</button><h1>${esc(a.nome||'Ambiente')}</h1><span class="small muted">#${a.num||''}</span></header>
+   <div class="stack"><div class="card stack" style="padding-top:14px">
+    <div class="grid2">${sel('Cliente',P+'.clientId',S.clients.map(c=>[c.id,c.name]),{blank:'Sem cliente'})}${sel('Status',P+'.status',STATUS.map(x=>[x,x]))}</div>
+    ${fechadoAmb(a)?'<div class="note">Orçamento fechado: os valores estão congelados. Mude o status para reabrir e editar.</div>':''}${fld('Nome',P+'.nome')}
     <div class="grid2">${fld('Largura',P+'.largura','n',{unit:'cm'})}${fld('Comprimento',P+'.comprimento','n',{unit:'cm'})}${fld('Altura (pé-direito)',P+'.altura','n',{unit:'cm'})}</div></div>
     <div id="ambmed" class="stack">${ambMedHtml(a)}</div>
     <div class="card stack"><div class="row between"><h3>Quantitativo</h3><span class="small muted">sem preço: vem no orçamento</span></div>
@@ -1354,13 +1394,20 @@ function viewAmbEdit(a){
      <div class="grid2">${fld('Margem',P+'.orc.margem','n',{unit:'% (vazio = Ajustes: '+nf(S.settings.margin,0)+'%)'})}${fld('Impostos',P+'.orc.impostos','n',{unit:'% (vazio = Ajustes: '+nf(S.settings.tax,0)+'%)'})}
      ${fld('Instalação',P+'.orc.instalacao','n',{unit:'R$'})}${fld('Frete',P+'.orc.frete','n',{unit:'R$'})}</div>
      <div id="ambpreco">${ambOrcHtml(a)}</div>
-     <button class="pri" data-act="amb-pdf">Gerar PDF do orçamento</button></div>
+     <div class="row"><button class="pri grow" data-act="amb-pdf">Gerar PDF</button><button class="grow" data-act="amb-wa">Enviar por WhatsApp</button></div></div>
     <button data-act="amb-3d" aria-pressed="${nav.amb3d}">${nav.amb3d?'Esconder o 3D':'Ver em 3D'}</button>
     ${nav.amb3d?`<div class="draw" id="ambbox" style="padding:0;height:min(80vw,380px);min-height:260px;position:relative"><div id="ambmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
      <p class="small muted">Cotas em cm. Para conferência visual: não é desenho de fabricação.</p>`:''}
     <div class="row"><button data-act="amb-add" data-v="porta">+ Porta</button><button data-act="amb-add" data-v="janela">+ Janela</button></div>
     ${ab}
     <button class="danger" data-act="amb-del">Excluir ambiente</button></div>`;
+}
+/* Orçamento de Ambiente fechado: só ver (3D, PDF, WhatsApp, voltar e o status para reabrir). */
+function aplicarTravaAmb(){
+  const a=ambs().find(x=>x.id===nav.amb);if(!fechadoAmb(a))return;
+  $$('#app input,#app select,#app textarea,#app button').forEach(el=>{
+    if(!el.matches('[data-act="amb-voltar"],[data-act="amb-3d"],[data-act="amb-pdf"],[data-act="amb-wa"],select[data-b$=".status"]'))el.disabled=true;
+  });
 }
 function liveAmb(){
   const a=ambs().find(x=>x.id===nav.amb);if(!a)return;
@@ -1601,6 +1648,16 @@ document.addEventListener('click',async e=>{
     case 'reopen':confirmTap(b,()=>{setStatus(q,'Negociação');render();toast('Reaberto. O preço agora usa os valores atuais do cadastro.')});break;
     case 'atualizar':location.reload();break;
     case 'modulo':abrirModulo(v);break;
+    case 'open-amb':nav.tab='amb';nav.amb=v;nav.qid=null;nav.amb3d=false;render();scrollTo(0,0);break;
+    case 'amb-wa':{const a=ambs().find(x=>x.id===nav.amb);if(!a)break;
+      const r=ambOrc(a);if(!r||!r.res.ok){toast('Corrija as medidas e os valores antes de enviar.');break}
+      b.disabled=true;toast('Gerando o PDF…');
+      try{const bl=await buildPdfAmbiente(a),nome=nomePdfAmb(a),arq=new File([bl],nome,{type:'application/pdf'}),texto=waTextoAmb(a,r);
+        if(navigator.canShare&&navigator.canShare({files:[arq]})){try{await navigator.share({files:[arq],text:texto,title:'Orçamento #'+a.num});b.disabled=false;break}catch(err){if(err&&err.name==='AbortError'){b.disabled=false;break}}}
+        await saveFile(nome,bl);let d=((S.clients.find(c=>c.id===a.clientId)||{}).phone||'').replace(/\D/g,'');if(d.length===10||d.length===11)d='55'+d;
+        window.open(`https://wa.me/${d}?text=${encodeURIComponent(texto)}`,'_blank','noopener');toast('PDF baixado. Anexe na conversa do WhatsApp.');
+      }catch(e){toast('Não foi possível gerar o PDF.')}
+      b.disabled=false;break}
     case 'amb-novo':ambNovo();break;
     case 'amb-abrir':nav.amb=v;nav.amb3d=false;render();scrollTo(0,0);break;
     case 'amb-voltar':nav.amb=null;render();break;
@@ -1610,7 +1667,7 @@ document.addEventListener('click',async e=>{
       const r=ambOrc(a);if(!r||!r.res.ok){toast('Corrija as medidas e os valores antes de gerar o PDF.');break}
       if(!r.res.completo&&!confirm('Há itens sem preço. Eles entram como R$ 0,00. Gerar o PDF mesmo assim?'))break;
       b.disabled=true;toast('Gerando o PDF…');
-      try{const bl=await buildPdfAmbiente(a);const sl=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-+|-+$/g,'');await saveFile('Orcamento-Ambiente-'+sl(a.nome)+'.pdf',bl)}catch(e){toast('Não foi possível gerar o PDF.')}
+      try{const bl=await buildPdfAmbiente(a);await saveFile(nomePdfAmb(a),bl)}catch(e){toast('Não foi possível gerar o PDF.')}
       b.disabled=false;break}
     case 'amb-add-rev':{const a=ambs().find(x=>x.id===nav.amb);if(a){(a.revestimentos=a.revestimentos||[]).push({id:uid(),parede:'',altura:a.altura});save();render()}break}
     case 'amb-del-rev':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.revestimentos=(a.revestimentos||[]).filter(r=>r.id!==v);save();render()}break}
@@ -1622,7 +1679,7 @@ document.addEventListener('click',async e=>{
     case 'close':nav.qid=null;render();break;
     case 'sec':if(nav.sec!==v){nav.sec=v;nav.animar=true;render();scrollTo(0,0)}break;
     case 'qmode':nav.qmode=v;render();break;
-    case 'move':{const x=S.quotes.find(o=>o.id===v);const i=STATUS.indexOf(x.status)+(+b.dataset.d);if(STATUS[i]){setStatus(x,STATUS[i]);render()}break}
+    case 'move':{const xa=ambs().find(o=>o.id===v);if(xa){const j=STATUS.indexOf(xa.status||'Rascunho')+(+b.dataset.d);if(STATUS[j]&&setStatusAmb(xa,STATUS[j]))render();break}const x=S.quotes.find(o=>o.id===v);const i=STATUS.indexOf(x.status)+(+b.dataset.d);if(STATUS[i]){setStatus(x,STATUS[i]);render()}break}
     case 'piece':nav.pi=+v;nav.showTypes=false;render();break;
     case 'showtypes':nav.showTypes=!nav.showTypes;render();break;
     case 'toggle3d':nav.show3d=!nav.show3d;nav.rolar3d=nav.show3d;render();{const t=$('[data-act="toggle3d"]');if(t)t.focus({preventScroll:true})}break;   // render() refaz o HTML: devolve o foco ao botão
@@ -1740,6 +1797,7 @@ document.addEventListener('change',e=>{
   if(el.id==='tex3d'){nav.tex3d=el.value;atualizar3d();return}                 // só visual: vale também em orçamento fechado
   if(fechado(curQ())&&el.closest('#secbody,#e3panel'))return;
   if(el.id==='addSvc'){const q=curQ();if(el.value){const f=q.lines.find(l=>l.svcId===el.value);if(f)f.qty+=1;else q.lines.push({svcId:el.value,qty:1});save();render()}return}
+  if(el.matches('select[data-b]')&&/^ambientes\..+\.status$/.test(el.dataset.b)){const a=ambs().find(x=>x.id===el.dataset.b.split('.')[1]);if(a)setStatusAmb(a,el.value);render();return}
   if(el.matches('select[data-b]')&&el.dataset.b.endsWith('.status')){const q2=curQ();if(q2)setStatus(q2,el.value);render();return}
   if(el.matches('select[data-b]')){setPath(el.dataset.b,el.dataset.t==='n'?num(el.value):el.value);
     const q=curQ();if(q&&/\.materialId$/.test(el.dataset.b)){const m=matOf(q);if(m)q.params.charge=m.priceSlab>0?'chapa':'m2'}
@@ -1748,12 +1806,12 @@ document.addEventListener('change',e=>{
   if(el.id==='fileLogo'&&el.files[0]){readImg(el.files[0],360).then(u=>{S.settings.logo=u;save();render();toast('Logo salvo.')}).catch(()=>toast('Não foi possível ler a imagem.'));el.value='';return}
   if(el.id==='fileMat'&&el.files[0]&&pendingMat){const m=S.materials.find(x=>x.id===pendingMat);readImg(el.files[0],600).then(u=>{m.photo=u;save();render()}).catch(()=>toast('Não foi possível ler a foto.'));el.value='';return}
   if(el.id==='fileImport'&&el.files[0]){
-    el.files[0].text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.quotes)||!Array.isArray(d.materials))throw 0;S=d;garantirSnapshots();save();applyTheme();nav.qid=null;nav.edit=null;render();toast('Backup restaurado.')}catch(x){toast('Arquivo de backup inválido.')}});el.value='';
+    el.files[0].text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.quotes)||!Array.isArray(d.materials))throw 0;S=d;garantirSnapshots();garantirAmbientes();save();applyTheme();nav.qid=null;nav.edit=null;render();toast('Backup restaurado.')}catch(x){toast('Arquivo de backup inválido.')}});el.value='';
   }
 });
 
 /* ===== Início ===== */
-load();garantirSnapshots();applyTheme();aplicarLayout();render();
+load();garantirSnapshots();garantirAmbientes();applyTheme();aplicarLayout();render();
 if(window.pfAbriu)window.pfAbriu();
 
 /* Aviso de nova versão: o app abre da cópia guardada; quando uma versão nova assume, oferece recarregar. */
