@@ -273,11 +273,12 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=30"></script>
-<script src="catalogo.js?v=30"></script>
-<script src="model3d.js?v=30"></script>
-<script src="motor/ambiente.js?v=30"></script>
-<script src="nucleo/registro-modulos.js?v=30"></script>
+<script src="calc.js?v=31"></script>
+<script src="catalogo.js?v=31"></script>
+<script src="model3d.js?v=31"></script>
+<script src="motor/ambiente.js?v=31"></script>
+<script src="nucleo/registro-modulos.js?v=31"></script>
+<script src="nucleo/orcamento.js?v=31"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -290,7 +291,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=30;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=31;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -980,7 +981,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=30');
+    const mod=await import('./viewer3d.js?v=31');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -998,6 +999,59 @@ async function imagens3dPdf(q){
   }catch(e){console.warn('PDF sem imagem 3D',e)}
   finally{try{v&&v.destruir()}catch(e){}if(box)box.remove()}
   return sai;
+}
+/* imagem 3D do ambiente para o PDF (visualizador próprio fora da tela; sem WebGL, o PDF sai sem imagem) */
+async function imagem3dAmbiente(a){
+  let box=null,v=null;
+  try{
+    const mod=await import('./viewer3d.js?v=31');
+    if(!mod.webglModo())return null;
+    box=document.createElement('div');box.setAttribute('aria-hidden','true');
+    box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
+    v=mod.criarVisualizador({brilho:mod.webglModo()==='gpu',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):[]});v.anexar(box);
+    v.atualizar(modeloAmbiente(a),false,{cotas:true,textura:'liso',cor:null,foto:null,equip:false});v.vista('iso');
+    return await v.capturar({semGrade:true,escala:2.4});
+  }catch(e){console.warn('PDF sem imagem 3D',e);return null}
+  finally{try{v&&v.destruir()}catch(e){}if(box)box.remove()}
+}
+/* PDF do orçamento de um Ambiente: o cliente vê medidas, quantitativo e o valor final (custo e margem não aparecem) */
+async function buildPdfAmbiente(a){
+  const r=ambOrc(a);if(!r||!r.res.ok)throw new Error('orcamento-invalido');
+  const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'}),s=S.settings,W=210,M=14,CW=W-2*M,ACC=[14,106,91],INK=[17,24,39];
+  const [img,logo]=await Promise.all([imagem3dAmbiente(a),urlParaDataUrl(s.logo)]);
+  const m=medidasAmbiente(a);let y=0;
+  const rodape=()=>{const n=doc.getNumberOfPages();for(let i=1;i<=n;i++){doc.setPage(i);doc.setDrawColor(200);doc.setLineWidth(0.2);doc.line(M,286,W-M,286);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(120);
+    doc.text('Valores sujeitos a conferência das medidas no local. A imagem 3D é ilustrativa.',M,290.5,{maxWidth:CW-18});doc.text(i+' / '+n,W-M,290.5,{align:'right'})}doc.setTextColor(0)};
+  const need=h=>{if(y+h>282){doc.addPage();y=16}};
+  const titulo=t=>{need(12);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...ACC);doc.text(t.toUpperCase(),M,y);doc.setTextColor(0);y+=5.5};
+  doc.setFillColor(...ACC);doc.rect(0,0,W,30,'F');let xt=M;
+  if(logo){try{const p=doc.getImageProperties(logo),h=18,w=Math.min(46,h*p.width/p.height);doc.setFillColor(255,255,255);doc.roundedRect(M,6,w+4,h,2,2,'F');doc.addImage(logo,'JPEG',M+2,6,w,h);xt=M+w+9}catch(e){}}
+  doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text(s.empresa||'Empresa',xt,14.5,{maxWidth:100});
+  doc.setFont('helvetica','normal');doc.setFontSize(9);const l2=[s.cnpj?'CNPJ '+s.cnpj:'',s.telefone].filter(Boolean).join('   ·   ');if(l2)doc.text(l2,xt,21.5,{maxWidth:105});
+  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('ORÇAMENTO',W-M,13,{align:'right'});
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.text(dateBR(Date.now()),W-M,19,{align:'right'});doc.text('Validade: '+(s.validade||15)+' dias',W-M,24,{align:'right'});
+  doc.setTextColor(0);y=38;
+  doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text(a.nome||'Ambiente',M,y);y+=6;
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(90);doc.text(`${nf(a.largura,0)} × ${nf(a.comprimento,0)} cm · pé-direito ${nf(a.altura,0)} cm`,M,y);doc.setTextColor(0);y+=6;
+  if(img){const hh=CW*430/700;try{doc.setFillColor(255,255,255);doc.roundedRect(M,y,CW,hh,2,2,'F');doc.addImage(img,'JPEG',M,y,CW,hh);doc.setDrawColor(225);doc.setLineWidth(0.2);doc.roundedRect(M,y,CW,hh,2,2);y+=hh+3;
+    doc.setFontSize(7.5);doc.setTextColor(120);doc.text('Simulação 3D ilustrativa. Medidas em centímetros.',M,y+1);doc.setTextColor(0);y+=7}catch(e){}}
+  titulo('Medidas');
+  [['Piso',nf(m.areaPiso)+' m²'],['Teto',nf(m.areaTeto)+' m²'],['Paredes (líquida)',nf(m.areaParedesLiquida)+' m²'],['Perímetro',nf(m.perimetro)+' m'],['Volume',nf(m.volume)+' m³'],['Portas / janelas',m.portas+' / '+m.janelas]].forEach(([k,v],i)=>{
+    const x=M+(i%2)*(CW/2);if(i%2===0)need(7);doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(90);doc.text(k,x,y);doc.setTextColor(0);doc.setFont('helvetica','bold');doc.text(v,x+42,y);if(i%2===1)y+=6});y+=4;
+  titulo('Quantitativo');
+  doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(120);doc.text('ITEM',M,y);doc.text('QUANTIDADE',W-M,y,{align:'right'});doc.setTextColor(0);y+=2;doc.setDrawColor(40);doc.setLineWidth(0.4);doc.line(M,y,W-M,y);y+=4.5;
+  r.q.itens.forEach(i=>{need(8);doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.text(i.descricao,M,y,{maxWidth:CW-40});
+    doc.setFont('helvetica','bold');doc.text(nf(i.quantidadeComPerda)+' '+i.unidade,W-M,y,{align:'right'});y+=1.5;doc.setDrawColor(225);doc.setLineWidth(0.2);doc.line(M,y,W-M,y);y+=4.8});
+  y+=3;need(36);doc.setFillColor(...INK);doc.roundedRect(M,y,CW,30,2.5,2.5,'F');
+  doc.setTextColor(190,200,210);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('VALOR TOTAL',M+7,y+9);
+  doc.setTextColor(255);doc.setFontSize(32);doc.text(brl(r.res.preco),M+7,y+23.5);
+  const pa=+s.parcelas||0,pd=+s.pixDesc||0;doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(210,218,226);
+  if(pa>1)doc.text('Em até '+pa+'x',W-M-7,y+11,{align:'right'});
+  if(pd>0){doc.text('PIX com '+nf(pd,pd%1?1:0)+'% de desconto:',W-M-7,y+16.2,{align:'right'});doc.setFont('helvetica','bold');doc.setFontSize(15);doc.setTextColor(255);doc.text(brl(Math.round(r.res.preco*(1-pd/100)*100)/100),W-M-7,y+24,{align:'right'})}
+  doc.setTextColor(0);y+=38;
+  const cond=[['Pagamento',s.pagamento],['Prazo de entrega',s.prazo],['Garantia',s.garantia]].filter(([,v])=>v&&String(v).trim());
+  if(cond.length){titulo('Condições');cond.forEach(([k,v])=>{const t=doc.splitTextToSize(String(v),CW-40);need(t.length*4.6+2);doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.text(k,M+2,y);doc.setFont('helvetica','normal');doc.text(t,M+40,y);y+=t.length*4.6+1.5})}
+  rodape();return doc.output('blob');
 }
 /* nome do arquivo: Orcamento-1034-Bancada-Cinza-Absoluto.pdf */
 function nomeArquivoPdf(q){
@@ -1144,7 +1198,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=30');
+    const m=await import('./viewer3d.js?v=31');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1243,6 +1297,21 @@ function ambMedHtml(a){
    ${c('Paredes (líquida)',nf(m.areaParedesLiquida)+' m²')}${c('Aberturas',nf(m.areaAberturas)+' m² · '+m.portas+' porta(s) · '+m.janelas+' janela(s)')}</div>
    <div class="sheet" style="margin-top:8px">${m.paredes.map(p=>`<div class="li" style="display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-top:1px solid var(--line)"><span>${p.nome} · ${nf(p.comprimento,0)} cm</span><span class="num">${nf(p.areaLiquida)} m² <span class="muted small">(bruta ${nf(p.areaBruta)})</span></span></div>`).join('')}</div>`;
 }
+/* Orçamento do Ambiente: preços por unidade informados pela pessoa; margem e impostos em branco usam os do Ajustes. */
+function ambOrc(a){
+  const o=a.orc||{},q=quantitativoAmbiente(a);if(!q.ok)return null;
+  const itens=q.itens.map(i=>({...i,precoUnit:(o.precos&&o.precos[i.codigo]||{}).preco,maoObraUnit:(o.precos&&o.precos[i.codigo]||{}).mo}));
+  const cfg={margem:o.margem===''||o.margem==null?S.settings.margin:o.margem,impostos:o.impostos===''||o.impostos==null?S.settings.tax:o.impostos,frete:o.frete,instalacao:o.instalacao};
+  return {q,res:orcarItens(itens,cfg),cfg};
+}
+function ambOrcHtml(a){
+  const r=ambOrc(a);if(!r)return '<p class="small muted">Corrija as medidas para orçar.</p>';
+  const {res}=r;
+  if(!res.ok)return `<div role="alert" style="color:var(--bad)"><b>Confira os valores</b><ul style="margin:6px 0 0;padding-left:18px">${res.erros.map(e=>`<li>${esc(e)}</li>`).join('')}</ul></div>`;
+  return `<div class="card" style="background:var(--fg);color:var(--bg);padding:14px"><div class="small" style="opacity:.8">PREÇO FINAL${res.completo?'':' (incompleto)'}</div><b class="num" style="font-size:26px">${brl(res.preco)}</b>
+   <div class="small" style="opacity:.8;margin-top:4px">Custo ${brl(res.custo)} · lucro ${brl(res.lucro)} · impostos ${brl(res.impostosValor)}</div></div>
+   ${res.pendentes.length?`<p class="small" style="color:var(--warn)">Faltam preços em: ${res.pendentes.map(c=>esc((r.q.itens.find(i=>i.codigo===c)||{}).descricao||c)).join(', ')}. Eles entram como R$ 0,00 até você preencher.</p>`:''}`;
+}
 function ambQtdHtml(a){
   const q=quantitativoAmbiente(a);if(!q.ok)return '';
   return `<div class="sheet">${q.itens.map(i=>`<div class="li" style="display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-top:1px solid var(--line)"><span>${esc(i.descricao)}</span><span class="num"><b>${nf(i.quantidade)} ${i.unidade}</b>${i.perdaPct>0?`<span class="muted small"> · com ${nf(i.perdaPct,0)}% de perda ${nf(i.quantidadeComPerda)}</span>`:''}</span></div>`).join('')}</div>`;
@@ -1259,7 +1328,12 @@ function viewAmb(){
 }
 function viewAmbEdit(a){
   const P='ambientes.'+a.id;
-  a.perdas=a.perdas||{};a.revestimentos=a.revestimentos||[];
+  a.perdas=a.perdas||{};a.revestimentos=a.revestimentos||[];a.orc=a.orc||{};a.orc.precos=a.orc.precos||{};
+  const qq=quantitativoAmbiente(a);
+  qq.itens.forEach(i=>{a.orc.precos[i.codigo]=a.orc.precos[i.codigo]||{preco:'',mo:''}});
+  const linhasPreco=qq.itens.map(i=>{const R=P+'.orc.precos.'+i.codigo;
+    return `<div class="stack" style="gap:6px;padding:10px 0;border-top:1px solid var(--line)"><div class="row between"><b>${esc(i.descricao)}</b><span class="num small">${nf(i.quantidadeComPerda)} ${i.unidade}</span></div>
+     <div class="grid2">${fld('Preço por '+i.unidade,R+'.preco','n',{unit:'R$'})}${fld('Mão de obra por '+i.unidade,R+'.mo','n',{unit:'R$'})}</div></div>`}).join('');
   const rv=a.revestimentos.map(r=>{const R=P+'.revestimentos.'+r.id;
     return `<div class="row" style="align-items:flex-end"><div class="grow">${sel('Parede',R+'.parede',AMB_PAREDE_OPC,{blank:'Escolha…'})}</div><div class="grow">${fld('Até a altura',R+'.altura','n',{unit:'cm'})}</div><button class="ghost danger sm" data-act="amb-del-rev" data-v="${r.id}" aria-label="Remover revestimento">Remover</button></div>`}).join('');
   const ab=a.aberturas.map(o=>{const Q=P+'.aberturas.'+o.id;
@@ -1275,6 +1349,12 @@ function viewAmbEdit(a){
      <div class="grid2">${fld('Perda do piso',P+'.perdas.piso','n',{unit:'%',ph:'0'})}${fld('Perda do rodapé',P+'.perdas.rodape','n',{unit:'%'})}${fld('Perda do revestimento',P+'.perdas.revestimento','n',{unit:'%'})}</div>
      <p class="small muted">A perda só entra se você preencher. O app não assume percentual.</p>
      ${rv}<button data-act="amb-add-rev">+ Revestimento de parede</button></div>
+    <div class="card stack"><h3>Orçamento</h3><p class="small muted">Informe o preço por unidade de cada item (material) e, se quiser, a mão de obra por unidade. O app não sugere preços.</p>
+     ${linhasPreco}
+     <div class="grid2">${fld('Margem',P+'.orc.margem','n',{unit:'% (vazio = Ajustes: '+nf(S.settings.margin,0)+'%)'})}${fld('Impostos',P+'.orc.impostos','n',{unit:'% (vazio = Ajustes: '+nf(S.settings.tax,0)+'%)'})}
+     ${fld('Instalação',P+'.orc.instalacao','n',{unit:'R$'})}${fld('Frete',P+'.orc.frete','n',{unit:'R$'})}</div>
+     <div id="ambpreco">${ambOrcHtml(a)}</div>
+     <button class="pri" data-act="amb-pdf">Gerar PDF do orçamento</button></div>
     <button data-act="amb-3d" aria-pressed="${nav.amb3d}">${nav.amb3d?'Esconder o 3D':'Ver em 3D'}</button>
     ${nav.amb3d?`<div class="draw" id="ambbox" style="padding:0;height:min(80vw,380px);min-height:260px;position:relative"><div id="ambmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
      <p class="small muted">Cotas em cm. Para conferência visual: não é desenho de fabricação.</p>`:''}
@@ -1284,7 +1364,7 @@ function viewAmbEdit(a){
 }
 function liveAmb(){
   const a=ambs().find(x=>x.id===nav.amb);if(!a)return;
-  const el=$('#ambmed');if(el)el.innerHTML=ambMedHtml(a);const qd=$('#ambqtd');if(qd)qd.innerHTML=ambQtdHtml(a);
+  const el=$('#ambmed');if(el)el.innerHTML=ambMedHtml(a);const qd=$('#ambqtd');if(qd)qd.innerHTML=ambQtdHtml(a);const pr=$('#ambpreco');if(pr)pr.innerHTML=ambOrcHtml(a);
   const t=$('.top h1');if(t)t.textContent=a.nome||'Ambiente';
   atualizarAmb();
 }
@@ -1526,6 +1606,12 @@ document.addEventListener('click',async e=>{
     case 'amb-voltar':nav.amb=null;render();break;
     case 'amb-3d':nav.amb3d=!nav.amb3d;render();if(nav.amb3d){const bx=$('#ambbox');if(bx)bx.scrollIntoView({block:'center'})}break;
     case 'amb-add':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.aberturas.push(v==='janela'?{id:uid(),tipo:'janela',parede:'',x:100,largura:120,altura:100,peitoril:100}:{id:uid(),tipo:'porta',parede:'',x:50,largura:80,altura:210,peitoril:0});save();render()}break}
+    case 'amb-pdf':{const a=ambs().find(x=>x.id===nav.amb);if(!a)break;
+      const r=ambOrc(a);if(!r||!r.res.ok){toast('Corrija as medidas e os valores antes de gerar o PDF.');break}
+      if(!r.res.completo&&!confirm('Há itens sem preço. Eles entram como R$ 0,00. Gerar o PDF mesmo assim?'))break;
+      b.disabled=true;toast('Gerando o PDF…');
+      try{const bl=await buildPdfAmbiente(a);const sl=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-+|-+$/g,'');await saveFile('Orcamento-Ambiente-'+sl(a.nome)+'.pdf',bl)}catch(e){toast('Não foi possível gerar o PDF.')}
+      b.disabled=false;break}
     case 'amb-add-rev':{const a=ambs().find(x=>x.id===nav.amb);if(a){(a.revestimentos=a.revestimentos||[]).push({id:uid(),parede:'',altura:a.altura});save();render()}break}
     case 'amb-del-rev':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.revestimentos=(a.revestimentos||[]).filter(r=>r.id!==v);save();render()}break}
     case 'amb-del-ab':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.aberturas=a.aberturas.filter(o=>o.id!==v);save();render()}break}
