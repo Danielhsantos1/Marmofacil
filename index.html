@@ -114,6 +114,12 @@ input[type=file]{display:none}
 .doc{background:#fff;color:#111;border:1px solid var(--line);border-radius:6px;padding:18px;font-size:13.5px}
 .doc h2{color:#111}.doc table{width:100%;border-collapse:collapse}.doc td,.doc th{padding:6px 4px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}
 .doc td:last-child,.doc th:last-child{text-align:right;white-space:nowrap}
+/* Tela "O que deseja projetar?" (v29) */
+.mods{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}@media(min-width:768px){.mods{grid-template-columns:repeat(3,1fr)}}@media(min-width:1024px){.mods{grid-template-columns:repeat(4,1fr)}}
+.mod{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;min-height:116px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--fg)}
+.mod .mi{width:38px;height:38px;border-radius:11px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);display:grid;place-items:center}.mod .mi svg{width:22px;height:22px}
+.mod b{font-size:15px}.mod .small{line-height:1.3}.mod .selo{position:absolute;top:10px;right:10px;font-size:10.5px;font-weight:650;padding:2px 8px;border-radius:99px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.mod.on:hover{border-color:var(--accent)}.mod[aria-disabled=true]{opacity:.78}
 /* ===== Layout responsivo (v28): mobile < 768 | tablet 768 | notebook 1024 | desktop 1440 | ultrawide 1920.
    Mobile continua com a barra inferior; a partir de 1024 px ela vira sidebar. O conteúdo é o mesmo em todos os tamanhos. ===== */
 .brand{display:none}
@@ -267,10 +273,11 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=28"></script>
-<script src="catalogo.js?v=28"></script>
-<script src="model3d.js?v=28"></script>
-<script src="motor/ambiente.js?v=28"></script>
+<script src="calc.js?v=29"></script>
+<script src="catalogo.js?v=29"></script>
+<script src="model3d.js?v=29"></script>
+<script src="motor/ambiente.js?v=29"></script>
+<script src="nucleo/registro-modulos.js?v=29"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -283,7 +290,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=28;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=29;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -493,6 +500,18 @@ function garantirSnapshots(){
 }
 
 /* ===== Início / painel ===== */
+const ICM={casa:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-5h4v5"/></svg>',pedra:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 15l4-8h10l4 8-9 5z"/><path d="M7 7l5 13M17 7l-5 13" opacity=".6"/></svg>',madeira:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M12 3v18M9 9v2M15 9v2"/></svg>',vidro:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 8l6-3M9 14l6-3" opacity=".7"/></svg>',porta:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 21V4l10-1v18M6 21h12"/><circle cx="13" cy="12.5" r=".8"/></svg>',ext:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3 0 3-2 6-2s3 2 6 2 3-2 6-2M3 21c3 0 3-2 6-2s3 2 6 2 3-2 6-2"/><path d="M8 4v7M5 7l3-3 3 3"/></svg>',livre:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 18l3-9 6 3 5-7 0 13z"/></svg>'};
+function secModulos(){
+  return `<section aria-labelledby="oqp"><h2 id="oqp" style="margin-bottom:10px">O que deseja projetar?</h2><div class="mods">${listarModulos().map(m=>{
+    const on=m.estado==='disponivel';
+    return `<button class="mod ${on?'on':''}" data-act="modulo" data-v="${m.id}" ${on?'':'aria-disabled="true"'}><span class="mi">${ICM[m.icone]||''}</span>${on?'':'<span class="selo">Em breve</span>'}<b>${esc(m.nome)}</b><span class="small muted">${esc(m.descricao)}</span></button>`}).join('')}</div></section>`;
+}
+function abrirModulo(id){
+  const m=moduloPorId(id);if(!m)return;
+  if(m.estado!=='disponivel'){toast(m.nome+' ainda não está disponível. Chega em breve.');return}
+  if(m.destino==='aba-ambientes')goTab('amb');
+  else if(m.destino==='novo-orcamento'){const n=newQuote();openQuote(n.id,'cli')}
+}
 function viewHome(){
   const Q=S.quotes.map(q=>({q,c:calc(q)}));
   const by=st=>Q.filter(x=>x.q.status===st);
@@ -509,6 +528,7 @@ function viewHome(){
   const ex=S.quotes.some(q=>q.ex);
   return `<header class="top"><h1>${esc(S.settings.empresa)}</h1><button class="pri" data-act="newq">${IC.plus.replace('<svg','<svg width="18" height="18"')} Novo orçamento</button></header>
   <div class="stack">
+   ${secModulos()}
    ${ex?'<div class="note"><span class="ex">DADOS DE EXEMPLO</span> Os números abaixo vêm de orçamentos fictícios. Remova em Ajustes quando começar a usar.</div>':''}
    <div class="grid2">
     <div class="card kpi"><span class="lbl">Faturamento fechado</span><b>${brl(fat)}</b></div>
@@ -960,7 +980,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=28');
+    const mod=await import('./viewer3d.js?v=29');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1124,7 +1144,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=28');
+    const m=await import('./viewer3d.js?v=29');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1488,6 +1508,7 @@ document.addEventListener('click',async e=>{
   switch(a){
     case 'reopen':confirmTap(b,()=>{setStatus(q,'Negociação');render();toast('Reaberto. O preço agora usa os valores atuais do cadastro.')});break;
     case 'atualizar':location.reload();break;
+    case 'modulo':abrirModulo(v);break;
     case 'amb-novo':ambNovo();break;
     case 'amb-abrir':nav.amb=v;nav.amb3d=false;render();scrollTo(0,0);break;
     case 'amb-voltar':nav.amb=null;render();break;

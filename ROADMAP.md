@@ -13,8 +13,8 @@ Regras fixas: JS puro (sem React, Vite, TypeScript, Tailwind), Three.js, PWA off
 
 ## Ciclos
 1. Documentos: este roteiro e `docs/ARQUITETURA.md`. (feito)
-2. Rebranding: nome Projetta visível (título, manifest, textos). Não renomear a chave `pedrafacil.v1` nem o prefixo de cache `marmofacil-`.
-3. Tela "O que deseja projetar?" e registro de módulos (`nucleo/registro-modulos.js`).
+2. Rebranding: nome Projetta visível (título, manifest, textos). (feito, v28, junto com o layout responsivo) Não renomear a chave `pedrafacil.v1` nem o prefixo de cache `marmofacil-`.
+3. Tela "O que deseja projetar?" e registro de módulos (`nucleo/registro-modulos.js`). (feito, v29)
 4. Marmoraria e Ambientes encaixados como módulos, sem mudar o comportamento.
 5. Ambientes completo: quantitativos (piso, pintura, rodapé, revestimento) e entrada em orçamento.
 6. Núcleo de orçamento genérico (quantitativo → custo → margem/impostos → PDF), sem tocar no `calc.js`.
