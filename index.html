@@ -120,6 +120,19 @@ input[type=file]{display:none}
 .mod .mi{width:38px;height:38px;border-radius:11px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);display:grid;place-items:center}.mod .mi svg{width:22px;height:22px}
 .mod b{font-size:15px}.mod .small{line-height:1.3}.mod .selo{position:absolute;top:10px;right:10px;font-size:10.5px;font-weight:650;padding:2px 8px;border-radius:99px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
 .mod.on:hover{border-color:var(--accent)}.mod[aria-disabled=true]{opacity:.78}
+/* Editor de Ambiente em 3 painéis (v34): no notebook e acima, dados à esquerda, desenho 2D e 3D ao centro, medidas e orçamento à direita. No celular continua uma coluna, na ordem de sempre. */
+.edcol{display:contents}.o1{order:1}.o2{order:2}.o3{order:3}.o4{order:4}.o5{order:5}.o6{order:6}.o7{order:7}.o8{order:8}.o9{order:9}.o10{order:10}
+@media (min-width:1024px){
+  #app[data-view=amb-edit]{max-width:none}
+  .ed3p{display:grid;grid-template-columns:minmax(300px,1fr) minmax(0,2fr) minmax(320px,1.1fr);gap:16px;align-items:start}
+  .ed3p .edcol{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .ed3p .ed-c{position:sticky;top:76px;height:calc(100vh - 92px);min-height:560px}
+  .ed3p .ed-c #plsvg{max-height:230px!important}.ed3p .ed-c>p{display:none}
+  .ed3p .ed-c #ambbox{flex:1 1 auto;height:auto!important;min-height:240px}
+  .amb3d-btn{display:none}
+}
+@media (min-width:1024px) and (max-height:800px){.ed3p .ed-c #plsvg{max-height:185px!important}}
+@media (min-width:1920px){.ed3p{grid-template-columns:minmax(340px,1fr) minmax(0,2.4fr) minmax(380px,1.1fr)}}
 /* ===== Layout responsivo (v28): mobile < 768 | tablet 768 | notebook 1024 | desktop 1440 | ultrawide 1920.
    Mobile continua com a barra inferior; a partir de 1024 px ela vira sidebar. O conteúdo é o mesmo em todos os tamanhos. ===== */
 .brand{display:none}
@@ -273,13 +286,13 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=33"></script>
-<script src="catalogo.js?v=33"></script>
-<script src="model3d.js?v=33"></script>
-<script src="motor/ambiente.js?v=33"></script>
-<script src="motor/planta.js?v=33"></script>
-<script src="nucleo/registro-modulos.js?v=33"></script>
-<script src="nucleo/orcamento.js?v=33"></script>
+<script src="calc.js?v=34"></script>
+<script src="catalogo.js?v=34"></script>
+<script src="model3d.js?v=34"></script>
+<script src="motor/ambiente.js?v=34"></script>
+<script src="motor/planta.js?v=34"></script>
+<script src="nucleo/registro-modulos.js?v=34"></script>
+<script src="nucleo/orcamento.js?v=34"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -292,7 +305,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=33;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=34;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -444,7 +457,7 @@ function render(){
   else if(nav.tab==='cad')h=viewCad();
   else if(nav.tab==='amb')h=viewAmb();
   else if(nav.tab==='cfg')h=viewCfg();
-  $('#app').innerHTML=h;nav.animar=false;$('#app').dataset.view=q&&nav.tab!=='cad'?'editor':nav.tab;
+  $('#app').innerHTML=h;nav.animar=false;$('#app').dataset.view=q&&nav.tab!=='cad'?'editor':nav.tab==='amb'&&nav.amb?'amb-edit':nav.tab;
   if(q&&nav.tab!=='cad')aplicarTrava(q);
   if(nav.show3d&&nav.sec==='med'&&q&&nav.tab!=='cad')montar3d();
   if(nav.ed3d)renderEd3d();
@@ -1000,7 +1013,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=33');
+    const mod=await import('./viewer3d.js?v=34');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1023,7 +1036,7 @@ async function imagens3dPdf(q){
 async function imagem3dAmbiente(a){
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=33');
+    const mod=await import('./viewer3d.js?v=34');
     if(!mod.webglModo())return null;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1218,7 +1231,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=33');
+    const m=await import('./viewer3d.js?v=34');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1346,7 +1359,7 @@ function ambParedeCtl(a){
 function ambNovo(tipo){
   const base={id:uid(),nome:'Ambiente '+(ambs().length+1),num:S.settings.nextNum++,status:'Rascunho',clientId:'',createdAt:Date.now(),closedAt:null,aberturas:[]};
   const f=FORMAS[tipo],a=f?{...base,formato:'planta',altura:270,forma:{tipo,...f.ini},editada:false,pontos:plantaFormato(tipo,f.ini.A,f.ini.B,f.ini.a,f.ini.b)}:{...base,largura:400,comprimento:500,altura:270};
-  ambs().push(a);save();nav.amb=a.id;nav.amb3d=false;render();scrollTo(0,0);
+  ambs().push(a);save();nav.amb=a.id;nav.amb3d=matchMedia('(min-width:1024px)').matches;render();scrollTo(0,0);
 }
 function ambMedHtml(a){
   const m=medidasDe(a);
@@ -1425,29 +1438,31 @@ function viewAmbEdit(a){
      <div class="grid2">${sel('Parede',Q+(ehPlanta(a)?'.aresta':'.parede'),ehPlanta(a)?arestasOpc(a):AMB_PAREDE_OPC,{blank:'Escolha…'})}${fld(ehPlanta(a)?'Distância do início da parede':'Distância do canto esquerdo',Q+'.x','n',{unit:'cm'})}
      ${fld('Largura',Q+'.largura','n',{unit:'cm'})}${fld('Altura',Q+'.altura','n',{unit:'cm'})}${o.tipo==='janela'?fld('Altura do peitoril',Q+'.peitoril','n',{unit:'cm'}):''}</div></div>`}).join('');
   return `<header class="top"><button class="ghost" data-act="amb-voltar" aria-label="Voltar">${IC.back}</button><h1>${esc(a.nome||'Ambiente')}</h1><span class="small muted">#${a.num||''}</span></header>
-   <div class="stack"><div class="card stack" style="padding-top:14px">
+   <div class="stack ed3p"><div class="edcol ed-l"><div class="card stack o1" style="padding-top:14px">
     <div class="grid2">${sel('Cliente',P+'.clientId',S.clients.map(c=>[c.id,c.name]),{blank:'Sem cliente'})}${sel('Status',P+'.status',STATUS.map(x=>[x,x]))}</div>
     ${fechadoAmb(a)?'<div class="note">Orçamento fechado: os valores estão congelados. Mude o status para reabrir e editar.</div>':''}${fld('Nome',P+'.nome')}
     ${ehPlanta(a)?campoPlanta(a,P):`<div class="grid2">${fld('Largura',P+'.largura','n',{unit:'cm'})}${fld('Comprimento',P+'.comprimento','n',{unit:'cm'})}${fld('Altura (pé-direito)',P+'.altura','n',{unit:'cm'})}</div>`}</div>
-    ${ehPlanta(a)?`<div class="stack"><div id="ambplanta">${ambPlantaSvg(a)}</div><div id="ambparede">${ambParedeCtl(a)}</div></div>`:''}
-    <div id="ambmed" class="stack">${ambMedHtml(a)}</div>
-    <div class="card stack"><div class="row between"><h3>Quantitativo</h3><span class="small muted">sem preço: vem no orçamento</span></div>
+    <div class="row o8"><button data-act="amb-add" data-v="porta">+ Porta</button><button data-act="amb-add" data-v="janela">+ Janela</button></div>
+    <div class="stack o9">${ab}</div>
+    <button class="danger o10" data-act="amb-del">Excluir ambiente</button></div>
+   <div class="edcol ed-c">${ehPlanta(a)?`<div class="stack o2"><div id="ambplanta">${ambPlantaSvg(a)}</div><div id="ambparede">${ambParedeCtl(a)}</div></div>`:''}
+    <button class="o6 amb3d-btn" data-act="amb-3d" aria-pressed="${nav.amb3d}">${nav.amb3d?'Esconder o 3D':'Ver em 3D'}</button>
+    ${nav.amb3d?`<div class="draw o7" id="ambbox" style="padding:0;height:min(80vw,380px);min-height:260px;position:relative"><div id="ambmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
+     <p class="small muted o7">Cotas em cm. Para conferência visual: não é desenho de fabricação.</p>`:''}
+   </div>
+   <div class="edcol ed-r"><div id="ambmed" class="stack o3">${ambMedHtml(a)}</div>
+    <div class="card stack o4"><div class="row between"><h3>Quantitativo</h3><span class="small muted">sem preço: vem no orçamento</span></div>
      <div id="ambqtd">${ambQtdHtml(a)}</div>
      <div class="grid2">${fld('Perda do piso',P+'.perdas.piso','n',{unit:'%',ph:'0'})}${fld('Perda do rodapé',P+'.perdas.rodape','n',{unit:'%'})}${fld('Perda do revestimento',P+'.perdas.revestimento','n',{unit:'%'})}</div>
      <p class="small muted">A perda só entra se você preencher. O app não assume percentual.</p>
      ${rv}<button data-act="amb-add-rev">+ Revestimento de parede</button></div>
-    <div class="card stack"><h3>Orçamento</h3><p class="small muted">Informe o preço por unidade de cada item (material) e, se quiser, a mão de obra por unidade. O app não sugere preços.</p>
+    <div class="card stack o5"><h3>Orçamento</h3><p class="small muted">Informe o preço por unidade de cada item (material) e, se quiser, a mão de obra por unidade. O app não sugere preços.</p>
      ${linhasPreco}
      <div class="grid2">${fld('Margem',P+'.orc.margem','n',{unit:'% (vazio = Ajustes: '+nf(S.settings.margin,0)+'%)'})}${fld('Impostos',P+'.orc.impostos','n',{unit:'% (vazio = Ajustes: '+nf(S.settings.tax,0)+'%)'})}
      ${fld('Instalação',P+'.orc.instalacao','n',{unit:'R$'})}${fld('Frete',P+'.orc.frete','n',{unit:'R$'})}</div>
      <div id="ambpreco">${ambOrcHtml(a)}</div>
      <div class="row"><button class="pri grow" data-act="amb-pdf">Gerar PDF</button><button class="grow" data-act="amb-wa">Enviar por WhatsApp</button></div></div>
-    <button data-act="amb-3d" aria-pressed="${nav.amb3d}">${nav.amb3d?'Esconder o 3D':'Ver em 3D'}</button>
-    ${nav.amb3d?`<div class="draw" id="ambbox" style="padding:0;height:min(80vw,380px);min-height:260px;position:relative"><div id="ambmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
-     <p class="small muted">Cotas em cm. Para conferência visual: não é desenho de fabricação.</p>`:''}
-    <div class="row"><button data-act="amb-add" data-v="porta">+ Porta</button><button data-act="amb-add" data-v="janela">+ Janela</button></div>
-    ${ab}
-    <button class="danger" data-act="amb-del">Excluir ambiente</button></div>`;
+   </div></div>`;
 }
 /* Orçamento de Ambiente fechado: só ver (3D, PDF, WhatsApp, voltar e o status para reabrir). */
 function travarFormatoAmb(){const a=ambs().find(x=>x.id===nav.amb);if(ehPlanta(a)&&a.editada)$$('input[data-b*=".forma."]').forEach(el=>el.disabled=true)}
@@ -1697,7 +1712,7 @@ document.addEventListener('click',async e=>{
     case 'reopen':confirmTap(b,()=>{setStatus(q,'Negociação');render();toast('Reaberto. O preço agora usa os valores atuais do cadastro.')});break;
     case 'atualizar':location.reload();break;
     case 'modulo':abrirModulo(v);break;
-    case 'open-amb':nav.tab='amb';nav.amb=v;nav.qid=null;nav.amb3d=false;render();scrollTo(0,0);break;
+    case 'open-amb':nav.tab='amb';nav.amb=v;nav.qid=null;nav.amb3d=matchMedia('(min-width:1024px)').matches;render();scrollTo(0,0);break;
     case 'amb-wa':{const a=ambs().find(x=>x.id===nav.amb);if(!a)break;
       const r=ambOrc(a);if(!r||!r.res.ok){toast('Corrija as medidas e os valores antes de enviar.');break}
       b.disabled=true;toast('Gerando o PDF…');
@@ -1708,7 +1723,7 @@ document.addEventListener('click',async e=>{
       }catch(e){toast('Não foi possível gerar o PDF.')}
       b.disabled=false;break}
     case 'amb-novo':ambNovo(v);break;
-    case 'amb-abrir':nav.amb=v;nav.amb3d=false;render();scrollTo(0,0);break;
+    case 'amb-abrir':nav.amb=v;nav.amb3d=matchMedia('(min-width:1024px)').matches;render();scrollTo(0,0);break;
     case 'amb-voltar':nav.amb=null;render();break;
     case 'amb-parede-sel':nav.ambParede=+v;{const a=ambs().find(x=>x.id===nav.amb);if(a){const pl=$('#ambplanta');if(pl){pl.innerHTML=ambPlantaSvg(a);$('#ambparede').innerHTML=ambParedeCtl(a)}}}break;
     case 'amb-mover':{const a=ambs().find(x=>x.id===nav.amb);if(!a||fechadoAmb(a))break;const r=plantaMoverParede(a,nav.ambParede||0,+b.dataset.d);
