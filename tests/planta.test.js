@@ -130,3 +130,67 @@ test('propriedade: 600 plantas aleatórias válidas, sem sobreposição e com a 
     for(let i=0;i<m.solids.length;i++)for(let j=i+1;j<m.solids.length;j++)assert.ok(!sobrepoe(m.solids[i],m.solids[j]),'sobrepõe em '+tp+A+'x'+B+'/'+a+'x'+b);
   }
 });
+
+/* ===== Desenhar ponto a ponto ===== */
+const {plantaProximaDirecao,plantaAdicionarParede,plantaDoToque,plantaFechar}=require('../motor/planta.js');
+const desenhar=lista=>{let pts=[{x:0,y:0}];for(const [s,l] of lista){const r=plantaAdicionarParede(pts,s,l);assert.equal(r.ok,true,r.erro);pts=r.pontos}return pts};
+
+test('desenho: as direções alternam (H, V, H, V...) e a primeira parede é horizontal',()=>{
+  assert.deepEqual([1,2,3,4,5].map(n=>plantaProximaDirecao(Array(n).fill({x:0,y:0}))),['H','V','H','V','H']);
+  const p=desenhar([[1,400],[1,300]]);assert.deepEqual(p,[{x:0,y:0},{x:400,y:0},{x:400,y:300}]);
+});
+test('desenho: sentido negativo vai para a esquerda e para cima',()=>{
+  const p=desenhar([[-1,200],[-1,100]]);assert.deepEqual(p[2],{x:-200,y:-100});
+});
+test('desenho + fechar: retângulo em 3 paredes (última vertical)',()=>{
+  const f=plantaFechar(desenhar([[1,400],[1,300],[-1,400]]),270);
+  assert.equal(f.ok,true,f.erro);near(medidasPlanta({altura:270,pontos:f.pontos}).areaPiso,12,'12 m²');assert.equal(f.pontos.length,4);
+});
+test('desenho + fechar: L em 4 paredes (última horizontal: o último canto é alinhado)',()=>{
+  const f=plantaFechar(desenhar([[1,500],[1,300],[-1,200],[1,150]]),270);
+  assert.equal(f.ok,true,f.erro);near(medidasPlanta({altura:270,pontos:f.pontos}).areaPiso,19.5,'19,5 m²');assert.equal(f.pontos.length,6);
+});
+test('desenho + fechar: formato em escada com 5 degraus',()=>{
+  const f=plantaFechar(desenhar([[1,100],[1,100],[1,100],[1,100],[1,100],[1,100],[1,100],[1,100]]),270);
+  assert.equal(f.ok,true,f.erro);
+  /* 4 degraus de 100×100: área = 100·100 · (1+2+3+4) = 10 m² ... confere pela fórmula do polígono */
+  near(medidasPlanta({altura:270,pontos:f.pontos}).areaPiso,Math.abs(plArea2(f.pontos))/2/1e4,'área');
+});
+test('desenho: recusa parede curta, enorme, sentido inválido, sem ponto inicial; nada muda',()=>{
+  const base=[{x:0,y:0}];
+  for(const [s,l] of [[1,10],[1,'abc'],[1,99999],[0,100],['x',100]]){const r=plantaAdicionarParede(base,s,l);assert.equal(r.ok,false,`${s},${l}`);assert.deepEqual(r.pontos,base)}
+  assert.equal(plantaAdicionarParede([],1,100).ok,false);
+});
+test('desenho: recusa parede que cruza ou encosta numa já desenhada',()=>{
+  const p=desenhar([[1,400],[1,300],[-1,300]]);                              // (0,0) (400,0) (400,300) (100,300)
+  assert.equal(plantaAdicionarParede(p,-1,400).ok,false,'subir 400 cruza a parede de cima');
+  assert.equal(plantaAdicionarParede(p,-1,300).ok,false,'subir 300 chega em (100,0): encosta na parede de cima');
+  assert.equal(plantaAdicionarParede(p,-1,100).ok,true,'subir 100 é livre');
+});
+test('fechar: recusa com poucas paredes e planta inválida (mantém os pontos)',()=>{
+  const dois=desenhar([[1,400]]);const r=plantaFechar(dois,270);assert.equal(r.ok,false);assert.ok(r.erro);assert.deepEqual(r.pontos,dois);
+  const apertado=desenhar([[1,400],[1,300],[-1,300],[-1,280]]);             // (0,0) (400,0) (400,300) (100,300) (100,20): fechar deixaria uma parede de 20 cm
+  const f=plantaFechar(apertado,270);assert.equal(f.ok,false);assert.ok(/pelo menos/.test(f.erro),f.erro);assert.deepEqual(f.pontos,apertado);
+  const alinhar=plantaFechar(desenhar([[1,400],[1,300],[-1,380]]),270);assert.equal(alinhar.ok,true,'última horizontal: alinha o canto e fecha');near(medidasPlanta({altura:270,pontos:alinhar.pontos}).areaPiso,12,'retângulo 400×300');
+});
+test('toque: vira sentido e comprimento em múltiplos de 5 cm, na direção certa',()=>{
+  const p=[{x:0,y:0}];
+  assert.deepEqual(plantaDoToque(p,303,40),{sinal:1,comprimento:305},'primeira parede é horizontal: só o x conta');
+  assert.deepEqual(plantaDoToque(p,-198,999),{sinal:-1,comprimento:200});
+  const q=desenhar([[1,400]]);assert.deepEqual(plantaDoToque(q,9999,152),{sinal:1,comprimento:150},'segunda parede é vertical: só o y conta');
+  assert.equal(plantaDoToque([],1,1),null);assert.equal(plantaDoToque(p,NaN,1),null);
+});
+test('propriedade: 500 desenhos aleatórios; o que fecha é uma planta válida com área = fórmula do polígono',()=>{
+  let s=987;const rnd=()=>(s=(s*1664525+1013904223)%4294967296)/4294967296,int=(a,b)=>Math.round(a+rnd()*(b-a));
+  let fechou=0;
+  for(let k=0;k<500;k++){
+    let pts=[{x:0,y:0}];const n=int(2,9);
+    for(let i=0;i<n;i++){const r=plantaAdicionarParede(pts,rnd()<.5?-1:1,int(30,600));if(r.ok)pts=r.pontos}
+    const f=plantaFechar(pts,270);
+    if(!f.ok){assert.deepEqual(f.pontos,pts);continue}
+    fechou++;assert.equal(validarPlanta({altura:270,pontos:f.pontos}).ok,true);
+    near(medidasPlanta({altura:270,pontos:f.pontos}).areaPiso,Math.abs(plArea2(f.pontos))/2/1e4,'área '+k);
+    assert.equal(modeloPlanta({altura:270,pontos:f.pontos}).vazio,false);
+  }
+  assert.ok(fechou>20,'esperava vários desenhos fechando, vieram '+fechou);
+});

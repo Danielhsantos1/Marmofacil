@@ -176,4 +176,61 @@ function plantaMoverParede(entrada,i,delta){
   return v.ok?{ok:true,pontos:pts,erro:''}:{ok:false,pontos:a.pontos,erro:v.erros[0]};
 }
 
-if(typeof module!=='undefined')module.exports={criarPlanta,plantaFormato,validarPlanta,medidasPlanta,quantitativoPlanta,modeloPlanta,plantaMoverParede,plRetangulos,plArea2};
+
+/* ===== Desenhar ponto a ponto =====
+   A pessoa parte de um canto (0,0) e vai acrescentando paredes. As direções ALTERNAM sozinhas (horizontal, vertical, horizontal...), então todo
+   canto sai reto; ela só escolhe o sentido (-1 esquerda/cima, +1 direita/baixo) e o comprimento. "Fechar" liga o último canto ao primeiro. */
+const PL_PASSO=5;                                                              // o toque na tela arredonda para múltiplos de 5 cm
+
+/* 'H' (horizontal) ou 'V' (vertical): a primeira parede é horizontal e as seguintes alternam */
+const plantaProximaDirecao=pontos=>(Array.isArray(pontos)?pontos.length:0)%2===1?'H':'V';
+
+/* o novo segmento (de a para b) encosta em alguma parede já desenhada, fora a anterior? (só dividem o canto) */
+function plSegmentoColide(pontos,a,b,ignorarUltima=true){
+  const seg={p:a,q:b};
+  for(let i=0;i+1<pontos.length;i++){
+    if(ignorarUltima&&i===pontos.length-2)continue;                           // a parede anterior só divide o canto
+    if(plSegTocam(seg,{p:pontos[i],q:pontos[i+1]}))return true;
+  }
+  return false;
+}
+
+/* Acrescenta uma parede. sinal: -1 ou +1; comprimento em cm. Devolve {ok,pontos,erro}; nada muda se recusar. */
+function plantaAdicionarParede(pontos,sinal,comprimento){
+  const pts=(Array.isArray(pontos)?pontos:[]).map(p=>({x:p.x,y:p.y})),sg=plNum(sinal),L=plNum(comprimento);
+  const recusa=erro=>({ok:false,pontos:pts,erro});
+  if(!pts.length)return recusa('Comece pelo primeiro canto.');
+  if(sg!==1&&sg!==-1)return recusa('Escolha o sentido da parede.');
+  if(!(L>=plLim.min))return recusa('A parede precisa ter pelo menos '+plLim.min+' cm.');
+  if(L>plLim.max)return recusa('A parede passa de '+plLim.max+' cm.');
+  const u=pts[pts.length-1],h=plantaProximaDirecao(pts)==='H',nv={x:u.x+(h?sg*L:0),y:u.y+(h?0:sg*L)};
+  if(plSegmentoColide(pts,u,nv))return recusa('Essa parede cruza ou encosta em outra já desenhada.');
+  pts.push(nv);
+  const c=plCompPlano(pts);
+  if(c.maxx-c.minx>plLim.max||c.maxy-c.miny>plLim.max)return recusa('A planta passa de '+plLim.max+' cm.');
+  return {ok:true,pontos:pts,erro:''};
+}
+
+/* Toque no desenho (x, y em cm): vira {sinal, comprimento}, arredondado de PL_PASSO em PL_PASSO. */
+function plantaDoToque(pontos,x,y){
+  const pts=Array.isArray(pontos)?pontos:[];if(!pts.length||!isFinite(x)||!isFinite(y))return null;
+  const u=pts[pts.length-1],d=(plantaProximaDirecao(pts)==='H'?x-u.x:y-u.y);
+  return {sinal:d<0?-1:1,comprimento:Math.round(Math.abs(d)/PL_PASSO)*PL_PASSO};
+}
+
+/* Fecha a planta: última parede horizontal => acrescenta o canto que falta; última vertical => alinha o último canto ao primeiro. */
+function plantaFechar(pontos,altura){
+  const pts=(Array.isArray(pontos)?pontos:[]).map(p=>({x:p.x,y:p.y}));
+  const recusa=erro=>({ok:false,pontos:pts,erro});
+  if(pts.length<3)return recusa('Desenhe pelo menos 3 paredes antes de fechar.');
+  const p0=pts[0],u=pts[pts.length-1],ant=pts[pts.length-2],ultimaH=ant.y===u.y;
+  const fim=pts.slice();
+  if(ultimaH){ if(u.x!==p0.x)fim[fim.length-1]={x:p0.x,y:u.y}; }               // a parede que fecha é vertical: o último canto fica em cima do x do primeiro
+  else fim.push({x:p0.x,y:u.y});                                                 // última vertical: falta uma horizontal até o x do primeiro; depois a vertical fecha
+  /* sobrou um canto igual ao primeiro? */
+  if(fim.length>1&&fim[fim.length-1].x===p0.x&&fim[fim.length-1].y===p0.y)fim.pop();
+  const v=validarPlanta({altura:plNum(altura)>0?altura:270,pontos:fim});
+  return v.ok?{ok:true,pontos:fim,erro:''}:{ok:false,pontos:pts,erro:v.erros[0]};
+}
+
+if(typeof module!=='undefined')module.exports={plantaProximaDirecao,plantaAdicionarParede,plantaDoToque,plantaFechar,PL_PASSO,criarPlanta,plantaFormato,validarPlanta,medidasPlanta,quantitativoPlanta,modeloPlanta,plantaMoverParede,plRetangulos,plArea2};

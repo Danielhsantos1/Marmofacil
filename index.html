@@ -286,13 +286,13 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=34"></script>
-<script src="catalogo.js?v=34"></script>
-<script src="model3d.js?v=34"></script>
-<script src="motor/ambiente.js?v=34"></script>
-<script src="motor/planta.js?v=34"></script>
-<script src="nucleo/registro-modulos.js?v=34"></script>
-<script src="nucleo/orcamento.js?v=34"></script>
+<script src="calc.js?v=35"></script>
+<script src="catalogo.js?v=35"></script>
+<script src="model3d.js?v=35"></script>
+<script src="motor/ambiente.js?v=35"></script>
+<script src="motor/planta.js?v=35"></script>
+<script src="nucleo/registro-modulos.js?v=35"></script>
+<script src="nucleo/orcamento.js?v=35"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -305,7 +305,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=34;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=35;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -1013,7 +1013,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=34');
+    const mod=await import('./viewer3d.js?v=35');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1036,7 +1036,7 @@ async function imagens3dPdf(q){
 async function imagem3dAmbiente(a){
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=34');
+    const mod=await import('./viewer3d.js?v=35');
     if(!mod.webglModo())return null;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1231,7 +1231,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=34');
+    const m=await import('./viewer3d.js?v=35');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1328,7 +1328,7 @@ const FORMAS={L:{nome:'Em L',A:'Largura total',B:'Comprimento total',a:'Recorte:
   T:{nome:'Em T',A:'Largura da barra',B:'Comprimento total',a:'Largura do braço',b:'Profundidade da barra',ini:{A:600,B:400,a:200,b:150}}};
 function plantaSync(a){if(!ehPlanta(a)||a.editada)return;const f=a.forma||{};a.pontos=plantaFormato(f.tipo,num(f.A),num(f.B),num(f.a),num(f.b))}
 const arestasOpc=a=>(a.pontos||[]).map((_,i)=>[String(i),'Parede '+(i+1)]);
-const descAmb=a=>ehPlanta(a)?`Planta ${(FORMAS[a.forma&&a.forma.tipo]||{nome:'livre'}).nome.replace(/^Em /,'em ')} · altura ${nf(a.altura,0)} cm`:`${nf(a.largura,0)} × ${nf(a.comprimento,0)} × ${nf(a.altura,0)} cm`;
+const descAmb=a=>a&&a.desenhando?'Planta livre · desenhando…':ehPlanta(a)&&a.forma&&a.forma.tipo==='livre'?`Planta livre · altura ${nf(a.altura,0)} cm`:ehPlanta(a)?`Planta ${(FORMAS[a.forma&&a.forma.tipo]||{nome:'livre'}).nome.replace(/^Em /,'em ')} · altura ${nf(a.altura,0)} cm`:`${nf(a.largura,0)} × ${nf(a.comprimento,0)} × ${nf(a.altura,0)} cm`;
 /* desenho 2D da planta: paredes, aberturas, medidas e números das paredes (toque no número escolhe a parede; arraste a parede escolhida para movê-la) */
 function ambPlantaSvg(a){
   const pts=(a.pontos||[]).map(p=>({x:+p.x,y:+p.y}));
@@ -1358,6 +1358,7 @@ function ambParedeCtl(a){
 }
 function ambNovo(tipo){
   const base={id:uid(),nome:'Ambiente '+(ambs().length+1),num:S.settings.nextNum++,status:'Rascunho',clientId:'',createdAt:Date.now(),closedAt:null,aberturas:[]};
+  if(tipo==='livre'){const a={...base,formato:'planta',altura:270,forma:{tipo:'livre'},editada:true,desenhando:true,pontos:[{x:0,y:0}]};ambs().push(a);save();nav.amb=a.id;nav.amb3d=false;nav.ambSinal=1;render();scrollTo(0,0);return}
   const f=FORMAS[tipo],a=f?{...base,formato:'planta',altura:270,forma:{tipo,...f.ini},editada:false,pontos:plantaFormato(tipo,f.ini.A,f.ini.B,f.ini.a,f.ini.b)}:{...base,largura:400,comprimento:500,altura:270};
   ambs().push(a);save();nav.amb=a.id;nav.amb3d=matchMedia('(min-width:1024px)').matches;render();scrollTo(0,0);
 }
@@ -1413,16 +1414,48 @@ function viewAmb(){
   const lista=L.map(a=>{const m=medidasDe(a);
     return `<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="amb-abrir" data-v="${a.id}"><div class="grow"><b>${esc(a.nome)}</b>
      <div class="small muted">${descAmb(a)}</div></div>
-     <div class="num">${m.ok?`<b>${nf(m.areaPiso)} m²</b><div class="small muted">paredes ${nf(m.areaParedesLiquida)} m²</div>`:'<span class="small" style="color:var(--bad)">medidas inválidas</span>'}</div></div>`}).join('');
+     <div class="num">${m.ok?`<b>${nf(m.areaPiso)} m²</b><div class="small muted">paredes ${nf(m.areaParedesLiquida)} m²</div>`:a.desenhando?'<span class="small muted">desenhando…</span>':'<span class="small" style="color:var(--bad)">medidas inválidas</span>'}</div></div>`}).join('');
   return `<header class="top"><h1>Ambientes</h1><button class="pri" data-act="amb-novo">Novo</button></header>
-   <div class="stack"><div class="row wrap" style="gap:6px"><span class="small muted">Formato livre:</span>${Object.entries(FORMAS).map(([k,f])=>`<button class="sm" data-act="amb-novo" data-v="${k}">${f.nome}</button>`).join('')}</div>${lista?`<div class="sheet">${lista}</div>`:'<div class="card muted" style="text-align:center">Nenhum ambiente ainda. Toque em Novo para medir uma sala, cozinha ou quarto: o app calcula piso, paredes, perímetro e aberturas na hora.</div>'}</div>`;
+   <div class="stack"><div class="row wrap" style="gap:6px"><span class="small muted">Formato livre:</span>${Object.entries(FORMAS).map(([k,f])=>`<button class="sm" data-act="amb-novo" data-v="${k}">${f.nome}</button>`).join('')}<button class="sm" data-act="amb-novo" data-v="livre">Desenhar planta</button></div>${lista?`<div class="sheet">${lista}</div>`:'<div class="card muted" style="text-align:center">Nenhum ambiente ainda. Toque em Novo para medir uma sala, cozinha ou quarto: o app calcula piso, paredes, perímetro e aberturas na hora.</div>'}</div>`;
 }
 function campoPlanta(a,P){
+  if(a.forma&&a.forma.tipo==='livre')return `<div class="grid2">${fld('Altura (pé-direito)',P+'.altura','n',{unit:'cm'})}</div><div class="note">Planta desenhada por você. Para ajustar uma medida, toque no número da parede e mova-a.</div>`;
   const f=FORMAS[a.forma&&a.forma.tipo]||FORMAS.L,F=P+'.forma',off=a.editada;
   return `<div class="grid2">${fld(f.A,F+'.A','n',{unit:'cm'})}${fld(f.B,F+'.B','n',{unit:'cm'})}${fld(f.a,F+'.a','n',{unit:'cm'})}${fld(f.b,F+'.b','n',{unit:'cm'})}${fld('Altura (pé-direito)',P+'.altura','n',{unit:'cm'})}</div>
    ${off?'<div class="note">Você moveu paredes: as medidas do formato estão travadas. <button class="sm" data-act="amb-refazer">Refazer o formato</button></div>':''}`;
 }
+/* Desenhar a planta ponto a ponto: a pessoa escolhe o sentido e o comprimento de cada parede (ou toca no desenho); as direções alternam e todo canto sai reto. */
+function ambDesenhoSvg(a){
+  const pts=(a.pontos||[]).map(p=>({x:+p.x,y:+p.y}));
+  const xs=pts.map(p=>p.x).concat([0,800]),ys=pts.map(p=>p.y).concat([0,600]);
+  const x0=Math.min(...xs)-100,x1=Math.max(...xs)+100,y0=Math.min(...ys)-100,y1=Math.max(...ys)+100,w=x1-x0,h=y1-y0,m=Math.max(w,h),fs=m*0.032;
+  const g0=Math.floor(x0/100)*100,gy0=Math.floor(y0/100)*100,grade=[];
+  for(let x=g0;x<=x1;x+=100)grade.push(`<line x1="${x}" y1="${y0}" x2="${x}" y2="${y1}" stroke="var(--line)" stroke-width="${m*0.0015}"/>`);
+  for(let y=gy0;y<=y1;y+=100)grade.push(`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="var(--line)" stroke-width="${m*0.0015}"/>`);
+  const seg=pts.slice(1).map((q,i)=>{const p=pts[i],L=Math.abs(q.x-p.x)+Math.abs(q.y-p.y),mx=(p.x+q.x)/2,my=(p.y+q.y)/2;
+    return `<line x1="${p.x}" y1="${p.y}" x2="${q.x}" y2="${q.y}" stroke="var(--fg)" stroke-width="${m*0.014}" stroke-linecap="square"/>
+     <text x="${mx}" y="${my-fs*.6}" text-anchor="middle" font-size="${fs}" fill="var(--muted)" font-family="var(--mono)">${nf(L,0)}</text>`}).join('');
+  const pontos=pts.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="${m*(i===pts.length-1?0.014:0.01)}" fill="${i===0?'var(--accent)':i===pts.length-1?'var(--dim)':'var(--bg)'}" stroke="var(--fg)" stroke-width="${m*0.003}"/>`).join('');
+  return `<svg id="desvg" viewBox="${x0} ${y0} ${w} ${h}" width="100%" style="max-height:360px;touch-action:manipulation;background:var(--surface);border:1px solid var(--line);border-radius:10px" role="img" aria-label="Área de desenho da planta (grade de 1 metro)">
+   ${grade.join('')}<rect data-act="amb-toque" x="${x0}" y="${y0}" width="${w}" height="${h}" fill="transparent" style="cursor:crosshair"/>${seg}${pontos}
+   <text x="${x0+fs*.6}" y="${y0+fs*1.4}" font-size="${fs}" fill="var(--muted)">grade: 1 m</text></svg>`;
+}
+function viewAmbDesenho(a){
+  const n=a.pontos.length,h=plantaProximaDirecao(a.pontos)==='H',sg=nav.ambSinal===-1?-1:1;
+  const lab=h?['← Esquerda','Direita →']:['↑ Cima','Baixo ↓'];
+  return `<header class="top"><button class="ghost" data-act="amb-voltar" aria-label="Voltar">${IC.back}</button><h1>${esc(a.nome||'Ambiente')}</h1><span class="small muted">#${a.num||''}</span></header>
+   <div class="stack"><div class="card stack" style="gap:6px"><b>Desenhe a planta</b>
+    <div class="small muted">Comece no ponto azul. Escolha o sentido, digite o comprimento e toque em Adicionar parede (ou toque direto no desenho). Os cantos saem sempre retos. Com 3 paredes ou mais, toque em Fechar planta.</div></div>
+    <div id="amdes">${ambDesenhoSvg(a)}</div>
+    <div class="card stack"><div class="row between"><b>Parede ${n} <span class="muted">(${h?'horizontal':'vertical'})</span></b><span class="small muted">${n-1} desenhada${n-1===1?'':'s'}</span></div>
+     <div class="grid2"><button data-act="amb-dir" data-v="-1" aria-pressed="${sg===-1}">${lab[0]}</button><button data-act="amb-dir" data-v="1" aria-pressed="${sg===1}">${lab[1]}</button></div>
+     <label class="f">Comprimento <span style="font-weight:500">(cm)</span><input id="ambcomp" type="number" inputmode="decimal" min="0" step="any" placeholder="Ex.: 400" autocomplete="off"></label>
+     <button class="pri big" data-act="amb-add-parede">Adicionar parede</button></div>
+    <div class="row wrap"><button class="grow" data-act="amb-desfazer-ponto" ${n<2?'disabled':''}>Desfazer última</button><button class="pri grow" data-act="amb-fechar" ${n<4?'disabled':''}>Fechar planta</button></div>
+    <button class="ghost danger" data-act="amb-del">Excluir ambiente</button></div>`;
+}
 function viewAmbEdit(a){
+  if(a.desenhando)return viewAmbDesenho(a);
   const P='ambientes.'+a.id;
   a.perdas=a.perdas||{};a.revestimentos=a.revestimentos||[];a.orc=a.orc||{};a.orc.precos=a.orc.precos||{};
   plantaSync(a);
@@ -1725,6 +1758,15 @@ document.addEventListener('click',async e=>{
     case 'amb-novo':ambNovo(v);break;
     case 'amb-abrir':nav.amb=v;nav.amb3d=matchMedia('(min-width:1024px)').matches;render();scrollTo(0,0);break;
     case 'amb-voltar':nav.amb=null;render();break;
+    case 'amb-dir':nav.ambSinal=+v===-1?-1:1;render();break;
+    case 'amb-toque':{const a=ambs().find(x=>x.id===nav.amb);if(!a||!a.desenhando)break;const pt=ptSvg(b.ownerSVGElement,e),t=plantaDoToque(a.pontos,pt.x,pt.y);if(!t)break;
+      const r=plantaAdicionarParede(a.pontos,t.sinal,t.comprimento);if(!r.ok){toast(r.erro);break}a.pontos=r.pontos;save();render();break}
+    case 'amb-add-parede':{const a=ambs().find(x=>x.id===nav.amb);if(!a||!a.desenhando)break;const inp=$('#ambcomp'),L=num(inp&&inp.value);
+      if(!(L>0)){toast('Digite o comprimento da parede em cm.');break}
+      const r=plantaAdicionarParede(a.pontos,nav.ambSinal===-1?-1:1,L);if(!r.ok){toast(r.erro);break}a.pontos=r.pontos;save();render();break}
+    case 'amb-desfazer-ponto':{const a=ambs().find(x=>x.id===nav.amb);if(a&&a.desenhando&&a.pontos.length>1){a.pontos=a.pontos.slice(0,-1);save();render()}break}
+    case 'amb-fechar':{const a=ambs().find(x=>x.id===nav.amb);if(!a||!a.desenhando)break;const r=plantaFechar(a.pontos,a.altura);if(!r.ok){toast(r.erro);break}
+      a.pontos=r.pontos;a.desenhando=false;a.editada=true;nav.ambParede=0;save();render();toast('Planta fechada. Toque no número de uma parede para ajustá-la.');break}
     case 'amb-parede-sel':nav.ambParede=+v;{const a=ambs().find(x=>x.id===nav.amb);if(a){const pl=$('#ambplanta');if(pl){pl.innerHTML=ambPlantaSvg(a);$('#ambparede').innerHTML=ambParedeCtl(a)}}}break;
     case 'amb-mover':{const a=ambs().find(x=>x.id===nav.amb);if(!a||fechadoAmb(a))break;const r=plantaMoverParede(a,nav.ambParede||0,+b.dataset.d);
       if(!r.ok){toast(r.erro);break}a.pontos=r.pontos;a.editada=true;save();render();break}
@@ -1850,6 +1892,7 @@ function live(){
   if(nav.sec==='cal'){const t=document.createElement('template');t.innerHTML=secCal(q);
     ['#calcbox','#aprov','#plano'].forEach(id=>{const n=t.content.querySelector(id),o=$(id);if(n&&o)o.innerHTML=n.innerHTML})}
 }
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='ambcomp'){e.preventDefault();const b=$('[data-act="amb-add-parede"]');if(b)b.click()}});
 /* arrastar uma parede da planta: ela anda de 5 em 5 cm no sentido perpendicular; o que invalidar a planta é recusado */
 let arrastoParede=null;
 const ptSvg=(svg,e)=>{const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse())};
