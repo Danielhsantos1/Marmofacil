@@ -273,12 +273,13 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=32"></script>
-<script src="catalogo.js?v=32"></script>
-<script src="model3d.js?v=32"></script>
-<script src="motor/ambiente.js?v=32"></script>
-<script src="nucleo/registro-modulos.js?v=32"></script>
-<script src="nucleo/orcamento.js?v=32"></script>
+<script src="calc.js?v=33"></script>
+<script src="catalogo.js?v=33"></script>
+<script src="model3d.js?v=33"></script>
+<script src="motor/ambiente.js?v=33"></script>
+<script src="motor/planta.js?v=33"></script>
+<script src="nucleo/registro-modulos.js?v=33"></script>
+<script src="nucleo/orcamento.js?v=33"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -291,7 +292,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=32;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=33;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -412,7 +413,7 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={amb:null,amb3d:false,tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',brilho3d:true,pdf:null,novoCli:false,animar:false,e3mq:'',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
+const nav={ambParede:0,amb:null,amb3d:false,tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',brilho3d:true,pdf:null,novoCli:false,animar:false,e3mq:'',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
 const IC={amb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V6l8-3 8 3v14z"/><path d="M9 20v-6h6v6"/></svg>',
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
@@ -447,7 +448,7 @@ function render(){
   if(q&&nav.tab!=='cad')aplicarTrava(q);
   if(nav.show3d&&nav.sec==='med'&&q&&nav.tab!=='cad')montar3d();
   if(nav.ed3d)renderEd3d();
-  if(nav.tab==='amb'&&nav.amb)aplicarTravaAmb();
+  if(nav.tab==='amb'&&nav.amb){travarFormatoAmb();aplicarTravaAmb()}
   if(nav.tab==='amb'&&nav.amb&&nav.amb3d)montarAmb();
   if(nav.tab==='cfg'&&!q)mostrarVersao();
 }
@@ -572,7 +573,7 @@ const fechadoAmb=a=>!!a&&a.status==='Fechado'&&!!a.snap;
 function todosOrcamentos(){
   const Q=S.quotes.map(q=>({q,c:calc(q)}));
   (S.ambientes||[]).forEach(a=>{
-    const r=ambOrc(a),sn=fechadoAmb(a)?a.snap:null,m=r&&medidasAmbiente(a);
+    const r=ambOrc(a),sn=fechadoAmb(a)?a.snap:null,m=r&&medidasDe(a);
     Q.push({q:{id:a.id,num:a.num,status:a.status||'Rascunho',clientId:a.clientId||'',kind:'ambiente',nome:a.nome,createdAt:a.createdAt||0,closedAt:a.closedAt||null},
       c:{price:sn?sn.preco:(r&&r.res.ok?r.res.preco:0),profit:sn?sn.lucro:(r&&r.res.ok?r.res.lucro:0),area:m&&m.ok?m.areaPiso:0,m:null}});
   });
@@ -999,7 +1000,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=32');
+    const mod=await import('./viewer3d.js?v=33');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1022,12 +1023,12 @@ async function imagens3dPdf(q){
 async function imagem3dAmbiente(a){
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=32');
+    const mod=await import('./viewer3d.js?v=33');
     if(!mod.webglModo())return null;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
     v=mod.criarVisualizador({brilho:mod.webglModo()==='gpu',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):[]});v.anexar(box);
-    v.atualizar(modeloAmbiente(a),false,{cotas:true,textura:'liso',cor:null,foto:null,equip:false});v.vista('iso');
+    v.atualizar(modeloDe(a),false,{cotas:true,textura:'liso',cor:null,foto:null,equip:false});v.vista('iso');
     return await v.capturar({semGrade:true,escala:2.4});
   }catch(e){console.warn('PDF sem imagem 3D',e);return null}
   finally{try{v&&v.destruir()}catch(e){}if(box)box.remove()}
@@ -1037,7 +1038,7 @@ async function buildPdfAmbiente(a){
   const r=ambOrc(a);if(!r||!r.res.ok)throw new Error('orcamento-invalido');
   const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'}),s=S.settings,W=210,M=14,CW=W-2*M,ACC=[14,106,91],INK=[17,24,39];
   const [img,logo]=await Promise.all([imagem3dAmbiente(a),urlParaDataUrl(s.logo)]);
-  const m=medidasAmbiente(a);let y=0;
+  const m=medidasDe(a);let y=0;
   const rodape=()=>{const n=doc.getNumberOfPages();for(let i=1;i<=n;i++){doc.setPage(i);doc.setDrawColor(200);doc.setLineWidth(0.2);doc.line(M,286,W-M,286);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(120);
     doc.text('Valores sujeitos a conferência das medidas no local. A imagem 3D é ilustrativa.',M,290.5,{maxWidth:CW-18});doc.text(i+' / '+n,W-M,290.5,{align:'right'})}doc.setTextColor(0)};
   const need=h=>{if(y+h>282){doc.addPage();y=16}};
@@ -1050,7 +1051,7 @@ async function buildPdfAmbiente(a){
   doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.text(dateBR(Date.now()),W-M,19,{align:'right'});doc.text('Validade: '+(s.validade||15)+' dias',W-M,24,{align:'right'});
   doc.setTextColor(0);y=38;
   doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text(a.nome||'Ambiente',M,y);y+=6;
-  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(90);doc.text(`${nf(a.largura,0)} × ${nf(a.comprimento,0)} cm · pé-direito ${nf(a.altura,0)} cm`,M,y);doc.setTextColor(0);y+=6;
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(90);doc.text(ehPlanta(a)?descAmb(a):`${nf(a.largura,0)} × ${nf(a.comprimento,0)} cm · pé-direito ${nf(a.altura,0)} cm`,M,y);doc.setTextColor(0);y+=6;
   const cli=S.clients.find(c=>c.id===a.clientId);if(cli){doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('Cliente: '+cli.name,M,y);doc.setFont('helvetica','normal');doc.setTextColor(90);const ct=[cli.phone,cli.email,cli.address].filter(Boolean).join('   ·   ');if(ct)doc.text(ct,M,y+5,{maxWidth:CW});doc.setTextColor(0);y+=ct?11:6}
   if(img){const hh=CW*430/700;try{doc.setFillColor(255,255,255);doc.roundedRect(M,y,CW,hh,2,2,'F');doc.addImage(img,'JPEG',M,y,CW,hh);doc.setDrawColor(225);doc.setLineWidth(0.2);doc.roundedRect(M,y,CW,hh,2,2);y+=hh+3;
     doc.setFontSize(7.5);doc.setTextColor(120);doc.text('Simulação 3D ilustrativa. Medidas em centímetros.',M,y+1);doc.setTextColor(0);y+=7}catch(e){}}
@@ -1217,7 +1218,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=32');
+    const m=await import('./viewer3d.js?v=33');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1304,12 +1305,51 @@ function atualizar3d(){
 /* ===== Ambientes (v27): sala/cozinha/quarto com paredes, piso, teto, portas e janelas. Medidas em cm; o cálculo está em motor/ambiente.js ===== */
 const ambs=()=>S.ambientes||(S.ambientes=[]);
 const AMB_PAREDE_OPC=AMB_PAREDES.map(p=>[p,AMB_NOME_PAREDE[p]]);
-function ambNovo(){
-  const a={id:uid(),nome:'Ambiente '+(ambs().length+1),num:S.settings.nextNum++,status:'Rascunho',clientId:'',createdAt:Date.now(),closedAt:null,largura:400,comprimento:500,altura:270,aberturas:[]};
+/* Ambiente de planta (formato livre ortogonal: L, U, T): mesmos itens, orçamento, PDF e 3D do retangular, com a geometria de motor/planta.js */
+const ehPlanta=a=>!!a&&a.formato==='planta';
+const medidasDe=a=>ehPlanta(a)?medidasPlanta(a):medidasAmbiente(a);
+const quantitativoDe=a=>ehPlanta(a)?quantitativoPlanta(a):quantitativoAmbiente(a);
+const modeloDe=(a,op)=>ehPlanta(a)?modeloPlanta(a,op):modeloAmbiente(a,op);
+const FORMAS={L:{nome:'Em L',A:'Largura total',B:'Comprimento total',a:'Recorte: largura',b:'Recorte: profundidade',ini:{A:500,B:400,a:200,b:150}},
+  U:{nome:'Em U',A:'Largura total',B:'Comprimento total',a:'Vão do U: largura',b:'Vão do U: profundidade',ini:{A:600,B:400,a:200,b:150}},
+  T:{nome:'Em T',A:'Largura da barra',B:'Comprimento total',a:'Largura do braço',b:'Profundidade da barra',ini:{A:600,B:400,a:200,b:150}}};
+function plantaSync(a){if(!ehPlanta(a)||a.editada)return;const f=a.forma||{};a.pontos=plantaFormato(f.tipo,num(f.A),num(f.B),num(f.a),num(f.b))}
+const arestasOpc=a=>(a.pontos||[]).map((_,i)=>[String(i),'Parede '+(i+1)]);
+const descAmb=a=>ehPlanta(a)?`Planta ${(FORMAS[a.forma&&a.forma.tipo]||{nome:'livre'}).nome.replace(/^Em /,'em ')} · altura ${nf(a.altura,0)} cm`:`${nf(a.largura,0)} × ${nf(a.comprimento,0)} × ${nf(a.altura,0)} cm`;
+/* desenho 2D da planta: paredes, aberturas, medidas e números das paredes (toque no número escolhe a parede; arraste a parede escolhida para movê-la) */
+function ambPlantaSvg(a){
+  const pts=(a.pontos||[]).map(p=>({x:+p.x,y:+p.y}));
+  if(pts.length<4||pts.some(p=>!isFinite(p.x)||!isFinite(p.y)))return '<div class="card muted small">Preencha as medidas do formato para ver a planta.</div>';
+  const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),w=x1-x0||1,h=y1-y0||1,m=Math.max(w,h),fs=m*0.04,pad=m*0.14;
+  const sg=plArea2(pts)>0?1:-1,n=pts.length,sel=Math.min(nav.ambParede||0,n-1);
+  const E=pts.map((p,i)=>{const q=pts[(i+1)%n],dx=q.x-p.x,dy=q.y-p.y,L=Math.abs(dx)+Math.abs(dy)||1,ux=dx/L,uy=dy/L;return {i,p,q,L,ux,uy,ox:sg>0?uy:-uy,oy:sg>0?-ux:ux}});
+  const wall=E.map(e=>`<line x1="${e.p.x}" y1="${e.p.y}" x2="${e.q.x}" y2="${e.q.y}" stroke="${e.i===sel?'var(--accent)':'var(--fg)'}" stroke-width="${m*0.016}" stroke-linecap="square"/>`).join('');
+  const ab=(a.aberturas||[]).map(o=>{const e=E[+o.aresta];if(!e||!(+o.largura>0))return '';const s0=+o.x||0,s1=s0+(+o.largura);
+    return `<line x1="${e.p.x+e.ux*s0}" y1="${e.p.y+e.uy*s0}" x2="${e.p.x+e.ux*s1}" y2="${e.p.y+e.uy*s1}" stroke="${o.tipo==='janela'?'var(--dim)':'#B5651D'}" stroke-width="${m*0.024}"/>`}).join('');
+  const lab=E.map(e=>{const mx=(e.p.x+e.q.x)/2,my=(e.p.y+e.q.y)/2;
+    return `<text x="${mx+e.ox*fs*1.9}" y="${my+e.oy*fs*1.9+fs*.35}" text-anchor="middle" font-size="${fs}" fill="var(--muted)" font-family="var(--mono)">${nf(e.L,0)}</text>
+     <g data-act="amb-parede-sel" data-v="${e.i}" style="cursor:pointer" role="button" aria-label="Parede ${e.i+1}"><circle cx="${mx-e.ox*fs*1.5}" cy="${my-e.oy*fs*1.5}" r="${fs*.85}" fill="${e.i===sel?'var(--accent)':'var(--surface)'}" stroke="var(--line)"/>
+     <text x="${mx-e.ox*fs*1.5}" y="${my-e.oy*fs*1.5+fs*.33}" text-anchor="middle" font-size="${fs*.95}" font-weight="700" fill="${e.i===sel?'#fff':'var(--fg)'}">${e.i+1}</text></g>`}).join('');
+  const hit=E.map(e=>`<line data-wall="${e.i}" x1="${e.p.x}" y1="${e.p.y}" x2="${e.q.x}" y2="${e.q.y}" stroke="transparent" stroke-width="${m*0.07}" style="cursor:${e.p.y===e.q.y?'ns-resize':'ew-resize'}"/>`).join('');
+  const dots=E.map(e=>`<circle cx="${e.p.x}" cy="${e.p.y}" r="${m*0.011}" fill="var(--bg)" stroke="var(--fg)" stroke-width="${m*0.004}"/>`).join('');
+  return `<svg id="plsvg" viewBox="${x0-pad} ${y0-pad} ${w+2*pad} ${h+2*pad}" width="100%" style="max-height:340px;touch-action:none;background:var(--surface);border:1px solid var(--line);border-radius:10px" role="img" aria-label="Planta baixa do ambiente">
+   <polygon points="${pts.map(p=>p.x+','+p.y).join(' ')}" fill="color-mix(in srgb,var(--accent) 9%,transparent)"/><g id="plg">${wall}${ab}${dots}${lab}</g>${hit}</svg>`;
+}
+function ambParedeCtl(a){
+  const pts=a.pontos||[],n=pts.length;if(n<4)return '';
+  const i=Math.min(nav.ambParede||0,n-1),p=pts[i],q=pts[(i+1)%n],horiz=+p.y===+q.y,L=Math.abs(q.x-p.x)+Math.abs(q.y-p.y);
+  const bt=(d)=>`<button class="sm" data-act="amb-mover" data-d="${d}" aria-label="Mover a parede ${i+1} ${Math.abs(d)} cm ${horiz?(d<0?'para cima':'para baixo'):(d<0?'para a esquerda':'para a direita')}">${horiz?(d<0?'↑':'↓'):(d<0?'←':'→')} ${Math.abs(d)}</button>`;
+  return `<div class="card stack" style="gap:8px"><div class="row between"><b>Parede ${i+1}</b><span class="num small">${nf(L,0)} cm</span></div>
+   <div class="small muted">Arraste a parede no desenho ou use os botões. Os cantos ligados a ela acompanham.</div>
+   <div class="row wrap" style="gap:6px">${[-50,-10,-5,5,10,50].map(bt).join('')}</div></div>`;
+}
+function ambNovo(tipo){
+  const base={id:uid(),nome:'Ambiente '+(ambs().length+1),num:S.settings.nextNum++,status:'Rascunho',clientId:'',createdAt:Date.now(),closedAt:null,aberturas:[]};
+  const f=FORMAS[tipo],a=f?{...base,formato:'planta',altura:270,forma:{tipo,...f.ini},editada:false,pontos:plantaFormato(tipo,f.ini.A,f.ini.B,f.ini.a,f.ini.b)}:{...base,largura:400,comprimento:500,altura:270};
   ambs().push(a);save();nav.amb=a.id;nav.amb3d=false;render();scrollTo(0,0);
 }
 function ambMedHtml(a){
-  const m=medidasAmbiente(a);
+  const m=medidasDe(a);
   if(!m.ok)return `<div class="card" role="alert" style="color:var(--bad)"><b>Confira as medidas</b><ul style="margin:6px 0 0;padding-left:18px">${m.erros.map(e=>`<li>${esc(e)}</li>`).join('')}</ul></div>`;
   const c=(t,v)=>`<div class="card" style="padding:10px"><div class="small muted">${t}</div><b class="num">${v}</b></div>`;
   return `<div class="grid2">${c('Piso',nf(m.areaPiso)+' m²')}${c('Teto',nf(m.areaTeto)+' m²')}${c('Perímetro',nf(m.perimetro)+' m')}${c('Volume',nf(m.volume)+' m³')}
@@ -1318,7 +1358,7 @@ function ambMedHtml(a){
 }
 const nomePdfAmb=a=>'Orcamento-'+(a.num||'')+'-Ambiente-'+String(a.nome||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-+|-+$/g,'')+'.pdf';
 function waTextoAmb(a,r){
-  const cl=S.clients.find(c=>c.id===a.clientId)||{},s=S.settings,m=medidasAmbiente(a);
+  const cl=S.clients.find(c=>c.id===a.clientId)||{},s=S.settings,m=medidasDe(a);
   return `Olá${cl.name?', '+cl.name.split(' ')[0]:''}! Segue o orçamento #${a.num} da ${s.empresa}.\n\nAmbiente: ${a.nome} (${nf(m.areaPiso)} m² de piso)\nTotal: ${brl(r.res.preco)}\nValidade: ${s.validade||15} dias.`;
 }
 /* Fechar congela o preço (a.snap); qualquer outra etapa descongela. Só fecha com medidas válidas e todos os preços preenchidos. */
@@ -1336,7 +1376,7 @@ function setStatusAmb(a,st){
 }
 /* Orçamento do Ambiente: preços por unidade informados pela pessoa; margem e impostos em branco usam os do Ajustes. */
 function ambOrc(a){
-  const o=a.orc||{},q=quantitativoAmbiente(a);if(!q.ok)return null;
+  const o=a.orc||{},q=quantitativoDe(a);if(!q.ok)return null;
   const itens=q.itens.map(i=>({...i,precoUnit:(o.precos&&o.precos[i.codigo]||{}).preco,maoObraUnit:(o.precos&&o.precos[i.codigo]||{}).mo}));
   const cfg={margem:o.margem===''||o.margem==null?S.settings.margin:o.margem,impostos:o.impostos===''||o.impostos==null?S.settings.tax:o.impostos,frete:o.frete,instalacao:o.instalacao};
   if(fechadoAmb(a)){cfg.margem=a.snap.cfg.margem;cfg.impostos=a.snap.cfg.impostos}      // fechado: a margem e os impostos do fechamento, não os do Ajustes de hoje
@@ -1351,38 +1391,45 @@ function ambOrcHtml(a){
    ${res.pendentes.length?`<p class="small" style="color:var(--warn)">Faltam preços em: ${res.pendentes.map(c=>esc((r.q.itens.find(i=>i.codigo===c)||{}).descricao||c)).join(', ')}. Eles entram como R$ 0,00 até você preencher.</p>`:''}`;
 }
 function ambQtdHtml(a){
-  const q=quantitativoAmbiente(a);if(!q.ok)return '';
+  const q=quantitativoDe(a);if(!q.ok)return '';
   return `<div class="sheet">${q.itens.map(i=>`<div class="li" style="display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-top:1px solid var(--line)"><span>${esc(i.descricao)}</span><span class="num"><b>${nf(i.quantidade)} ${i.unidade}</b>${i.perdaPct>0?`<span class="muted small"> · com ${nf(i.perdaPct,0)}% de perda ${nf(i.quantidadeComPerda)}</span>`:''}</span></div>`).join('')}</div>`;
 }
 function viewAmb(){
   const L=ambs();
   if(nav.amb){const a=L.find(x=>x.id===nav.amb);if(a)return viewAmbEdit(a);nav.amb=null}
-  const lista=L.map(a=>{const m=medidasAmbiente(a);
+  const lista=L.map(a=>{const m=medidasDe(a);
     return `<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="amb-abrir" data-v="${a.id}"><div class="grow"><b>${esc(a.nome)}</b>
-     <div class="small muted">${nf(a.largura,0)} × ${nf(a.comprimento,0)} × ${nf(a.altura,0)} cm</div></div>
+     <div class="small muted">${descAmb(a)}</div></div>
      <div class="num">${m.ok?`<b>${nf(m.areaPiso)} m²</b><div class="small muted">paredes ${nf(m.areaParedesLiquida)} m²</div>`:'<span class="small" style="color:var(--bad)">medidas inválidas</span>'}</div></div>`}).join('');
   return `<header class="top"><h1>Ambientes</h1><button class="pri" data-act="amb-novo">Novo</button></header>
-   <div class="stack">${lista?`<div class="sheet">${lista}</div>`:'<div class="card muted" style="text-align:center">Nenhum ambiente ainda. Toque em Novo para medir uma sala, cozinha ou quarto: o app calcula piso, paredes, perímetro e aberturas na hora.</div>'}</div>`;
+   <div class="stack"><div class="row wrap" style="gap:6px"><span class="small muted">Formato livre:</span>${Object.entries(FORMAS).map(([k,f])=>`<button class="sm" data-act="amb-novo" data-v="${k}">${f.nome}</button>`).join('')}</div>${lista?`<div class="sheet">${lista}</div>`:'<div class="card muted" style="text-align:center">Nenhum ambiente ainda. Toque em Novo para medir uma sala, cozinha ou quarto: o app calcula piso, paredes, perímetro e aberturas na hora.</div>'}</div>`;
+}
+function campoPlanta(a,P){
+  const f=FORMAS[a.forma&&a.forma.tipo]||FORMAS.L,F=P+'.forma',off=a.editada;
+  return `<div class="grid2">${fld(f.A,F+'.A','n',{unit:'cm'})}${fld(f.B,F+'.B','n',{unit:'cm'})}${fld(f.a,F+'.a','n',{unit:'cm'})}${fld(f.b,F+'.b','n',{unit:'cm'})}${fld('Altura (pé-direito)',P+'.altura','n',{unit:'cm'})}</div>
+   ${off?'<div class="note">Você moveu paredes: as medidas do formato estão travadas. <button class="sm" data-act="amb-refazer">Refazer o formato</button></div>':''}`;
 }
 function viewAmbEdit(a){
   const P='ambientes.'+a.id;
   a.perdas=a.perdas||{};a.revestimentos=a.revestimentos||[];a.orc=a.orc||{};a.orc.precos=a.orc.precos||{};
-  const qq=quantitativoAmbiente(a);
+  plantaSync(a);
+  const qq=quantitativoDe(a);
   qq.itens.forEach(i=>{a.orc.precos[i.codigo]=a.orc.precos[i.codigo]||{preco:'',mo:''}});
   const linhasPreco=qq.itens.map(i=>{const R=P+'.orc.precos.'+i.codigo;
     return `<div class="stack" style="gap:6px;padding:10px 0;border-top:1px solid var(--line)"><div class="row between"><b>${esc(i.descricao)}</b><span class="num small">${nf(i.quantidadeComPerda)} ${i.unidade}</span></div>
      <div class="grid2">${fld('Preço por '+i.unidade,R+'.preco','n',{unit:'R$'})}${fld('Mão de obra por '+i.unidade,R+'.mo','n',{unit:'R$'})}</div></div>`}).join('');
   const rv=a.revestimentos.map(r=>{const R=P+'.revestimentos.'+r.id;
-    return `<div class="row" style="align-items:flex-end"><div class="grow">${sel('Parede',R+'.parede',AMB_PAREDE_OPC,{blank:'Escolha…'})}</div><div class="grow">${fld('Até a altura',R+'.altura','n',{unit:'cm'})}</div><button class="ghost danger sm" data-act="amb-del-rev" data-v="${r.id}" aria-label="Remover revestimento">Remover</button></div>`}).join('');
+    return `<div class="row" style="align-items:flex-end"><div class="grow">${sel('Parede',R+(ehPlanta(a)?'.aresta':'.parede'),ehPlanta(a)?arestasOpc(a):AMB_PAREDE_OPC,{blank:'Escolha…'})}</div><div class="grow">${fld('Até a altura',R+'.altura','n',{unit:'cm'})}</div><button class="ghost danger sm" data-act="amb-del-rev" data-v="${r.id}" aria-label="Remover revestimento">Remover</button></div>`}).join('');
   const ab=a.aberturas.map(o=>{const Q=P+'.aberturas.'+o.id;
     return `<div class="card stack" style="padding:12px"><div class="row between"><b>${o.tipo==='janela'?'Janela':'Porta'}</b><button class="ghost danger sm" data-act="amb-del-ab" data-v="${o.id}">Remover</button></div>
-     <div class="grid2">${sel('Parede',Q+'.parede',AMB_PAREDE_OPC,{blank:'Escolha…'})}${fld('Distância do canto esquerdo',Q+'.x','n',{unit:'cm'})}
+     <div class="grid2">${sel('Parede',Q+(ehPlanta(a)?'.aresta':'.parede'),ehPlanta(a)?arestasOpc(a):AMB_PAREDE_OPC,{blank:'Escolha…'})}${fld(ehPlanta(a)?'Distância do início da parede':'Distância do canto esquerdo',Q+'.x','n',{unit:'cm'})}
      ${fld('Largura',Q+'.largura','n',{unit:'cm'})}${fld('Altura',Q+'.altura','n',{unit:'cm'})}${o.tipo==='janela'?fld('Altura do peitoril',Q+'.peitoril','n',{unit:'cm'}):''}</div></div>`}).join('');
   return `<header class="top"><button class="ghost" data-act="amb-voltar" aria-label="Voltar">${IC.back}</button><h1>${esc(a.nome||'Ambiente')}</h1><span class="small muted">#${a.num||''}</span></header>
    <div class="stack"><div class="card stack" style="padding-top:14px">
     <div class="grid2">${sel('Cliente',P+'.clientId',S.clients.map(c=>[c.id,c.name]),{blank:'Sem cliente'})}${sel('Status',P+'.status',STATUS.map(x=>[x,x]))}</div>
     ${fechadoAmb(a)?'<div class="note">Orçamento fechado: os valores estão congelados. Mude o status para reabrir e editar.</div>':''}${fld('Nome',P+'.nome')}
-    <div class="grid2">${fld('Largura',P+'.largura','n',{unit:'cm'})}${fld('Comprimento',P+'.comprimento','n',{unit:'cm'})}${fld('Altura (pé-direito)',P+'.altura','n',{unit:'cm'})}</div></div>
+    ${ehPlanta(a)?campoPlanta(a,P):`<div class="grid2">${fld('Largura',P+'.largura','n',{unit:'cm'})}${fld('Comprimento',P+'.comprimento','n',{unit:'cm'})}${fld('Altura (pé-direito)',P+'.altura','n',{unit:'cm'})}</div>`}</div>
+    ${ehPlanta(a)?`<div class="stack"><div id="ambplanta">${ambPlantaSvg(a)}</div><div id="ambparede">${ambParedeCtl(a)}</div></div>`:''}
     <div id="ambmed" class="stack">${ambMedHtml(a)}</div>
     <div class="card stack"><div class="row between"><h3>Quantitativo</h3><span class="small muted">sem preço: vem no orçamento</span></div>
      <div id="ambqtd">${ambQtdHtml(a)}</div>
@@ -1403,6 +1450,7 @@ function viewAmbEdit(a){
     <button class="danger" data-act="amb-del">Excluir ambiente</button></div>`;
 }
 /* Orçamento de Ambiente fechado: só ver (3D, PDF, WhatsApp, voltar e o status para reabrir). */
+function travarFormatoAmb(){const a=ambs().find(x=>x.id===nav.amb);if(ehPlanta(a)&&a.editada)$$('input[data-b*=".forma."]').forEach(el=>el.disabled=true)}
 function aplicarTravaAmb(){
   const a=ambs().find(x=>x.id===nav.amb);if(!fechadoAmb(a))return;
   $$('#app input,#app select,#app textarea,#app button').forEach(el=>{
@@ -1411,6 +1459,7 @@ function aplicarTravaAmb(){
 }
 function liveAmb(){
   const a=ambs().find(x=>x.id===nav.amb);if(!a)return;
+  plantaSync(a);const pl=$('#ambplanta');if(pl&&ehPlanta(a)&&!arrastoParede){pl.innerHTML=ambPlantaSvg(a);const pc=$('#ambparede');if(pc)pc.innerHTML=ambParedeCtl(a)}
   const el=$('#ambmed');if(el)el.innerHTML=ambMedHtml(a);const qd=$('#ambqtd');if(qd)qd.innerHTML=ambQtdHtml(a);const pr=$('#ambpreco');if(pr)pr.innerHTML=ambOrcHtml(a);
   const t=$('.top h1');if(t)t.textContent=a.nome||'Ambiente';
   atualizarAmb();
@@ -1425,7 +1474,7 @@ async function montarAmb(){
 function atualizarAmb(mantem=true){
   if(!v3||!nav.amb3d||!$('#ambbox'))return;
   const a=ambs().find(x=>x.id===nav.amb);if(!a)return;
-  const m=modeloAmbiente(a);
+  const m=modeloDe(a);
   v3.atualizar(m,mantem&&v3Peca==='amb:'+a.id,{cotas:true,textura:'liso',cor:null,foto:null,brilho:nav.brilho3d&&v3Modo!=='software',equip:false});
   v3Peca='amb:'+a.id;
 }
@@ -1658,18 +1707,22 @@ document.addEventListener('click',async e=>{
         window.open(`https://wa.me/${d}?text=${encodeURIComponent(texto)}`,'_blank','noopener');toast('PDF baixado. Anexe na conversa do WhatsApp.');
       }catch(e){toast('Não foi possível gerar o PDF.')}
       b.disabled=false;break}
-    case 'amb-novo':ambNovo();break;
+    case 'amb-novo':ambNovo(v);break;
     case 'amb-abrir':nav.amb=v;nav.amb3d=false;render();scrollTo(0,0);break;
     case 'amb-voltar':nav.amb=null;render();break;
+    case 'amb-parede-sel':nav.ambParede=+v;{const a=ambs().find(x=>x.id===nav.amb);if(a){const pl=$('#ambplanta');if(pl){pl.innerHTML=ambPlantaSvg(a);$('#ambparede').innerHTML=ambParedeCtl(a)}}}break;
+    case 'amb-mover':{const a=ambs().find(x=>x.id===nav.amb);if(!a||fechadoAmb(a))break;const r=plantaMoverParede(a,nav.ambParede||0,+b.dataset.d);
+      if(!r.ok){toast(r.erro);break}a.pontos=r.pontos;a.editada=true;save();render();break}
+    case 'amb-refazer':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.editada=false;plantaSync(a);save();render()}break}
     case 'amb-3d':nav.amb3d=!nav.amb3d;render();if(nav.amb3d){const bx=$('#ambbox');if(bx)bx.scrollIntoView({block:'center'})}break;
-    case 'amb-add':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.aberturas.push(v==='janela'?{id:uid(),tipo:'janela',parede:'',x:100,largura:120,altura:100,peitoril:100}:{id:uid(),tipo:'porta',parede:'',x:50,largura:80,altura:210,peitoril:0});save();render()}break}
+    case 'amb-add':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.aberturas.push(v==='janela'?{id:uid(),tipo:'janela',parede:'',aresta:'',x:100,largura:120,altura:100,peitoril:100}:{id:uid(),tipo:'porta',parede:'',aresta:'',x:50,largura:80,altura:210,peitoril:0});save();render()}break}
     case 'amb-pdf':{const a=ambs().find(x=>x.id===nav.amb);if(!a)break;
       const r=ambOrc(a);if(!r||!r.res.ok){toast('Corrija as medidas e os valores antes de gerar o PDF.');break}
       if(!r.res.completo&&!confirm('Há itens sem preço. Eles entram como R$ 0,00. Gerar o PDF mesmo assim?'))break;
       b.disabled=true;toast('Gerando o PDF…');
       try{const bl=await buildPdfAmbiente(a);await saveFile(nomePdfAmb(a),bl)}catch(e){toast('Não foi possível gerar o PDF.')}
       b.disabled=false;break}
-    case 'amb-add-rev':{const a=ambs().find(x=>x.id===nav.amb);if(a){(a.revestimentos=a.revestimentos||[]).push({id:uid(),parede:'',altura:a.altura});save();render()}break}
+    case 'amb-add-rev':{const a=ambs().find(x=>x.id===nav.amb);if(a){(a.revestimentos=a.revestimentos||[]).push({id:uid(),parede:'',aresta:'',altura:a.altura});save();render()}break}
     case 'amb-del-rev':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.revestimentos=(a.revestimentos||[]).filter(r=>r.id!==v);save();render()}break}
     case 'amb-del-ab':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.aberturas=a.aberturas.filter(o=>o.id!==v);save();render()}break}
     case 'amb-del':confirmTap(b,()=>{S.ambientes=ambs().filter(x=>x.id!==nav.amb);nav.amb=null;save();render()});break;
@@ -1782,6 +1835,24 @@ function live(){
   if(nav.sec==='cal'){const t=document.createElement('template');t.innerHTML=secCal(q);
     ['#calcbox','#aprov','#plano'].forEach(id=>{const n=t.content.querySelector(id),o=$(id);if(n&&o)o.innerHTML=n.innerHTML})}
 }
+/* arrastar uma parede da planta: ela anda de 5 em 5 cm no sentido perpendicular; o que invalidar a planta é recusado */
+let arrastoParede=null;
+const ptSvg=(svg,e)=>{const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse())};
+document.addEventListener('pointerdown',e=>{
+  const h=e.target.closest&&e.target.closest('[data-wall]');if(!h||nav.tab!=='amb')return;
+  const a=ambs().find(x=>x.id===nav.amb);if(!ehPlanta(a)||fechadoAmb(a))return;
+  const svg=h.ownerSVGElement,i=+h.dataset.wall;nav.ambParede=i;
+  arrastoParede={a,i,svg,base:a.pontos.map(p=>({...p})),ini:ptSvg(svg,e),moveu:false};e.preventDefault();
+});
+document.addEventListener('pointermove',e=>{
+  if(!arrastoParede)return;const d=arrastoParede,pts=d.base,n=pts.length,p=pts[d.i],q=pts[(d.i+1)%n],pt=ptSvg(d.svg,e);
+  const delta=Math.round(((p.y===q.y?pt.y-d.ini.y:pt.x-d.ini.x))/5)*5;
+  const r=plantaMoverParede({...d.a,pontos:d.base},d.i,delta);
+  if(r.ok&&delta!==0){d.a.pontos=r.pontos;d.a.editada=true;d.moveu=true;liveAmb()}
+  const g=$('#plg');if(g&&d.moveu){const t=document.createElement('div');t.innerHTML=ambPlantaSvg(d.a);const ng=t.querySelector('#plg'),np=t.querySelector('polygon'),sv=$('#plsvg');if(ng){g.innerHTML=ng.innerHTML;sv.querySelector('polygon').setAttribute('points',np.getAttribute('points'));sv.setAttribute('viewBox',t.querySelector('svg').getAttribute('viewBox'))}}
+});
+const fimArrasto=()=>{if(!arrastoParede)return;const d=arrastoParede;arrastoParede=null;if(d.moveu){save();render()}else{const pl=$('#ambplanta');if(pl){pl.innerHTML=ambPlantaSvg(d.a);$('#ambparede').innerHTML=ambParedeCtl(d.a)}}};
+document.addEventListener('pointerup',fimArrasto);document.addEventListener('pointercancel',fimArrasto);
 document.addEventListener('input',e=>{
   const el=e.target.closest('[data-b]');if(!el||el.tagName==='SELECT')return;
   if(fechado(curQ())&&el.closest('#secbody,#e3panel'))return;
