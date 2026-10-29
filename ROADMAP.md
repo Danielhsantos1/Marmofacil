@@ -18,7 +18,7 @@ Regras fixas: JS puro (sem React, Vite, TypeScript, Tailwind), Three.js, PWA off
 4. Marmoraria e Ambientes encaixados como módulos, sem mudar o comportamento.
 5. Ambientes completo: quantitativos (piso, pintura, rodapé, revestimento) (feito, v30) e entrada em orçamento (feito, v31).
 6. Núcleo de orçamento genérico (quantitativo → custo → margem/impostos → PDF), sem tocar no `calc.js`. (feito, v31: `nucleo/orcamento.js` + PDF do Ambiente; v32: cliente, status, funil, painel e WhatsApp)
-7. Planta baixa 2D com paredes livres.
+7. Planta baixa 2D com paredes livres. (v33: formatos L, U e T com paredes movíveis; falta desenhar ponto a ponto e paredes inclinadas)
 8. 3D gerado da planta e medições automáticas em tempo real.
 9. Primeiro módulo novo: Vidraçaria (m², ferragens, instalação). Depois Marcenaria, Esquadrias, Área externa.
 10. Contratos SaaS (login, equipes, nuvem, permissões): só interfaces até existir backend. Em paralelo.

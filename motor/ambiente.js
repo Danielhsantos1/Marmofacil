@@ -102,14 +102,15 @@ function quantitativoAmbiente(entrada){
 
 /* Faixas [ini,fim] em que a parede é cheia, e as aberturas viram "vergas" (acima) e "peitoris" (abaixo). Coordenada ao longo da parede. */
 function ambSegmentos(comp,altura,aberturas,extra){
-  const seg=[];let cur=-extra;
+  const [e0,e1]=Array.isArray(extra)?extra:[extra,extra];                    // [início, fim]: negativo = parede mais curta que o comprimento
+  const seg=[];let cur=-e0;
   aberturas.slice().sort((p,q)=>p.x-q.x).forEach(o=>{
     if(o.x>cur)seg.push({a:cur,b:o.x,y0:0,y1:altura});
     if(o.peitoril>0)seg.push({a:o.x,b:o.x+o.largura,y0:0,y1:o.peitoril});
     if(o.peitoril+o.altura<altura)seg.push({a:o.x,b:o.x+o.largura,y0:o.peitoril+o.altura,y1:altura});
     cur=o.x+o.largura;
   });
-  if(cur<comp+extra)seg.push({a:cur,b:comp+extra,y0:0,y1:altura});
+  if(cur<comp+e1)seg.push({a:cur,b:comp+e1,y0:0,y1:altura});
   return seg;
 }
 
@@ -152,4 +153,4 @@ function modeloAmbiente(entrada,op={}){
     peca:{type:'ambiente',d:{A:L,B:C,H},saiaH:0,rodaH:0}};
 }
 
-if(typeof module!=='undefined')module.exports={AMB_LIM,AMB_PAREDES,AMB_NOME_PAREDE,criarAmbiente,validarAmbiente,medidasAmbiente,modeloAmbiente,ambSegmentos,quantitativoAmbiente};
+if(typeof module!=='undefined')module.exports={AMB_LIM,AMB_PAREDES,AMB_NOME_PAREDE,criarAmbiente,validarAmbiente,medidasAmbiente,modeloAmbiente,ambSegmentos,quantitativoAmbiente,ambNum,ambPerda};
