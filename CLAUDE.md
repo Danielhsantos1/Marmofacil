@@ -15,6 +15,7 @@ Protótipo funcional, JS puro, **sem build**, instalável como PWA (`manifest.we
 - `model3d.js`: modelo 3D da peça, emendas, recortes e cotas (funções puras, mesma peça do cálculo).
 - `viewer3d.js`: visualizador Three.js (carregado só ao abrir o 3D; Three.js local em `vendor/`, MIT, 692 KB).
 - `motor/ambiente.js`: Ambiente (paredes, piso, teto, portas e janelas): medidas e modelo 3D, funções puras, tudo em cm. Aba "Ambientes" no app; dados em `S.ambientes` (opcional, projetos antigos abrem iguais). Não mexe em preço nem em `calc.js`.
+- `nucleo/registro-modulos.js`: registro dos módulos (Ambientes, Marmoraria, Marcenaria, Vidraçaria, Esquadrias, Área externa, Projeto personalizado) com estado `disponivel`/`embreve`; alimenta a seção "O que deseja projetar?" no Início. Funções puras, testadas.
 - `vendor/jspdf.umd.min.js`: PDF.
 - `tests/`: `npm test` (Node 18+, sem dependências). Regressão do cálculo com `tests/golden.json`, gerado pelo código original: **não mudar os valores esperados sem decisão comercial**.
 - Layout responsivo (v28): mobile <768 e tablet 768–1023 usam a barra inferior; a partir de 1024 px ela vira sidebar (84 px; 232 px a partir de 1440) e o painel inicial ganha largura (até 1400–1640 px). `body[data-layout]` informa a faixa (mobile/tablet/notebook/desktop/ultrawide). Editor em 3 painéis e tabelas vêm nas fases B–E do `ROADMAP.md`.
