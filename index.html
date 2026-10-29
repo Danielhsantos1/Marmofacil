@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <style>html{color-scheme:light;padding-top:env(safe-area-inset-top,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>Marmofácil</title>
+<title>Projetta</title>
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
@@ -114,6 +114,28 @@ input[type=file]{display:none}
 .doc{background:#fff;color:#111;border:1px solid var(--line);border-radius:6px;padding:18px;font-size:13.5px}
 .doc h2{color:#111}.doc table{width:100%;border-collapse:collapse}.doc td,.doc th{padding:6px 4px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}
 .doc td:last-child,.doc th:last-child{text-align:right;white-space:nowrap}
+/* ===== Layout responsivo (v28): mobile < 768 | tablet 768 | notebook 1024 | desktop 1440 | ultrawide 1920.
+   Mobile continua com a barra inferior; a partir de 1024 px ela vira sidebar. O conteúdo é o mesmo em todos os tamanhos. ===== */
+.brand{display:none}
+@media (min-width:768px){#app{max-width:860px}}
+@media (min-width:1024px){
+  :root{--side:84px}
+  body{padding-left:calc(var(--side) + 28px);padding-right:28px}
+  .tabs{top:0;right:auto;bottom:0;width:var(--side);flex-direction:column;align-items:stretch;gap:4px;border-top:0;border-right:1px solid var(--line);padding:12px 8px;overflow-y:auto}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 6px 14px;font-weight:800;font-size:17px;letter-spacing:-.02em}
+  .brand i{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),#7AA0FF);flex:none}.brand span{display:none}
+  .tabs button{flex:none;min-height:60px;border-radius:10px}.tabs button:hover{background:var(--bg)}.tabs button[aria-current=page]{background:var(--bg)}
+  #app{max-width:1180px;margin:0 auto;padding-bottom:40px}#app[data-view=home]{max-width:1400px}
+  [data-view=home] .grid2{grid-template-columns:repeat(4,1fr)}.dash2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+  .sum{bottom:16px}.toast{bottom:32px;left:calc(50% + var(--side)/2)}
+}
+@media (min-width:1440px){
+  :root{--side:232px}
+  .brand span{display:inline}
+  .tabs button{flex-direction:row;justify-content:flex-start;gap:12px;font-size:14px;padding:0 14px;min-height:46px}
+  #app{max-width:1280px}#app[data-view=home]{max-width:1520px}
+}
+@media (min-width:1920px){#app{max-width:1440px}#app[data-view=home]{max-width:1640px}}
 @media (prefers-reduced-motion:no-preference){.toast{animation:up .18s ease-out}@keyframes up{from{opacity:0;transform:translate(-50%,8px)}}}
 
 /* Editor 3D em tela cheia: celular = 3D em cima e menu embaixo; computador/celular deitado = menu lateral */
@@ -245,10 +267,10 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=27"></script>
-<script src="catalogo.js?v=27"></script>
-<script src="model3d.js?v=27"></script>
-<script src="motor/ambiente.js?v=27"></script>
+<script src="calc.js?v=28"></script>
+<script src="catalogo.js?v=28"></script>
+<script src="model3d.js?v=28"></script>
+<script src="motor/ambiente.js?v=28"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -261,7 +283,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=27;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=28;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -393,10 +415,15 @@ const IC={amb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
   cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg>',
   back:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 5l-7 7 7 7"/></svg>'
 };
+/* faixa de tela atual, para o JS e os testes saberem em que layout estão */
+function aplicarLayout(){
+  const w=innerWidth;document.body.dataset.layout=w>=1920?'ultrawide':w>=1440?'desktop':w>=1024?'notebook':w>=768?'tablet':'mobile';
+}
+addEventListener('resize',aplicarLayout);
 function goTab(t){nav.catAberto=false;nav.tab=t;nav.qid=null;nav.edit=null;render();scrollTo(0,0)}
 function renderTabs(){
   const T=[['home','Início',IC.home],['quotes','Orçamentos',IC.list],['new','Novo',IC.plus],['amb','Ambientes',IC.amb],['cad','Cadastros',IC.box],['cfg','Ajustes',IC.gear]];
-  $('#tabs').innerHTML=T.map(([k,l,i])=>`<button data-act="tab" data-v="${k}" ${nav.tab===k&&!(k!=='new'&&nav.qid&&k==='quotes'&&false)?'aria-current="page"':''}>${i}<span>${l}</span></button>`).join('');
+  $('#tabs').innerHTML='<div class="brand"><i></i><span>Projetta</span></div>'+T.map(([k,l,i])=>`<button data-act="tab" data-v="${k}" ${nav.tab===k&&!(k!=='new'&&nav.qid&&k==='quotes'&&false)?'aria-current="page"':''}>${i}<span>${l}</span></button>`).join('');
 }
 function render(){
   renderTabs();
@@ -408,7 +435,7 @@ function render(){
   else if(nav.tab==='cad')h=viewCad();
   else if(nav.tab==='amb')h=viewAmb();
   else if(nav.tab==='cfg')h=viewCfg();
-  $('#app').innerHTML=h;nav.animar=false;
+  $('#app').innerHTML=h;nav.animar=false;$('#app').dataset.view=q&&nav.tab!=='cad'?'editor':nav.tab;
   if(q&&nav.tab!=='cad')aplicarTrava(q);
   if(nav.show3d&&nav.sec==='med'&&q&&nav.tab!=='cad')montar3d();
   if(nav.ed3d)renderEd3d();
@@ -489,7 +516,7 @@ function viewHome(){
     <div class="card kpi"><span class="lbl">Conversão</span><b>${pct(conv)}</b><span class="small muted">${fech.length} de ${enviados} propostas</span></div>
     <div class="card kpi"><span class="lbl">Em aberto</span><b>${brl(abertoV)}</b><span class="small muted">${aberto.length} orçamentos</span></div>
    </div>
-   <div class="card"><div class="row between"><h3>Faturamento por mês</h3><span class="small muted">fechados</span></div>
+   <div class="dash2"><div class="card"><div class="row between"><h3>Faturamento por mês</h3><span class="small muted">fechados</span></div>
     <div class="row" style="align-items:flex-end;height:110px;margin-top:10px;gap:12px">
      ${meses.map(m=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end">
       <span class="mono small muted">${m.v?nf(m.v/1000,1)+'k':''}</span>
@@ -498,6 +525,7 @@ function viewHome(){
     </div></div>
    <div class="card"><h3 style="margin-bottom:10px">Funil de vendas</h3>
     ${STATUS.map(st=>{const n=by(st).length,v=by(st).reduce((t,x)=>t+x.c.price,0);return `<div style="margin-bottom:10px"><div class="row between small"><span class="chip c-${st}">${st}</span><span class="mono">${n} · ${brl(v)}</span></div><div class="bar" style="margin-top:5px"><i style="width:${Q.length?n/Q.length*100:0}%"></i></div></div>`}).join('')}
+   </div>
    </div>
    <div class="row between"><h3>Últimos orçamentos</h3><button class="ghost sm" data-act="tab" data-v="quotes">Ver todos</button></div>
    ${quoteList(Q.slice(0,3))}
@@ -932,7 +960,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=27');
+    const mod=await import('./viewer3d.js?v=28');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1096,7 +1124,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=27');
+    const m=await import('./viewer3d.js?v=28');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1604,7 +1632,7 @@ document.addEventListener('change',e=>{
 });
 
 /* ===== Início ===== */
-load();garantirSnapshots();applyTheme();render();
+load();garantirSnapshots();applyTheme();aplicarLayout();render();
 if(window.pfAbriu)window.pfAbriu();
 
 /* Aviso de nova versão: o app abre da cópia guardada; quando uma versão nova assume, oferece recarregar. */

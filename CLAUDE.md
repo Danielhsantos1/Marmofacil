@@ -1,4 +1,4 @@
-# Marmofácil
+# Projetta (antes Marmofácil)
 
 SaaS para marmorarias. O vendedor usa só o celular na visita ao cliente para medir, desenhar a bancada, calcular chapas e custo, precificar e gerar orçamento (PDF + WhatsApp). Alvo comercial: vender para várias marmorarias, cada uma com seus próprios dados.
 
@@ -17,6 +17,7 @@ Protótipo funcional, JS puro, **sem build**, instalável como PWA (`manifest.we
 - `motor/ambiente.js`: Ambiente (paredes, piso, teto, portas e janelas): medidas e modelo 3D, funções puras, tudo em cm. Aba "Ambientes" no app; dados em `S.ambientes` (opcional, projetos antigos abrem iguais). Não mexe em preço nem em `calc.js`.
 - `vendor/jspdf.umd.min.js`: PDF.
 - `tests/`: `npm test` (Node 18+, sem dependências). Regressão do cálculo com `tests/golden.json`, gerado pelo código original: **não mudar os valores esperados sem decisão comercial**.
+- Layout responsivo (v28): mobile <768 e tablet 768–1023 usam a barra inferior; a partir de 1024 px ela vira sidebar (84 px; 232 px a partir de 1440) e o painel inicial ganha largura (até 1400–1640 px). `body[data-layout]` informa a faixa (mobile/tablet/notebook/desktop/ultrawide). Editor em 3 painéis e tabelas vêm nas fases B–E do `ROADMAP.md`.
 - Versão: `V` em `sw.js`, `APP_V` e os `?v=` em `index.html` têm o mesmo número (`tests/versao.test.js` confere). Subir os três a cada mudança de arquivo.
 - Dados só em `localStorage` (chave `pedrafacil.v1`, nome antigo mantido de propósito para não perder dados já salvos). Sem login, nuvem ou permissões.
 - Orçamento **Fechado** congela os valores (`q.snap`, inclusive chapa e espessura para o 3D) e fica só para ver até ser reaberto.
