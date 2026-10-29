@@ -245,9 +245,10 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=26"></script>
-<script src="catalogo.js?v=26"></script>
-<script src="model3d.js?v=26"></script>
+<script src="calc.js?v=27"></script>
+<script src="catalogo.js?v=27"></script>
+<script src="model3d.js?v=27"></script>
+<script src="motor/ambiente.js?v=27"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -260,7 +261,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=26;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=27;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -381,8 +382,8 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',brilho3d:true,pdf:null,novoCli:false,animar:false,e3mq:'',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
-const IC={
+const nav={amb:null,amb3d:false,tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',brilho3d:true,pdf:null,novoCli:false,animar:false,e3mq:'',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
+const IC={amb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V6l8-3 8 3v14z"/><path d="M9 20v-6h6v6"/></svg>',
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
   plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>',
@@ -394,7 +395,7 @@ const IC={
 };
 function goTab(t){nav.catAberto=false;nav.tab=t;nav.qid=null;nav.edit=null;render();scrollTo(0,0)}
 function renderTabs(){
-  const T=[['home','Início',IC.home],['quotes','Orçamentos',IC.list],['new','Novo',IC.plus],['cad','Cadastros',IC.box],['cfg','Ajustes',IC.gear]];
+  const T=[['home','Início',IC.home],['quotes','Orçamentos',IC.list],['new','Novo',IC.plus],['amb','Ambientes',IC.amb],['cad','Cadastros',IC.box],['cfg','Ajustes',IC.gear]];
   $('#tabs').innerHTML=T.map(([k,l,i])=>`<button data-act="tab" data-v="${k}" ${nav.tab===k&&!(k!=='new'&&nav.qid&&k==='quotes'&&false)?'aria-current="page"':''}>${i}<span>${l}</span></button>`).join('');
 }
 function render(){
@@ -405,11 +406,13 @@ function render(){
   else if(nav.tab==='home')h=viewHome();
   else if(nav.tab==='quotes')h=viewQuotes();
   else if(nav.tab==='cad')h=viewCad();
+  else if(nav.tab==='amb')h=viewAmb();
   else if(nav.tab==='cfg')h=viewCfg();
   $('#app').innerHTML=h;nav.animar=false;
   if(q&&nav.tab!=='cad')aplicarTrava(q);
   if(nav.show3d&&nav.sec==='med'&&q&&nav.tab!=='cad')montar3d();
   if(nav.ed3d)renderEd3d();
+  if(nav.tab==='amb'&&nav.amb&&nav.amb3d)montarAmb();
   if(nav.tab==='cfg'&&!q)mostrarVersao();
 }
 /* Orçamento fechado é só para ver: campos e botões de edição ficam desligados (o 3D e o PDF continuam). */
@@ -929,7 +932,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=26');
+    const mod=await import('./viewer3d.js?v=27');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1093,7 +1096,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=26');
+    const m=await import('./viewer3d.js?v=27');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1174,6 +1177,70 @@ function atualizar3d(){
   v3.editar(nav.ed3d&&nav.alcas3d&&!fechado(q),aoEditar3d);                // alças só no editor e fora de orçamento fechado
   v3.atualizar(m,mantem,{cotas:nav.cotas3d,textura:texDe(q),cor:corDe(q),foto:fotoDe(q),brilho:nav.brilho3d&&v3Modo!=='software',equip:nav.equip3d});
   nota3d(lay.itens[nav.pi].modelo);marcarVista();
+}
+
+
+/* ===== Ambientes (v27): sala/cozinha/quarto com paredes, piso, teto, portas e janelas. Medidas em cm; o cálculo está em motor/ambiente.js ===== */
+const ambs=()=>S.ambientes||(S.ambientes=[]);
+const AMB_PAREDE_OPC=AMB_PAREDES.map(p=>[p,AMB_NOME_PAREDE[p]]);
+function ambNovo(){
+  const a={id:uid(),nome:'Ambiente '+(ambs().length+1),largura:400,comprimento:500,altura:270,aberturas:[]};
+  ambs().push(a);save();nav.amb=a.id;nav.amb3d=false;render();scrollTo(0,0);
+}
+function ambMedHtml(a){
+  const m=medidasAmbiente(a);
+  if(!m.ok)return `<div class="card" role="alert" style="color:var(--bad)"><b>Confira as medidas</b><ul style="margin:6px 0 0;padding-left:18px">${m.erros.map(e=>`<li>${esc(e)}</li>`).join('')}</ul></div>`;
+  const c=(t,v)=>`<div class="card" style="padding:10px"><div class="small muted">${t}</div><b class="num">${v}</b></div>`;
+  return `<div class="grid2">${c('Piso',nf(m.areaPiso)+' m²')}${c('Teto',nf(m.areaTeto)+' m²')}${c('Perímetro',nf(m.perimetro)+' m')}${c('Volume',nf(m.volume)+' m³')}
+   ${c('Paredes (líquida)',nf(m.areaParedesLiquida)+' m²')}${c('Aberturas',nf(m.areaAberturas)+' m² · '+m.portas+' porta(s) · '+m.janelas+' janela(s)')}</div>
+   <div class="sheet" style="margin-top:8px">${m.paredes.map(p=>`<div class="li" style="display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-top:1px solid var(--line)"><span>${p.nome} · ${nf(p.comprimento,0)} cm</span><span class="num">${nf(p.areaLiquida)} m² <span class="muted small">(bruta ${nf(p.areaBruta)})</span></span></div>`).join('')}</div>`;
+}
+function viewAmb(){
+  const L=ambs();
+  if(nav.amb){const a=L.find(x=>x.id===nav.amb);if(a)return viewAmbEdit(a);nav.amb=null}
+  const lista=L.map(a=>{const m=medidasAmbiente(a);
+    return `<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="amb-abrir" data-v="${a.id}"><div class="grow"><b>${esc(a.nome)}</b>
+     <div class="small muted">${nf(a.largura,0)} × ${nf(a.comprimento,0)} × ${nf(a.altura,0)} cm</div></div>
+     <div class="num">${m.ok?`<b>${nf(m.areaPiso)} m²</b><div class="small muted">paredes ${nf(m.areaParedesLiquida)} m²</div>`:'<span class="small" style="color:var(--bad)">medidas inválidas</span>'}</div></div>`}).join('');
+  return `<header class="top"><h1>Ambientes</h1><button class="pri" data-act="amb-novo">Novo</button></header>
+   <div class="stack">${lista?`<div class="sheet">${lista}</div>`:'<div class="card muted" style="text-align:center">Nenhum ambiente ainda. Toque em Novo para medir uma sala, cozinha ou quarto: o app calcula piso, paredes, perímetro e aberturas na hora.</div>'}</div>`;
+}
+function viewAmbEdit(a){
+  const P='ambientes.'+a.id;
+  const ab=a.aberturas.map(o=>{const Q=P+'.aberturas.'+o.id;
+    return `<div class="card stack" style="padding:12px"><div class="row between"><b>${o.tipo==='janela'?'Janela':'Porta'}</b><button class="ghost danger sm" data-act="amb-del-ab" data-v="${o.id}">Remover</button></div>
+     <div class="grid2">${sel('Parede',Q+'.parede',AMB_PAREDE_OPC,{blank:'Escolha…'})}${fld('Distância do canto esquerdo',Q+'.x','n',{unit:'cm'})}
+     ${fld('Largura',Q+'.largura','n',{unit:'cm'})}${fld('Altura',Q+'.altura','n',{unit:'cm'})}${o.tipo==='janela'?fld('Altura do peitoril',Q+'.peitoril','n',{unit:'cm'}):''}</div></div>`}).join('');
+  return `<header class="top"><button class="ghost" data-act="amb-voltar" aria-label="Voltar">${IC.back}</button><h1>${esc(a.nome||'Ambiente')}</h1></header>
+   <div class="stack"><div class="card stack" style="padding-top:14px">${fld('Nome',P+'.nome')}
+    <div class="grid2">${fld('Largura',P+'.largura','n',{unit:'cm'})}${fld('Comprimento',P+'.comprimento','n',{unit:'cm'})}${fld('Altura (pé-direito)',P+'.altura','n',{unit:'cm'})}</div></div>
+    <div id="ambmed" class="stack">${ambMedHtml(a)}</div>
+    <button data-act="amb-3d" aria-pressed="${nav.amb3d}">${nav.amb3d?'Esconder o 3D':'Ver em 3D'}</button>
+    ${nav.amb3d?`<div class="draw" id="ambbox" style="padding:0;height:min(80vw,380px);min-height:260px;position:relative"><div id="ambmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
+     <p class="small muted">Cotas em cm. Para conferência visual: não é desenho de fabricação.</p>`:''}
+    <div class="row"><button data-act="amb-add" data-v="porta">+ Porta</button><button data-act="amb-add" data-v="janela">+ Janela</button></div>
+    ${ab}
+    <button class="danger" data-act="amb-del">Excluir ambiente</button></div>`;
+}
+function liveAmb(){
+  const a=ambs().find(x=>x.id===nav.amb);if(!a)return;
+  const el=$('#ambmed');if(el)el.innerHTML=ambMedHtml(a);
+  const t=$('.top h1');if(t)t.textContent=a.nome||'Ambiente';
+  atualizarAmb();
+}
+async function montarAmb(){
+  const id=nav.amb;if(!$('#ambbox'))return;
+  try{await carregar3d()}catch(e){const m=$('#ambmsg');if(m)m.textContent=v3Falha;return}
+  const box=$('#ambbox');if(!nav.amb3d||!box||nav.amb!==id)return;
+  v3.anexar(box);const m=$('#ambmsg');if(m)m.remove();
+  v3.editar(false,aoEditar3d);v3Peca='';atualizarAmb(false);
+}
+function atualizarAmb(mantem=true){
+  if(!v3||!nav.amb3d||!$('#ambbox'))return;
+  const a=ambs().find(x=>x.id===nav.amb);if(!a)return;
+  const m=modeloAmbiente(a);
+  v3.atualizar(m,mantem&&v3Peca==='amb:'+a.id,{cotas:true,textura:'liso',cor:null,foto:null,brilho:nav.brilho3d&&v3Modo!=='software',equip:false});
+  v3Peca='amb:'+a.id;
 }
 
 /* ===== Editor 3D em tela cheia: mesmos campos, mesma peça, mesmo cálculo. Só muda onde a pessoa mexe. ===== */
@@ -1393,6 +1460,13 @@ document.addEventListener('click',async e=>{
   switch(a){
     case 'reopen':confirmTap(b,()=>{setStatus(q,'Negociação');render();toast('Reaberto. O preço agora usa os valores atuais do cadastro.')});break;
     case 'atualizar':location.reload();break;
+    case 'amb-novo':ambNovo();break;
+    case 'amb-abrir':nav.amb=v;nav.amb3d=false;render();scrollTo(0,0);break;
+    case 'amb-voltar':nav.amb=null;render();break;
+    case 'amb-3d':nav.amb3d=!nav.amb3d;render();if(nav.amb3d){const bx=$('#ambbox');if(bx)bx.scrollIntoView({block:'center'})}break;
+    case 'amb-add':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.aberturas.push(v==='janela'?{id:uid(),tipo:'janela',parede:'',x:100,largura:120,altura:100,peitoril:100}:{id:uid(),tipo:'porta',parede:'',x:50,largura:80,altura:210,peitoril:0});save();render()}break}
+    case 'amb-del-ab':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.aberturas=a.aberturas.filter(o=>o.id!==v);save();render()}break}
+    case 'amb-del':confirmTap(b,()=>{S.ambientes=ambs().filter(x=>x.id!==nav.amb);nav.amb=null;save();render()});break;
     case 'tab':if(v==='new'){const n=newQuote();openQuote(n.id,'cli')}else goTab(v);break;
     case 'newq':{const n=newQuote();openQuote(n.id,'cli');break}
     case 'open':openQuote(v);break;
@@ -1494,6 +1568,7 @@ document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.tar
 
 /* Atualização ao vivo: não recria os campos para não perder o foco */
 function live(){
+  if(nav.tab==='amb'&&nav.amb){liveAmb();return}
   const q=curQ();if(!q)return;
   const sb=$('#sumbar');if(sb)sb.outerHTML=sumBar(q);
   if(nav.sec==='med'){const p=q.pieces[nav.pi];if(p&&$('#pdraw')){$('#pdraw').innerHTML=drawPiece(p);$('#parea').textContent=nf(partsArea(shape(p).parts))+' m²'}const ri=$('#rcinfo');if(ri&&p){ri.innerHTML=rcInfo(q,p);const mr=rcModelo(q,p);(p.recortes||[]).forEach((r,i)=>{const e=$('#rcs'+i);if(e)e.innerHTML=rcStatus(mr.statusRecortes[i])})}atualizar3d();if(nav.ed3d)e3resumo(q)}

@@ -27,11 +27,11 @@ test('todo arquivo da lista de instalação (CORE) existe',()=>{
 
 test('os scripts do index.html e o import do 3D estão versionados e estão no CORE',()=>{
   const core=/const CORE=\[(.*?)\];/s.exec(sw)[1];
-  for(const f of ['calc.js','catalogo.js','model3d.js','viewer3d.js']){
+  for(const f of ['calc.js','catalogo.js','model3d.js','viewer3d.js','motor/ambiente.js']){
     assert.ok(html.includes(f+'?v='+V),f+' sem ?v= no index.html');
     assert.ok(core.includes(f+'?v='+V),f+' sem ?v= no CORE');
   }
-  assert.ok(!/<script src="(calc|catalogo|model3d)\.js"/.test(html),'script sem versão');
+  assert.ok(!/<script src="(calc|catalogo|model3d|motor\/ambiente)\.js"/.test(html),'script sem versão');
 });
 
 test('o service worker só apaga caches do Marmofácil (o github.io é compartilhado com outros projetos)',()=>{
