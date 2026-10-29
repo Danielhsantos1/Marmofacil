@@ -1,36 +1,41 @@
-# Roadmap: do protótipo ao SaaS
+# Roadmap: Projetta (antes Marmofácil)
 
-Cada etapa termina com algo que funciona e pode ser testado no celular. Não pule etapas.
+**Projete. Meça. Orce.** Plataforma de projetos, medições e orçamentos 3D. A marmoraria é o primeiro módulo; os outros seguem o mesmo fluxo:
 
-## Etapa 0: publicar o que existe
-- Ligar o GitHub Pages (ou Vercel) para abrir o protótipo no celular e instalar como PWA.
-- Critério: abrir a URL no Chrome do Android, instalar na tela inicial e usar em modo avião.
+Projeto → Modelagem → Medição → Quantitativo → Orçamento → PDF
 
-## Etapa 1: organizar o código
-- Criar projeto Vite (React + TypeScript) e separar: cálculo (`lib/calc`), plano de corte, desenho SVG, telas.
-- Escrever testes para o cálculo de preço, área, emendas e aproveitamento, usando como referência os 3 orçamentos de exemplo do protótipo.
-- Critério: mesmos números do protótipo, testes passando.
+Regras fixas: JS puro (sem React, Vite, TypeScript, Tailwind), Three.js, PWA offline, GitHub Pages, `calc.js` e `tests/golden.json` intactos sem decisão comercial, cada etapa termina com `npm test` verde e algo que se testa no celular. Arquitetura detalhada em `docs/ARQUITETURA.md`.
 
-## Etapa 2: banco e login (Supabase)
-- Tabelas: `empresas`, `perfis`, `materiais`, `servicos`, `clientes`, `orcamentos` (peças em JSON), `fotos`.
-- Todo registro leva `empresa_id`. Row Level Security: cada usuário só enxerga a própria empresa.
-- Login por e-mail. Papéis: dono, vendedor (vendedor não vê lucro nem edita preços).
-- Critério: duas empresas de teste sem conseguir ver os dados uma da outra.
+## Já feito
+- Marmoraria: peças, plano de corte, preço, snapshot, 3D profissional, PDF, catálogo de 46 pedras (v1 a v26).
+- Ambientes: motor `motor/ambiente.js` + aba Ambientes com medidas e 3D (v27).
+- Página de vendas Projetta em `/vendas/`, com selo "Em breve" no que não existe.
 
-## Etapa 3: offline de verdade
-- Salvar localmente (IndexedDB), fila de sincronização quando voltar a internet, resolução simples de conflitos.
-- Fotos no Supabase Storage com compressão antes de enviar.
-- Critério: criar orçamento em modo avião e ver no outro aparelho depois.
+## Ciclos
+1. Documentos: este roteiro e `docs/ARQUITETURA.md`. (feito)
+2. Rebranding: nome Projetta visível (título, manifest, textos). Não renomear a chave `pedrafacil.v1` nem o prefixo de cache `marmofacil-`.
+3. Tela "O que deseja projetar?" e registro de módulos (`nucleo/registro-modulos.js`).
+4. Marmoraria e Ambientes encaixados como módulos, sem mudar o comportamento.
+5. Ambientes completo: quantitativos (piso, pintura, rodapé, revestimento) e entrada em orçamento.
+6. Núcleo de orçamento genérico (quantitativo → custo → margem/impostos → PDF), sem tocar no `calc.js`.
+7. Planta baixa 2D com paredes livres.
+8. 3D gerado da planta e medições automáticas em tempo real.
+9. Primeiro módulo novo: Vidraçaria (m², ferragens, instalação). Depois Marcenaria, Esquadrias, Área externa.
+10. Contratos SaaS (login, equipes, nuvem, permissões): só interfaces até existir backend. Em paralelo.
 
-## Etapa 4: IA de fotos
-- Função de servidor (Supabase Edge Function) que chama a API da Anthropic. A chave fica só no servidor.
-- Limitar uso por empresa. Sempre mostrar as medidas como sugestão a confirmar.
-
-## Etapa 5: produto
-- PDF com logo e cores da empresa, validade e condições de pagamento.
-- Backup automático (dump diário do Supabase) e exportação.
-- Cobrança por assinatura (Stripe ou Mercado Pago) e página de venda.
+## Primeiras 10 tarefas
+1. Atualizar este roadmap. (feito)  2. Escrever `docs/ARQUITETURA.md`. (feito)
+3. Rebranding visível.  4. `nucleo/registro-modulos.js` com testes.
+5. Tela "O que deseja projetar?".  6. Marmoraria como módulo.
+7. Ambientes como módulo.  8. Quantitativo de Ambientes com testes.
+9. Orçamento genérico.  10. PDF para projetos que não são marmoraria.
 
 ## Riscos conhecidos
-- O plano de corte é estimado. Antes de vender, validar com 3 a 5 projetos reais de uma marmoraria e comparar com o que o cortador usaria.
-- Cada marmoraria calcula preço de um jeito (por chapa, por m², com ou sem perda). Fazer isso configurável, não fixo.
+- `index.html` (~140 KB) cresce a cada módulo: telas novas em arquivos separados.
+- Renomear a chave do localStorage ou o prefixo do cache apaga ou duplica dados dos usuários.
+- Sem login e sem nuvem não é SaaS para várias empresas (isolamento por RLS quando houver banco).
+- O plano de corte é estimado: validar com 3 a 5 projetos reais antes de vender.
+- Cada empresa calcula preço de um jeito (por chapa, por m², com ou sem perda): manter configurável.
+- Nada foi testado em Android de entrada real.
+- O nome Projetta precisa de consulta de marca (INPI) e de domínio.
+- Nunca inventar valores de negócio (desperdício, margem): campos nascem em branco.
