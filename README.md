@@ -145,3 +145,7 @@ O orçamento agora tem **uma tela por etapa**: Cliente → Medir → Material �
 
 ## Ambientes (v27)
 Aba **Ambientes**: informe largura, comprimento e pé-direito (cm), adicione portas e janelas por parede e veja piso, teto, paredes líquidas, perímetro, volume e o 3D com cotas automáticas. O cálculo fica em `motor/ambiente.js` (testes em `tests/motor-ambiente.test.js`). Ainda não entra em orçamento.
+
+
+## Layout por tamanho de tela (v28)
+Celular e tablet: barra inferior. Notebook (1024 px) e acima: sidebar lateral com a marca Projetta; painel inicial em grade. O app continua sendo um só código; só a casca muda por largura (`aplicarLayout()` e as regras `@media` em `index.html`).
