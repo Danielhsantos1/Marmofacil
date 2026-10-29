@@ -16,7 +16,7 @@ Regras fixas: JS puro (sem React, Vite, TypeScript, Tailwind), Three.js, PWA off
 2. Rebranding: nome Projetta visível (título, manifest, textos). (feito, v28, junto com o layout responsivo) Não renomear a chave `pedrafacil.v1` nem o prefixo de cache `marmofacil-`.
 3. Tela "O que deseja projetar?" e registro de módulos (`nucleo/registro-modulos.js`). (feito, v29)
 4. Marmoraria e Ambientes encaixados como módulos, sem mudar o comportamento.
-5. Ambientes completo: quantitativos (piso, pintura, rodapé, revestimento) e entrada em orçamento.
+5. Ambientes completo: quantitativos (piso, pintura, rodapé, revestimento) (feito, v30) e entrada em orçamento (falta: ciclo 6).
 6. Núcleo de orçamento genérico (quantitativo → custo → margem/impostos → PDF), sem tocar no `calc.js`.
 7. Planta baixa 2D com paredes livres.
 8. 3D gerado da planta e medições automáticas em tempo real.

@@ -14,7 +14,7 @@ Protótipo funcional, JS puro, **sem build**, instalável como PWA (`manifest.we
 - `catalogo.js`: catálogo de pedras para escolher (nome, tipo, cor; funções puras) e foto/cor aproximada da pedra; fotos em `pedras/` (origem: ver README).
 - `model3d.js`: modelo 3D da peça, emendas, recortes e cotas (funções puras, mesma peça do cálculo).
 - `viewer3d.js`: visualizador Three.js (carregado só ao abrir o 3D; Three.js local em `vendor/`, MIT, 692 KB).
-- `motor/ambiente.js`: Ambiente (paredes, piso, teto, portas e janelas): medidas e modelo 3D, funções puras, tudo em cm. Aba "Ambientes" no app; dados em `S.ambientes` (opcional, projetos antigos abrem iguais). Não mexe em preço nem em `calc.js`.
+- `motor/ambiente.js`: Ambiente (paredes, piso, teto, portas e janelas): medidas e modelo 3D, funções puras, tudo em cm. Aba "Ambientes" no app; dados em `S.ambientes` (opcional, projetos antigos abrem iguais). Inclui `quantitativoAmbiente` (piso, teto, pintura, rodapé e revestimentos; perda só se informada). Não mexe em preço nem em `calc.js`.
 - `nucleo/registro-modulos.js`: registro dos módulos (Ambientes, Marmoraria, Marcenaria, Vidraçaria, Esquadrias, Área externa, Projeto personalizado) com estado `disponivel`/`embreve`; alimenta a seção "O que deseja projetar?" no Início. Funções puras, testadas.
 - `vendor/jspdf.umd.min.js`: PDF.
 - `tests/`: `npm test` (Node 18+, sem dependências). Regressão do cálculo com `tests/golden.json`, gerado pelo código original: **não mudar os valores esperados sem decisão comercial**.

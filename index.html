@@ -273,11 +273,11 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=29"></script>
-<script src="catalogo.js?v=29"></script>
-<script src="model3d.js?v=29"></script>
-<script src="motor/ambiente.js?v=29"></script>
-<script src="nucleo/registro-modulos.js?v=29"></script>
+<script src="calc.js?v=30"></script>
+<script src="catalogo.js?v=30"></script>
+<script src="model3d.js?v=30"></script>
+<script src="motor/ambiente.js?v=30"></script>
+<script src="nucleo/registro-modulos.js?v=30"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -290,7 +290,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=29;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=30;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -980,7 +980,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=29');
+    const mod=await import('./viewer3d.js?v=30');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1144,7 +1144,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=29');
+    const m=await import('./viewer3d.js?v=30');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1243,6 +1243,10 @@ function ambMedHtml(a){
    ${c('Paredes (líquida)',nf(m.areaParedesLiquida)+' m²')}${c('Aberturas',nf(m.areaAberturas)+' m² · '+m.portas+' porta(s) · '+m.janelas+' janela(s)')}</div>
    <div class="sheet" style="margin-top:8px">${m.paredes.map(p=>`<div class="li" style="display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-top:1px solid var(--line)"><span>${p.nome} · ${nf(p.comprimento,0)} cm</span><span class="num">${nf(p.areaLiquida)} m² <span class="muted small">(bruta ${nf(p.areaBruta)})</span></span></div>`).join('')}</div>`;
 }
+function ambQtdHtml(a){
+  const q=quantitativoAmbiente(a);if(!q.ok)return '';
+  return `<div class="sheet">${q.itens.map(i=>`<div class="li" style="display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-top:1px solid var(--line)"><span>${esc(i.descricao)}</span><span class="num"><b>${nf(i.quantidade)} ${i.unidade}</b>${i.perdaPct>0?`<span class="muted small"> · com ${nf(i.perdaPct,0)}% de perda ${nf(i.quantidadeComPerda)}</span>`:''}</span></div>`).join('')}</div>`;
+}
 function viewAmb(){
   const L=ambs();
   if(nav.amb){const a=L.find(x=>x.id===nav.amb);if(a)return viewAmbEdit(a);nav.amb=null}
@@ -1255,6 +1259,9 @@ function viewAmb(){
 }
 function viewAmbEdit(a){
   const P='ambientes.'+a.id;
+  a.perdas=a.perdas||{};a.revestimentos=a.revestimentos||[];
+  const rv=a.revestimentos.map(r=>{const R=P+'.revestimentos.'+r.id;
+    return `<div class="row" style="align-items:flex-end"><div class="grow">${sel('Parede',R+'.parede',AMB_PAREDE_OPC,{blank:'Escolha…'})}</div><div class="grow">${fld('Até a altura',R+'.altura','n',{unit:'cm'})}</div><button class="ghost danger sm" data-act="amb-del-rev" data-v="${r.id}" aria-label="Remover revestimento">Remover</button></div>`}).join('');
   const ab=a.aberturas.map(o=>{const Q=P+'.aberturas.'+o.id;
     return `<div class="card stack" style="padding:12px"><div class="row between"><b>${o.tipo==='janela'?'Janela':'Porta'}</b><button class="ghost danger sm" data-act="amb-del-ab" data-v="${o.id}">Remover</button></div>
      <div class="grid2">${sel('Parede',Q+'.parede',AMB_PAREDE_OPC,{blank:'Escolha…'})}${fld('Distância do canto esquerdo',Q+'.x','n',{unit:'cm'})}
@@ -1263,6 +1270,11 @@ function viewAmbEdit(a){
    <div class="stack"><div class="card stack" style="padding-top:14px">${fld('Nome',P+'.nome')}
     <div class="grid2">${fld('Largura',P+'.largura','n',{unit:'cm'})}${fld('Comprimento',P+'.comprimento','n',{unit:'cm'})}${fld('Altura (pé-direito)',P+'.altura','n',{unit:'cm'})}</div></div>
     <div id="ambmed" class="stack">${ambMedHtml(a)}</div>
+    <div class="card stack"><div class="row between"><h3>Quantitativo</h3><span class="small muted">sem preço: vem no orçamento</span></div>
+     <div id="ambqtd">${ambQtdHtml(a)}</div>
+     <div class="grid2">${fld('Perda do piso',P+'.perdas.piso','n',{unit:'%',ph:'0'})}${fld('Perda do rodapé',P+'.perdas.rodape','n',{unit:'%'})}${fld('Perda do revestimento',P+'.perdas.revestimento','n',{unit:'%'})}</div>
+     <p class="small muted">A perda só entra se você preencher. O app não assume percentual.</p>
+     ${rv}<button data-act="amb-add-rev">+ Revestimento de parede</button></div>
     <button data-act="amb-3d" aria-pressed="${nav.amb3d}">${nav.amb3d?'Esconder o 3D':'Ver em 3D'}</button>
     ${nav.amb3d?`<div class="draw" id="ambbox" style="padding:0;height:min(80vw,380px);min-height:260px;position:relative"><div id="ambmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
      <p class="small muted">Cotas em cm. Para conferência visual: não é desenho de fabricação.</p>`:''}
@@ -1272,7 +1284,7 @@ function viewAmbEdit(a){
 }
 function liveAmb(){
   const a=ambs().find(x=>x.id===nav.amb);if(!a)return;
-  const el=$('#ambmed');if(el)el.innerHTML=ambMedHtml(a);
+  const el=$('#ambmed');if(el)el.innerHTML=ambMedHtml(a);const qd=$('#ambqtd');if(qd)qd.innerHTML=ambQtdHtml(a);
   const t=$('.top h1');if(t)t.textContent=a.nome||'Ambiente';
   atualizarAmb();
 }
@@ -1514,6 +1526,8 @@ document.addEventListener('click',async e=>{
     case 'amb-voltar':nav.amb=null;render();break;
     case 'amb-3d':nav.amb3d=!nav.amb3d;render();if(nav.amb3d){const bx=$('#ambbox');if(bx)bx.scrollIntoView({block:'center'})}break;
     case 'amb-add':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.aberturas.push(v==='janela'?{id:uid(),tipo:'janela',parede:'',x:100,largura:120,altura:100,peitoril:100}:{id:uid(),tipo:'porta',parede:'',x:50,largura:80,altura:210,peitoril:0});save();render()}break}
+    case 'amb-add-rev':{const a=ambs().find(x=>x.id===nav.amb);if(a){(a.revestimentos=a.revestimentos||[]).push({id:uid(),parede:'',altura:a.altura});save();render()}break}
+    case 'amb-del-rev':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.revestimentos=(a.revestimentos||[]).filter(r=>r.id!==v);save();render()}break}
     case 'amb-del-ab':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.aberturas=a.aberturas.filter(o=>o.id!==v);save();render()}break}
     case 'amb-del':confirmTap(b,()=>{S.ambientes=ambs().filter(x=>x.id!==nav.amb);nav.amb=null;save();render()});break;
     case 'tab':if(v==='new'){const n=newQuote();openQuote(n.id,'cli')}else goTab(v);break;

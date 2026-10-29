@@ -22,9 +22,13 @@ function criarAmbiente(d){
     aberturas:ab.map((a,i)=>({
       id:(a&&a.id)||'a'+(i+1),tipo:a&&a.tipo==='janela'?'janela':'porta',parede:a&&a.parede,
       x:ambNum(a&&a.x),largura:ambNum(a&&a.largura),altura:ambNum(a&&a.altura),peitoril:a&&a.peitoril==null||a&&a.peitoril===''?0:ambNum(a&&a.peitoril)
-    }))
+    })),
+    revestimentos:(Array.isArray(d.revestimentos)?d.revestimentos:[]).map((r,i)=>({id:(r&&r.id)||'r'+(i+1),parede:r&&r.parede,altura:ambNum(r&&r.altura)})),
+    perdas:{piso:ambPerda(d.perdas&&d.perdas.piso),revestimento:ambPerda(d.perdas&&d.perdas.revestimento),rodape:ambPerda(d.perdas&&d.perdas.rodape)}
   };
 }
+/* perda em %: vazio = 0 (o app não inventa percentual); texto inválido vira NaN e a validação recusa */
+const ambPerda=v=>v==null||v===''?0:ambNum(v);
 
 const ambCompParede=(a,p)=>p==='N'||p==='S'?a.largura:a.comprimento;
 
@@ -45,6 +49,12 @@ function validarAmbiente(entrada){
     if(o.peitoril+o.altura>a.altura+1e-9)erros.push(nome+': passa da altura do ambiente ('+a.altura+' cm).');
     (porParede[o.parede]=porParede[o.parede]||[]).push({o,nome});
   });
+  a.revestimentos.forEach((r,i)=>{
+    const nome='Revestimento '+(i+1);
+    if(!AMB_PAREDES.includes(r.parede)){erros.push(nome+': escolha a parede.');return}
+    if(!(r.altura>0&&r.altura<=a.altura+1e-9))erros.push(nome+': a altura precisa ser maior que zero e no máximo '+a.altura+' cm.');
+  });
+  Object.entries(a.perdas).forEach(([k,v])=>{if(!(v>=0&&v<=100))erros.push('A perda de '+k+' precisa estar entre 0 e 100%.')});
   Object.values(porParede).forEach(l=>{
     const ord=l.slice().sort((p,q)=>p.o.x-q.o.x);
     for(let i=1;i<ord.length;i++)if(ord[i].o.x<ord[i-1].o.x+ord[i-1].o.largura-1e-9)erros.push(ord[i-1].nome+' e '+ord[i].nome+' se sobrepõem na mesma parede.');
@@ -66,6 +76,27 @@ function medidasAmbiente(entrada){
     perimetro:2*(a.largura+a.comprimento)/100,volume:a.largura*a.comprimento*a.altura/1e6,
     paredes,areaParedesBruta:soma('areaBruta'),areaAberturas:soma('areaAberturas'),areaParedesLiquida:soma('areaLiquida'),
     portas:a.aberturas.filter(o=>o.tipo==='porta').length,janelas:a.aberturas.filter(o=>o.tipo==='janela').length};
+}
+
+/* Quantitativo do ambiente: lista de itens {codigo, descricao, unidade, quantidade, perdaPct, quantidadeComPerda}.
+   Só geometria medida: piso, teto, pintura (paredes líquidas e teto), rodapé (perímetro menos portas) e revestimentos escolhidos.
+   Perda só entra se a pessoa informar (nunca inventada). Preço fica para o orçamento. */
+function quantitativoAmbiente(entrada){
+  const v=validarAmbiente(entrada);if(!v.ok)return {ok:false,erros:v.erros,itens:[]};
+  const a=criarAmbiente(entrada),m=medidasAmbiente(a),itens=[];
+  const add=(codigo,descricao,unidade,quantidade,perdaPct=0)=>itens.push({codigo,descricao,unidade,quantidade,perdaPct,quantidadeComPerda:quantidade*(1+perdaPct/100)});
+  add('AMB-PISO','Piso','m²',m.areaPiso,a.perdas.piso);
+  add('AMB-TETO','Teto / forro','m²',m.areaTeto);
+  add('AMB-PINT-PAREDE','Pintura das paredes (líquida)','m²',m.areaParedesLiquida);
+  add('AMB-PINT-TETO','Pintura do teto','m²',m.areaTeto);
+  const portas=a.aberturas.filter(o=>o.tipo==='porta').reduce((t,o)=>t+o.largura,0);
+  add('AMB-RODAPE','Rodapé (perímetro menos portas)','m',Math.max(0,m.perimetro-portas/100),a.perdas.rodape);
+  a.revestimentos.forEach(r=>{
+    const comp=ambCompParede(a,r.parede);
+    const abertas=a.aberturas.filter(o=>o.parede===r.parede).reduce((t,o)=>t+o.largura*Math.max(0,Math.min(r.altura,o.peitoril+o.altura)-o.peitoril),0);   // só a parte da abertura abaixo da altura revestida
+    add('AMB-REV-'+r.parede,'Revestimento parede '+AMB_NOME_PAREDE[r.parede]+' até '+r.altura+' cm','m²',(comp*r.altura-abertas)/1e4,a.perdas.revestimento);
+  });
+  return {ok:true,erros:[],itens};
 }
 
 /* Faixas [ini,fim] em que a parede é cheia, e as aberturas viram "vergas" (acima) e "peitoris" (abaixo). Coordenada ao longo da parede. */
@@ -120,4 +151,4 @@ function modeloAmbiente(entrada,op={}){
     peca:{type:'ambiente',d:{A:L,B:C,H},saiaH:0,rodaH:0}};
 }
 
-if(typeof module!=='undefined')module.exports={AMB_LIM,AMB_PAREDES,AMB_NOME_PAREDE,criarAmbiente,validarAmbiente,medidasAmbiente,modeloAmbiente,ambSegmentos};
+if(typeof module!=='undefined')module.exports={AMB_LIM,AMB_PAREDES,AMB_NOME_PAREDE,criarAmbiente,validarAmbiente,medidasAmbiente,modeloAmbiente,ambSegmentos,quantitativoAmbiente};
