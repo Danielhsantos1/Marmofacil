@@ -91,10 +91,11 @@ function quantitativoAmbiente(entrada){
   add('AMB-PINT-TETO','Pintura do teto','m²',m.areaTeto);
   const portas=a.aberturas.filter(o=>o.tipo==='porta').reduce((t,o)=>t+o.largura,0);
   add('AMB-RODAPE','Rodapé (perímetro menos portas)','m',Math.max(0,m.perimetro-portas/100),a.perdas.rodape);
+  const nRev={};
   a.revestimentos.forEach(r=>{
-    const comp=ambCompParede(a,r.parede);
+    const comp=ambCompParede(a,r.parede),n=nRev[r.parede]=(nRev[r.parede]||0)+1;      // dois revestimentos na mesma parede: AMB-REV-S e AMB-REV-S-2
     const abertas=a.aberturas.filter(o=>o.parede===r.parede).reduce((t,o)=>t+o.largura*Math.max(0,Math.min(r.altura,o.peitoril+o.altura)-o.peitoril),0);   // só a parte da abertura abaixo da altura revestida
-    add('AMB-REV-'+r.parede,'Revestimento parede '+AMB_NOME_PAREDE[r.parede]+' até '+r.altura+' cm','m²',(comp*r.altura-abertas)/1e4,a.perdas.revestimento);
+    add('AMB-REV-'+r.parede+(n>1?'-'+n:''),'Revestimento parede '+AMB_NOME_PAREDE[r.parede]+' até '+r.altura+' cm','m²',(comp*r.altura-abertas)/1e4,a.perdas.revestimento);
   });
   return {ok:true,erros:[],itens};
 }
