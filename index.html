@@ -123,12 +123,13 @@ input[type=file]{display:none}
 /* Editor de Ambiente em 3 painéis (v34): no notebook e acima, dados à esquerda, desenho 2D e 3D ao centro, medidas e orçamento à direita. No celular continua uma coluna, na ordem de sempre. */
 .edcol{display:contents}.o1{order:1}.o2{order:2}.o3{order:3}.o4{order:4}.o5{order:5}.o6{order:6}.o7{order:7}.o8{order:8}.o9{order:9}.o10{order:10}
 @media (min-width:1024px){
-  #app[data-view=amb-edit]{max-width:none}
+  #app[data-view=amb-edit],#app[data-view=editor]{max-width:none}
   .ed3p{display:grid;grid-template-columns:minmax(300px,1fr) minmax(0,2fr) minmax(320px,1.1fr);gap:16px;align-items:start}
   .ed3p .edcol{display:flex;flex-direction:column;gap:12px;min-width:0}
   .ed3p .ed-c{position:sticky;top:76px;height:calc(100vh - 92px);min-height:560px}
   .ed3p .ed-c #plsvg{max-height:230px!important}.ed3p .ed-c>p{display:none}
-  .ed3p .ed-c #ambbox{flex:1 1 auto;height:auto!important;min-height:240px}
+  .ed3p .ed-c #ambbox,.ed3p .ed-c #v3dbox{flex:1 1 auto;height:auto!important;min-height:240px}
+  .ed3p .sum{position:static}.ed3p .ed-r .sum{margin-bottom:0}
   .amb3d-btn{display:none}
 }
 @media (min-width:1024px) and (max-height:800px){.ed3p .ed-c #plsvg{max-height:185px!important}}
@@ -286,13 +287,13 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=35"></script>
-<script src="catalogo.js?v=35"></script>
-<script src="model3d.js?v=35"></script>
-<script src="motor/ambiente.js?v=35"></script>
-<script src="motor/planta.js?v=35"></script>
-<script src="nucleo/registro-modulos.js?v=35"></script>
-<script src="nucleo/orcamento.js?v=35"></script>
+<script src="calc.js?v=36"></script>
+<script src="catalogo.js?v=36"></script>
+<script src="model3d.js?v=36"></script>
+<script src="motor/ambiente.js?v=36"></script>
+<script src="motor/planta.js?v=36"></script>
+<script src="nucleo/registro-modulos.js?v=36"></script>
+<script src="nucleo/orcamento.js?v=36"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -305,7 +306,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=35;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=36;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -441,7 +442,7 @@ const IC={amb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 function aplicarLayout(){
   const w=innerWidth;document.body.dataset.layout=w>=1920?'ultrawide':w>=1440?'desktop':w>=1024?'notebook':w>=768?'tablet':'mobile';
 }
-addEventListener('resize',aplicarLayout);
+let _desk=null;addEventListener('resize',()=>{aplicarLayout();const d=innerWidth>=1024;if(_desk!==null&&d!==_desk&&nav.qid)render();_desk=d});
 function goTab(t){nav.catAberto=false;nav.tab=t;nav.qid=null;nav.edit=null;render();scrollTo(0,0)}
 function renderTabs(){
   const T=[['home','Início',IC.home],['quotes','Orçamentos',IC.list],['new','Novo',IC.plus],['amb','Ambientes',IC.amb],['cad','Cadastros',IC.box],['cfg','Ajustes',IC.gear]];
@@ -459,7 +460,7 @@ function render(){
   else if(nav.tab==='cfg')h=viewCfg();
   $('#app').innerHTML=h;nav.animar=false;$('#app').dataset.view=q&&nav.tab!=='cad'?'editor':nav.tab==='amb'&&nav.amb?'amb-edit':nav.tab;
   if(q&&nav.tab!=='cad')aplicarTrava(q);
-  if(nav.show3d&&nav.sec==='med'&&q&&nav.tab!=='cad')montar3d();
+  if(q&&nav.tab!=='cad'&&(desk3()||(nav.show3d&&nav.sec==='med')))montar3d();
   if(nav.ed3d)renderEd3d();
   if(nav.tab==='amb'&&nav.amb){travarFormatoAmb();aplicarTravaAmb()}
   if(nav.tab==='amb'&&nav.amb&&nav.amb3d)montarAmb();
@@ -633,6 +634,13 @@ function passoVizinho(dir){
   let i=STEPS.findIndex(x=>x[0]===nav.sec);const fora=i<0;if(fora)i=1;                  // Fotos e IA: conta como depois de Medir
   const j=dir==='next'?i+1:(fora?i:i-1);return STEPS[j]||null;
 }
+/* notebook e acima (>= 1024 px), fora do editor 3D em tela cheia: o editor de orçamento vira 3 painéis */
+const desk3=()=>innerWidth>=1024&&!nav.ed3d;
+function resumoQ(q){
+  const t=document.createElement('template');t.innerHTML=secCal(q);
+  const cb=t.content.querySelector('#calcbox'),ap=t.content.querySelector('#aprov');cb.id='rcalc';ap.id='raprov';
+  return sumBar(q)+cb.outerHTML+ap.outerHTML;
+}
 function stepper(){
   const at=Math.max(0,STEPS.findIndex(x=>x[0]===nav.sec));
   return `<nav class="steps" aria-label="Etapas do orçamento">${STEPS.map(([k,l],i)=>`<button data-act="sec" data-v="${k}" ${nav.sec===k?'aria-current="step"':''} class="${i<at&&STEPS.findIndex(x=>x[0]===nav.sec)>=0?'feito':''}"><span class="dot">${i<at&&STEPS.findIndex(x=>x[0]===nav.sec)>=0?'✓':i+1}</span><span>${l}</span></button>`).join('')}
@@ -656,13 +664,21 @@ function viewEditor(q){
   else body=secOrc(q);
   return `<header class="top"><button class="ghost" data-act="close" aria-label="Voltar">${IC.back}</button>
    <h1>#${q.num} ${esc(cl?.name||'Novo orçamento')}</h1><span class="chip c-${q.status}">${q.status}</span></header>
-  <div class="stack">
+  ${desk3()?viewEditor3p(q,body):`<div class="stack">
    ${stepper()}
    ${fechado(q)?`<div class="card lock" role="status"><b>Orçamento fechado.</b> Valores congelados em ${dateBR(q.snap.em)}${q.snap.migrado?' (guardados na primeira abertura desta versão)':''}. Mudar preços no cadastro não altera este orçamento.
     <button class="sm" style="margin-top:8px" data-act="reopen">Reabrir para editar</button></div>`:''}
    <div id="secbody" class="stack${nav.animar?' stepin':''}" style="padding-top:0">${body}</div>
    ${sumBar(q)}
-  </div>`;
+  </div>`}`;
+}
+function viewEditor3p(q,body){
+  const p=q.pieces[Math.min(nav.pi,q.pieces.length-1)];
+  return `<div class="stack ed3p"><div class="edcol ed-l">${stepper()}
+   ${fechado(q)?`<div class="card lock" role="status"><b>Orçamento fechado.</b> Valores congelados em ${dateBR(q.snap.em)}. <button class="sm" style="margin-top:8px" data-act="reopen">Reabrir para editar</button></div>`:''}
+   <div id="secbody" class="stack" style="padding-top:0">${body}</div></div>
+   <div class="edcol ed-c">${p?`<button class="pri" data-act="ed3d-abrir">Abrir editor 3D (tela cheia)</button>${painel3d(p)}`:'<div class="card muted">Adicione uma peça na etapa Medir para ver o 3D.</div>'}</div>
+   <div class="edcol ed-r" id="rcol">${resumoQ(q)}</div></div>`;
 }
 
 function secCli(q){
@@ -691,6 +707,15 @@ function secMat(q){
     <input type="search" id="e3matq" value="${esc(nav.e3mq)}" placeholder="Buscar pedra por nome ou cor" aria-label="Buscar pedra" autocomplete="off" style="min-height:48px">
     <div id="e3matgrid" class="stack grande" style="padding-top:0">${e3MatGrade(q)}</div></div>`;
 }
+/* Painel do 3D da peça selecionada: caixa, vistas, cotas, aparência e nota. No celular fica dentro da etapa Medir; no notebook e acima fica ao centro, sempre aberto. */
+function toggle3dHtml(p){return `   <button data-act="toggle3d" aria-pressed="${nav.show3d}">${nav.show3d?'Esconder o 3D':'Ver em 3D'}</button>
+   ${nav.show3d?painel3d(p):''}`}
+function painel3d(p){return `<div class="draw" id="v3dbox" style="padding:0;height:min(68vw,340px);min-height:260px;position:relative"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
+   <div class="bar3d" role="group" aria-label="Vistas do 3D"><button class="k3d" data-act="view3d" data-v="persp" aria-pressed="true">Perspectiva</button><button class="k3d" data-act="view3d" data-v="topo" aria-pressed="false">De cima</button><button class="k3d" data-act="view3d" data-v="frente" aria-pressed="false">De frente</button><button class="k3d" data-act="enquadrar3d">Enquadrar</button></div>
+   <div class="row3d"><button class="k3d" data-act="cotas3d" aria-pressed="${nav.cotas3d}">Cotas</button>
+    <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['material','Do material (nome e cor do cadastro)'],['liso','Lisa'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label>
+    ${(p.recortes||[]).length?`<button class="k3d" data-act="equip3d" aria-pressed="${nav.equip3d}" style="grid-column:1/-1">Cuba, torneira e cooktop (ilustrativos)</button>`:''}</div>
+   <div class="note" id="n3d">Arraste para girar e use dois dedos para aproximar.</div>`}
 function secMed(q){
   if(nav.ed3d)return '<div class="card muted" role="status">O editor 3D está aberto em tela cheia.</div>';
   if(nav.pi>=q.pieces.length)nav.pi=Math.max(0,q.pieces.length-1);
@@ -704,14 +729,8 @@ function secMed(q){
   const sh=shape(p),area=partsArea(sh.parts);
   h+=`<div class="draw" id="pdraw">${drawPiece(p)}</div>
    <div class="row between"><span class="small muted">${TYPES[p.type].nome} · área da peça</span><b class="num" id="parea">${nf(area)} m²</b></div>
-   <button class="pri" data-act="ed3d-abrir">Abrir editor 3D (tela cheia)</button>
-   <button data-act="toggle3d" aria-pressed="${nav.show3d}">${nav.show3d?'Esconder o 3D':'Ver em 3D'}</button>
-   ${nav.show3d?`<div class="draw" id="v3dbox" style="padding:0;height:min(68vw,340px);min-height:260px;position:relative"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
-   <div class="bar3d" role="group" aria-label="Vistas do 3D"><button class="k3d" data-act="view3d" data-v="persp" aria-pressed="true">Perspectiva</button><button class="k3d" data-act="view3d" data-v="topo" aria-pressed="false">De cima</button><button class="k3d" data-act="view3d" data-v="frente" aria-pressed="false">De frente</button><button class="k3d" data-act="enquadrar3d">Enquadrar</button></div>
-   <div class="row3d"><button class="k3d" data-act="cotas3d" aria-pressed="${nav.cotas3d}">Cotas</button>
-    <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['material','Do material (nome e cor do cadastro)'],['liso','Lisa'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label>
-    ${(p.recortes||[]).length?`<button class="k3d" data-act="equip3d" aria-pressed="${nav.equip3d}" style="grid-column:1/-1">Cuba, torneira e cooktop (ilustrativos)</button>`:''}</div>
-   <div class="note" id="n3d">Arraste para girar e use dois dedos para aproximar.</div>`:''}
+   ${desk3()?'':`<button class="pri" data-act="ed3d-abrir">Abrir editor 3D (tela cheia)</button>
+   ${toggle3dHtml(p)}`}
    <div class="card stack" style="padding-top:14px">
     ${fld('Nome da peça',PP+'.name')}
     <div class="grid2">${TYPES[p.type].campos.map(([k,l])=>fld(l,PP+'.d.'+k,'n',{unit:k==='N'?'un':'cm'})).join('')}</div>
@@ -1013,7 +1032,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=35');
+    const mod=await import('./viewer3d.js?v=36');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1036,7 +1055,7 @@ async function imagens3dPdf(q){
 async function imagem3dAmbiente(a){
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=35');
+    const mod=await import('./viewer3d.js?v=36');
     if(!mod.webglModo())return null;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1231,7 +1250,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=35');
+    const m=await import('./viewer3d.js?v=36');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1265,7 +1284,7 @@ async function montar3d(){
   const q=curQ();if(!q||!$('#v3dbox'))return;
   if(nav.rolar3d){nav.rolar3d=false;$('#v3dbox').scrollIntoView({block:'start'})}   // ao abrir, leva o 3D para a vista (a barra de preço não o esconde)
   try{await carregar3d()}catch(e){falha3d();return}
-  const box=$('#v3dbox');if(!nav.show3d||!box||curQ()!==q)return;      // a tela mudou enquanto carregava
+  const box=$('#v3dbox');if(!(nav.show3d||desk3())||!box||curQ()!==q)return;      // a tela mudou enquanto carregava
   v3.anexar(box);const m=$('#v3dmsg');if(m)m.remove();
   box.addEventListener('pointerup',marcarVista);box.addEventListener('wheel',marcarVista,{passive:true});
   atualizar3d();
@@ -1305,7 +1324,7 @@ function nota3d(m){
   el.textContent=partes.join(' ');
 }
 function atualizar3d(){
-  if(!v3||!nav.show3d||!$('#v3dbox'))return;
+  if(!v3||!(nav.show3d||desk3())||!$('#v3dbox'))return;
   const q=curQ(),p=q&&q.pieces[nav.pi];if(!p)return;
   const chave=q.id+':'+q.pieces.length,mantem=v3Peca===chave;v3Peca=chave;   // mesmo orçamento e mesmas peças: não reenquadra a câmera (trocar a peça selecionada não mexe na cena)
   const lay=layout3d(q),m=Model3D.comporCena(lay.itens,nav.pi);
@@ -1887,6 +1906,7 @@ function live(){
   if(nav.tab==='amb'&&nav.amb){liveAmb();return}
   const q=curQ();if(!q)return;
   const sb=$('#sumbar');if(sb)sb.outerHTML=sumBar(q);
+  if(desk3()){const rc=$('#rcol');if(rc)rc.innerHTML=resumoQ(q)}
   if(nav.sec==='med'){const p=q.pieces[nav.pi];if(p&&$('#pdraw')){$('#pdraw').innerHTML=drawPiece(p);$('#parea').textContent=nf(partsArea(shape(p).parts))+' m²'}const ri=$('#rcinfo');if(ri&&p){ri.innerHTML=rcInfo(q,p);const mr=rcModelo(q,p);(p.recortes||[]).forEach((r,i)=>{const e=$('#rcs'+i);if(e)e.innerHTML=rcStatus(mr.statusRecortes[i])})}atualizar3d();if(nav.ed3d)e3resumo(q)}
   if(nav.sec==='svc'){q.lines.forEach((l,i)=>{const s=S.services.find(x=>x.id===l.svcId),el=$('#ls'+i);if(el&&s)el.textContent=brl(s.price*l.qty)});const c=calc(q);$('#svcsub').textContent=brl(c.svc)}
   if(nav.sec==='cal'){const t=document.createElement('template');t.innerHTML=secCal(q);
