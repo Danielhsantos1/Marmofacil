@@ -17,11 +17,11 @@ test('não inventa números, depoimentos nem preços',()=>{
   for(const r of proibido)assert.ok(!r.test(pag),'frase proibida: '+r);
 });
 test('o que ainda não existe leva o selo "Em breve"',()=>{
-  for(const nome of ['Marcenaria','Vidraçaria','Esquadrias','Área externa']){
+  for(const nome of ['Marcenaria','Esquadrias','Área externa']){
     const m=new RegExp('<article class="seg[^>]*>(?:(?!</article>).)*<h3>'+nome+'</h3>(?:(?!</article>).)*</article>','s').exec(pag);
     assert.ok(m,'card '+nome);assert.ok(/class="tag">Em breve/.test(m[0]),nome+' sem selo Em breve');
   }
-  for(const nome of ['Ambientes','Marmoraria']){
+  for(const nome of ['Ambientes','Marmoraria','Vidraçaria']){
     const m=new RegExp('<article class="seg[^>]*>(?:(?!</article>).)*<h3>'+nome+'</h3>(?:(?!</article>).)*</article>','s').exec(pag);
     assert.ok(m&&/tag on">Disponível/.test(m[0]),nome+' deve estar Disponível');
   }

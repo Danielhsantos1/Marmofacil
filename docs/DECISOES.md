@@ -2,6 +2,10 @@
 
 Formato: data, decisão, motivo, quando rever. Mais recente primeiro.
 
+## 2026-10-30: seguir sem conversas, sem banco e sem login; vidraçaria como próximo módulo
+
+Decisão da fundadora: não fazer as conversas com empresas por falta de tempo, e continuar o desenvolvimento sem banco de dados e sem login por enquanto. Escolhido o módulo de vidraçaria. Risco aceito e registrado: sem validação com clientes e sem nuvem, não há prova de demanda nem proteção contra perda do aparelho; o backup manual em Ajustes é a única proteção dos dados. Rever quando houver o primeiro piloto ou a necessidade de cobrar assinatura.
+
 ## 2026-10-30: Missão 001 aprovada (fundação e primeiro produto)
 
 1. **Porta de entrada: marmoraria.** Produto: medição, 3D e orçamento na visita, por assinatura mensal. Vidraçaria e esquadrias são o segundo módulo a testar. Marcenaria, arquitetura e engenharia ficam para depois.

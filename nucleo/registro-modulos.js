@@ -4,13 +4,13 @@
    Contrato completo dos módulos: docs/ARQUITETURA.md. */
 
 const MOD_ESTADOS=['disponivel','embreve'];
-const MOD_DESTINOS=['aba-ambientes','novo-orcamento'];          // ações que a tela sabe executar
+const MOD_DESTINOS=['aba-ambientes','aba-vidracaria','novo-orcamento'];          // ações que a tela sabe executar
 
 const MODULOS=[
   {id:'ambientes',nome:'Ambientes',icone:'casa',estado:'disponivel',destino:'aba-ambientes',descricao:'Sala, cozinha, quarto, banheiro: piso, paredes, perímetro, volume e aberturas.'},
   {id:'marmoraria',nome:'Marmoraria',icone:'pedra',estado:'disponivel',destino:'novo-orcamento',descricao:'Bancadas, ilhas, nichos e escadas com plano de corte, chapas e preço.'},
   {id:'marcenaria',nome:'Marcenaria',icone:'madeira',estado:'embreve',descricao:'Armários, cozinhas planejadas e closets com chapas de MDF e ferragens.'},
-  {id:'vidracaria',nome:'Vidraçaria',icone:'vidro',estado:'embreve',descricao:'Box, espelhos, divisórias e guarda-corpos com m², ferragens e instalação.'},
+  {id:'vidracaria',nome:'Vidraçaria',icone:'vidro',estado:'disponivel',destino:'aba-vidracaria',descricao:'Box, espelhos, divisórias e guarda-corpos com m², ferragens e instalação.'},
   {id:'esquadrias',nome:'Esquadrias',icone:'porta',estado:'embreve',descricao:'Portas, janelas e portões com perfis, vidros e acessórios.'},
   {id:'externa',nome:'Área externa',icone:'ext',estado:'embreve',descricao:'Piscina, deck, pergolado, muro e calçadas com cálculo de materiais.'},
   {id:'personalizado',nome:'Projeto personalizado',icone:'livre',estado:'embreve',descricao:'Desenhe qualquer objeto informando largura, altura, profundidade e espessura.'}
