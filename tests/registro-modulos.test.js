@@ -9,9 +9,9 @@ test('o registro do app é válido',()=>{
 test('os 7 módulos da tela inicial existem, na ordem combinada',()=>{
   assert.deepEqual(listarModulos().map(m=>m.id),['ambientes','marmoraria','marcenaria','vidracaria','esquadrias','externa','personalizado']);
 });
-test('hoje só Ambientes e Marmoraria estão disponíveis; o resto é "em breve"',()=>{
-  assert.deepEqual(modulosDisponiveis().map(m=>m.id),['ambientes','marmoraria']);
-  assert.equal(modulosEmBreve().length,5);
+test('hoje Ambientes, Marmoraria e Vidraçaria estão disponíveis; o resto é "em breve"',()=>{
+  assert.deepEqual(modulosDisponiveis().map(m=>m.id),['ambientes','marmoraria','vidracaria']);
+  assert.equal(modulosEmBreve().length,4);
   assert.equal(modulosDisponiveis().length+modulosEmBreve().length,MODULOS.length);
 });
 test('moduloPorId acha e devolve null quando não existe',()=>{
