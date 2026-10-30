@@ -6,6 +6,9 @@ Projeto → Modelagem → Medição → Quantitativo → Orçamento → PDF
 
 Regras fixas: JS puro (sem React, Vite, TypeScript, Tailwind), Three.js, PWA offline, GitHub Pages, `calc.js` e `tests/golden.json` intactos sem decisão comercial, cada etapa termina com `npm test` verde e algo que se testa no celular. Arquitetura detalhada em `docs/ARQUITETURA.md`.
 
+## Fase atual (decisão de 2026-10-30)
+Pausa de funcionalidades novas por 3 a 4 semanas para descobrir a dor com 15 conversas com donos de marmoraria, depois tornar o produto cobrável (login, nuvem, isolamento por empresa) e vender aos primeiros pilotos. Detalhes e critérios em `docs/DECISOES.md`. Os ciclos abaixo continuam como lista de ideias; nada novo entra sem pedido de cliente pagante ou piloto.
+
 ## Já feito
 - Marmoraria: peças, plano de corte, preço, snapshot, 3D profissional, PDF, catálogo de 46 pedras (v1 a v26).
 - Ambientes: motor `motor/ambiente.js` + aba Ambientes com medidas e 3D (v27).
