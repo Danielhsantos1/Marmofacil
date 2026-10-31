@@ -1,126 +1,127 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#ffffff">
-<title>Projetta: projetos, medições e orçamentos 3D</title>
-<meta name="description" content="Projetta: plataforma para projetar, medir e orçar ambientes e peças sob medida. Visualização 3D em tempo real, quantitativos automáticos e PDF profissional, no celular ou no computador.">
-<meta property="og:type" content="website"><meta property="og:title" content="Projetta: projetos, medições e orçamentos 3D">
-<meta property="og:description" content="Projete qualquer ambiente. Meça qualquer elemento. Gere o orçamento em minutos.">
+<meta name="theme-color" content="#0E6A5B">
+<title>Marmofácil: orçamento em 3D para marmorarias</title>
+<meta name="description" content="App para marmorarias: meça no celular, veja a bancada em 3D, calcule chapas e preço e envie um PDF profissional pelo WhatsApp, na própria visita.">
+<meta property="og:type" content="website"><meta property="og:title" content="Marmofácil: orçamento em 3D para marmorarias">
+<meta property="og:description" content="Meça no celular, veja a bancada em 3D e envie o orçamento em PDF na própria visita.">
 <meta property="og:image" content="https://danielhsantos1.github.io/Marmofacil/vendas/img/editor-3d.jpg">
 <link rel="icon" href="../icon-192.png">
 <style>
-:root{--bg:#fff;--g1:#F5F6F8;--g2:#E7E9EE;--fg:#101322;--mut:#5B6272;--acc:#2D5BFF;--acc2:#1E43CC;--soft:#EAF0FF;--dark:#0B0E1A;--r:20px;--sh:0 10px 30px rgba(16,19,34,.08)}
-*{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;font:16px/1.55 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg);-webkit-font-smoothing:antialiased}
-img{max-width:100%;height:auto;display:block}a{color:inherit;text-decoration:none}
-.w{max-width:1160px;margin:0 auto;padding:0 20px}
-h1,h2,h3{line-height:1.12;margin:0;letter-spacing:-.02em}h1{font-size:clamp(34px,6vw,60px);font-weight:800}h2{font-size:clamp(26px,4vw,40px);font-weight:750}h3{font-size:18px;font-weight:700}
-p{margin:0}.sub{color:var(--mut);font-size:clamp(16px,2vw,19px);max-width:640px}
-section{padding:clamp(56px,9vw,104px) 0}.alt{background:var(--g1)}
-.eyebrow{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);margin-bottom:14px}
-.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:999px;font-weight:650;font-size:15px;border:1px solid var(--g2);background:#fff;transition:transform .2s,box-shadow .2s}
-.btn:hover{transform:translateY(-1px);box-shadow:var(--sh)}.btn.p{background:var(--fg);color:#fff;border-color:var(--fg)}.btn.b{background:var(--acc);color:#fff;border-color:var(--acc)}
-header.nav{position:fixed;inset:0 0 auto 0;z-index:50;background:rgba(255,255,255,.72);backdrop-filter:saturate(180%) blur(14px);-webkit-backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid rgba(16,19,34,.06)}
-.nav .w{display:flex;align-items:center;gap:24px;height:64px}.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.02em}
-.logo i{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,var(--acc),#7AA0FF);display:block}
-.nav nav{display:none;gap:22px;margin-left:auto;font-size:14.5px;color:var(--mut)}.nav nav a:hover{color:var(--fg)}.nav .cta{margin-left:auto}
-@media(min-width:900px){.nav nav{display:flex}.nav .cta{margin-left:0}}
-.nav .btn{min-height:40px;padding:0 16px;font-size:14px}
-.hero{padding:calc(64px + clamp(40px,7vw,88px)) 0 clamp(48px,7vw,88px);background:radial-gradient(900px 420px at 80% -10%,#DCE6FF 0,transparent 70%),linear-gradient(#fff,var(--g1))}
-.hg{display:grid;gap:48px;align-items:center}@media(min-width:960px){.hg{grid-template-columns:1fr 1.15fr}}
-.hero h1{margin-bottom:18px}.hero .sub{margin-bottom:28px}.row{display:flex;gap:12px;flex-wrap:wrap}
-.facts{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px;padding:0;list-style:none}.facts li{font-size:13.5px;color:var(--mut);background:rgba(255,255,255,.7);border:1px solid var(--g2);padding:7px 12px;border-radius:999px;backdrop-filter:blur(8px)}
-.mock{position:relative;padding:0 0 12% 0}.mock .main{border-radius:var(--r);box-shadow:0 30px 80px rgba(16,19,60,.22);border:1px solid var(--g2);background:#fff}
-.mock .f1{position:absolute;left:-3%;bottom:0;width:48%;border-radius:16px;border:1px solid rgba(255,255,255,.7);box-shadow:0 20px 50px rgba(16,19,60,.25)}
-.mock .f2{position:absolute;right:-2%;bottom:-4%;width:24%;border-radius:14px;border:1px solid var(--g2);box-shadow:0 20px 50px rgba(16,19,60,.25);background:#fff}
-.pick{padding:0 0 8px;margin-top:-1px}.pick h2{font-size:clamp(22px,3vw,30px);margin-bottom:20px}
-.grid{display:grid;gap:16px}.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
-.card,.seg{background:#fff;border:1px solid var(--g2);border-radius:var(--r);padding:24px;position:relative;transition:transform .25s,box-shadow .25s}
-.card:hover,.seg:hover{transform:translateY(-3px);box-shadow:var(--sh)}.card p,.seg p{color:var(--mut);margin-top:8px;font-size:15px}
-.ico{width:44px;height:44px;border-radius:13px;background:var(--soft);color:var(--acc);display:grid;place-items:center;margin-bottom:16px}.ico svg{width:24px;height:24px}
-.seg{background:linear-gradient(160deg,var(--bg),#fff 75%);min-height:200px}
-.tag{position:absolute;top:20px;right:20px;font-size:11.5px;font-weight:650;padding:4px 10px;border-radius:999px;background:var(--g1);color:var(--mut);border:1px solid var(--g2)}.tag.on{background:#E4F6EA;color:#17713A;border-color:#BFE6CB}
-.steps{list-style:none;padding:0;margin:40px 0 0;display:grid;gap:0;position:relative}.steps li{display:flex;gap:18px;align-items:center;padding:14px 0;position:relative}
-.steps li:not(:last-child)::after{content:"";position:absolute;left:21px;top:56px;bottom:-14px;width:2px;background:var(--g2)}
-.n{width:44px;height:44px;border-radius:50%;background:var(--fg);color:#fff;display:grid;place-items:center;font-weight:700;flex:none}.steps .tag{position:static;margin-left:8px}
-@media(min-width:900px){.steps{grid-template-columns:repeat(6,1fr);gap:12px}.steps li{flex-direction:column;align-items:flex-start;text-align:left}.steps li:not(:last-child)::after{left:56px;right:-12px;top:36px;bottom:auto;width:auto;height:2px}}
-.dark{background:var(--dark);color:#fff}.dark .sub{color:#A9AFC4}.dark .eyebrow{color:#8FAEFF}
-.dg{display:grid;gap:40px;align-items:center}@media(min-width:960px){.dg{grid-template-columns:1fr 1.2fr}}
-.glass{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--r);padding:10px;backdrop-filter:blur(12px)}.glass img{border-radius:14px}
-.feat{display:grid;gap:32px;align-items:center;margin-top:56px}@media(min-width:900px){.feat{grid-template-columns:1fr 1fr;gap:64px}.feat.rev .ft{order:2}}
-.feat img{border-radius:var(--r);border:1px solid var(--g2);box-shadow:var(--sh);background:#fff}.feat .tp{max-width:300px;margin:0 auto}
-.feat ul{padding:0;margin:18px 0 0;list-style:none;display:grid;gap:10px}.feat li{display:flex;gap:10px;color:var(--mut)}.feat li svg{width:20px;height:20px;color:var(--acc);flex:none;margin-top:3px}
-.plans{align-items:stretch}.plan{display:flex;flex-direction:column;gap:8px}.plan.hot{border-color:var(--acc);box-shadow:0 20px 60px rgba(45,91,255,.18);transform:scale(1.02)}
-.plan .tag{top:18px}.plan ul{margin:10px 0 0;padding-left:18px;color:var(--mut);font-size:15px}
-.cta{}.final{background:linear-gradient(135deg,#1E3FD1,#2D5BFF 60%,#6C93FF);color:#fff;text-align:center;border-radius:28px;padding:clamp(40px,7vw,72px) 24px}
-.final .sub{color:#DCE5FF;margin:16px auto 28px}.final .row{justify-content:center}.final .btn.p{background:#fff;color:var(--fg);border-color:#fff}.final .btn{border-color:rgba(255,255,255,.5);background:transparent;color:#fff}.final .btn.p{background:#fff;color:var(--fg)}
-form{display:grid;gap:12px;max-width:520px;margin-top:24px}label{display:grid;gap:6px;font-weight:600;font-size:14px}input,select,textarea{font:inherit;min-height:48px;padding:10px 14px;border:1px solid var(--g2);border-radius:12px;background:#fff}textarea{min-height:84px}
-form[hidden],[hidden]{display:none!important}.nota{font-size:13px;color:var(--mut)}
-footer{border-top:1px solid var(--g2);padding:48px 0 32px;font-size:14px;color:var(--mut)}.fg{display:grid;gap:28px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}footer b{color:var(--fg);display:block;margin-bottom:10px}footer a{display:block;padding:4px 0}footer a:hover{color:var(--fg)}.copy{margin-top:32px;font-size:13px}
-.reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}.reveal.in{opacity:1;transform:none}
-@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}.btn,.card,.seg{transition:none}}
+:root{--bg:#F4F6F5;--card:#fff;--fg:#14201E;--muted:#55635F;--line:#D5DCDA;--acc:#0E6A5B;--acc2:#0A4F44;--soft:#DDF0EA;--warn:#8A4B00;--warnbg:#FFF2DC}
+[hidden]{display:none!important}*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%}
+img{max-width:100%;height:auto;display:block}a{color:var(--acc)}
+.w{max-width:1080px;margin:0 auto;padding:0 20px}
+header.top{position:sticky;top:0;z-index:20;background:rgba(244,246,245,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header.top .w{display:flex;align-items:center;gap:16px;min-height:60px}
+.logo{font-weight:800;font-size:20px;letter-spacing:-.02em;color:var(--fg);text-decoration:none;margin-right:auto}.logo b{color:var(--acc)}
+nav.m a{color:var(--muted);text-decoration:none;font-weight:600;margin:0 8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:12px 24px;border-radius:12px;font-weight:700;font-size:17px;text-decoration:none;border:2px solid var(--acc);color:var(--acc);background:#fff;cursor:pointer;font-family:inherit}
+.btn.p{background:var(--acc);color:#fff}.btn.p:hover{background:var(--acc2)}.btn:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #6FB6A8;outline-offset:2px}
+.btn.s{min-height:44px;padding:8px 16px;font-size:15px}
+.hero{padding:44px 0 28px}.hero .g{display:grid;gap:32px;align-items:center}
+.hero .g,.feat,.cols,.duas,.steps{grid-template-columns:minmax(0,1fr)}                /* sem isso a coluna cresce com a largura das imagens e aparece rolagem lateral no celular */
+h1{font-size:clamp(30px,6vw,52px);line-height:1.08;margin:0 0 16px;letter-spacing:-.03em}
+.lead{font-size:clamp(18px,2.4vw,21px);color:var(--muted);margin:0 0 24px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+.ticks{list-style:none;padding:0;margin:0 0 8px;display:grid;gap:6px;font-weight:600}.ticks li:before{content:"✓";color:var(--acc);font-weight:800;margin-right:8px}
+.nota{font-size:14px;color:var(--muted)}
+.shot{border-radius:16px;border:1px solid var(--line);box-shadow:0 18px 40px rgba(20,32,30,.14);background:#fff}
+section{padding:46px 0}section.alt{background:#fff;border-block:1px solid var(--line)}
+h2{font-size:clamp(25px,4vw,36px);line-height:1.15;margin:0 0 12px;letter-spacing:-.02em}
+.sub{color:var(--muted);margin:0 0 28px;max-width:62ch}
+.cols{display:grid;gap:22px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}.card h3{margin:0 0 6px;font-size:19px}.card p{margin:0;color:var(--muted)}
+.feat{display:grid;gap:26px;align-items:center;margin:38px 0}.feat h3{font-size:24px;margin:0 0 8px}.feat p{color:var(--muted);margin:0 0 10px}.feat ul{margin:0;padding-left:20px;color:var(--muted)}
+.steps{counter-reset:s;list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.steps li{counter-increment:s;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px 14px 62px;position:relative;font-weight:700}
+.steps li:before{content:counter(s);position:absolute;left:14px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center}
+.steps li span{display:block;font-weight:400;color:var(--muted);font-size:15px}
+.duas{display:grid;gap:18px}.hoje{border-top:5px solid var(--acc)}.breve{border-top:5px solid #C9A24F}
+.duas ul{margin:8px 0 0;padding-left:20px;color:var(--muted)}.duas li{margin:4px 0}
+.aviso{background:var(--warnbg);color:var(--warn);border-radius:12px;padding:12px 16px;font-size:15px;margin-top:18px}
+form{display:grid;gap:14px;max-width:560px}label{font-weight:700;font-size:15px;display:grid;gap:6px}
+input,select,textarea{font:inherit;min-height:52px;padding:10px 14px;border:2px solid var(--line);border-radius:12px;background:#fff;color:var(--fg);width:100%}textarea{min-height:90px}
+#formOff{background:var(--soft);border-radius:14px;padding:18px;max-width:560px}
+footer{padding:34px 0 46px;color:var(--muted);font-size:15px}footer b{color:var(--fg)}
+@media (min-width:860px){.hero .g{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)}.cols{grid-template-columns:repeat(3,minmax(0,1fr))}.feat{grid-template-columns:repeat(2,minmax(0,1fr))}.feat.inv .tx{order:2}.duas{grid-template-columns:repeat(2,minmax(0,1fr))}.steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){nav.m{display:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style></head><body>
-<header class="nav"><div class="w"><a class="logo" href="#topo"><i></i>Projetta</a>
-<nav aria-label="Principal"><a href="#produto">Produto</a><a href="#funcionalidades">Funcionalidades</a><a href="#segmentos">Segmentos</a><a href="#planos">Planos</a><a href="#contato">Contato</a></nav>
-<a class="btn p cta" href="../">Abrir o app</a></div></header>
+<header class="top"><div class="w"><a class="logo" href="#topo">Marmo<b>fácil</b></a>
+ <nav class="m" aria-label="Seções"><a href="#como">Como funciona</a><a href="#recursos">Recursos</a><a href="#roadmap">Roadmap</a></nav>
+ <a class="btn p s" href="../">Abrir o app</a></div></header>
 <main id="topo">
-<section class="hero"><div class="w"><div class="hg"><div>
-<div class="eyebrow">Planejamento 3D e orçamentação inteligente</div>
-<h1>Projete qualquer ambiente. Meça qualquer elemento. Gere qualquer orçamento.</h1>
-<p class="sub">Da arquitetura à marmoraria, da marcenaria ao vidro. Crie projetos em 3D, veja as medidas em tempo real e gere orçamentos profissionais em minutos.</p>
-<div class="row"><a class="btn b" href="../">Criar projeto agora</a><a class="btn" href="#demo">Ver em 3D</a></div>
-<ul class="facts"><li>3D em tempo real</li><li>Funciona no celular</li><li>Instala como app</li><li>Seus dados ficam no seu aparelho</li></ul></div>
-<div class="mock reveal"><img class="main" src="img/editor-3d.jpg" width="1400" height="787" alt="Editor 3D mostrando uma bancada em L com cuba, cotas e medidas">
-<img class="f1" src="img/ambientes-3d.jpg" width="640" height="380" loading="lazy" alt="Ambiente em 3D com paredes, porta, janela e cotas automáticas">
-<img class="f2" src="img/pdf-orcamento.jpg" width="760" height="1075" loading="lazy" alt="Primeira página do PDF de orçamento"></div></div></div></section>
-<section class="pick" id="segmentos" style="padding-top:40px"><div class="w"><h2>Escolha o que deseja projetar</h2><p class="sub" style="margin:10px 0 28px">Uma plataforma para todo o mercado de projetos sob medida. O que ainda não está pronto leva o selo Em breve.</p>
-<div class="grid g3"><article class="seg reveal" style="--bg:#e8f0ff"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-5h4v5"/></svg></div><span class="tag on">Disponível</span><h3>Ambientes</h3><p>Sala, cozinha, quarto, banheiro: piso, paredes, perímetro, volume e aberturas em tempo real.</p></article><article class="seg reveal" style="--bg:#eef0f3"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 15l4-8h10l4 8-9 5z"/><path d="M7 7l5 13M17 7l-5 13" opacity=".6"/></svg></div><span class="tag on">Disponível</span><h3>Marmoraria</h3><p>Bancadas, ilhas, nichos e escadas com plano de corte, chapas, perdas e preço.</p></article><article class="seg reveal" style="--bg:#f3ede6"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M12 3v18M9 9v2M15 9v2"/></svg></div><span class="tag">Em breve</span><h3>Marcenaria</h3><p>Móveis planejados com chapas de MDF, fitas, ferragens e quantitativos.</p></article><article class="seg reveal" style="--bg:#e6f3f6"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 8l6-3M9 14l6-3" opacity=".7"/></svg></div><span class="tag on">Disponível</span><h3>Vidraçaria</h3><p>Box, espelhos, divisórias e guarda-corpos com m², ferragens e película.</p></article><article class="seg reveal" style="--bg:#eceff4"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 21V4l10-1v18M6 21h12"/><circle cx="13" cy="12.5" r=".8"/></svg></div><span class="tag on">Disponível</span><h3>Esquadrias</h3><p>Portas, janelas e portões com perfis, vidros e acessórios.</p></article><article class="seg reveal" style="--bg:#e9f4ec"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3 0 3-2 6-2s3 2 6 2 3-2 6-2M3 21c3 0 3-2 6-2s3 2 6 2 3-2 6-2"/><path d="M8 4v7M5 7l3-3 3 3"/></svg></div><span class="tag">Em breve</span><h3>Área externa</h3><p>Piscina, deck, pergolado, muro e calçadas com cálculo de materiais.</p></article></div></div></section>
-<section id="produto"><div class="w"><div class="eyebrow">Produto</div><h2 style="max-width:760px">Tudo o que você precisa para transformar ideias em projetos.</h2>
-<div class="grid g3" style="margin-top:40px"><div class="card reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M4 12h8V4M12 12v8M16 12h4"/></svg></div><span class="tag">Em breve</span><h3>Planta baixa inteligente</h3><p>Desenhe paredes, ambientes, portas e janelas.</p></div><div class="card reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></div><h3>Visualização 3D</h3><p>Veja a peça ou o ambiente ganhar forma em tempo real.</p></div><div class="card reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.5 9c-.5-1-1.5-1.5-2.5-1.5-1.5 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1 2-2.5 2c-1.1 0-2.1-.6-2.6-1.6M12 6v1.5M12 16.5V18"/></svg></div><h3>Orçamento automático</h3><p>Área, chapas e custo calculados enquanto você mede.</p></div><div class="card reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg></div><h3>PDF profissional</h3><p>Apresente o projeto com imagem 3D, condições e forma de pagamento.</p></div><div class="card reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4 4 0 010-8 5.5 5.5 0 0110.6 1.5A3.3 3.3 0 0117 18z"/></svg></div><span class="tag">Em breve</span><h3>Pronto para nuvem</h3><p>Projetos sincronizados entre aparelhos e equipes.</p></div><div class="card reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg></div><h3>Funciona em qualquer tela</h3><p>Celular, tablet ou computador, até sem internet depois de instalado.</p></div></div></div></section>
-<section class="alt"><div class="w"><div class="eyebrow">Como funciona</div><h2>Do conceito ao orçamento.</h2><ol class="steps"><li class="reveal"><span class="n">1</span><div><b>Crie a planta</b> <span class="tag">Em breve</span></div></li><li class="reveal"><span class="n">2</span><div><b>Monte os ambientes</b></div></li><li class="reveal"><span class="n">3</span><div><b>Escolha materiais</b></div></li><li class="reveal"><span class="n">4</span><div><b>Visualize em 3D</b></div></li><li class="reveal"><span class="n">5</span><div><b>Gere quantitativos</b></div></li><li class="reveal"><span class="n">6</span><div><b>Entregue o orçamento</b></div></li></ol></div></section>
-<section class="dark" id="demo"><div class="w"><div class="dg"><div><div class="eyebrow">Demonstração 3D</div><h2>Visualize cada detalhe antes da execução.</h2>
-<p class="sub" style="margin-top:16px">Reduza erros de medida, mostre o resultado ao cliente na própria visita e aprove com mais segurança. As cotas aparecem sozinhas e acompanham cada mudança.</p>
-<div class="row" style="margin-top:28px"><a class="btn" style="background:#fff;color:var(--fg)" href="../">Abrir o 3D</a></div></div>
-<div class="glass reveal"><img src="img/ambientes-3d.jpg" loading="lazy" width="640" height="380" alt="Ambiente 3D com cotas de largura, comprimento e altura"></div></div></div></section>
-<section id="funcionalidades"><div class="w"><div class="eyebrow">Funcionalidades</div><h2>O que a plataforma faz hoje.</h2>
-<div class="feat"><div class="ft reveal"><h3 style="font-size:26px">Editor 3D em tempo real</h3><p class="sub" style="margin-top:10px">Arraste as extremidades, ajuste medidas, adicione peças e recortes. Tudo conferido em 3D.</p>
-<ul><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Várias peças no mesmo projeto</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Cotas automáticas em cm</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Material com foto e textura</li></ul></div><img class="reveal" src="img/editor-3d.jpg" loading="lazy" width="1400" height="787" alt="Editor 3D com bancada em L"></div>
-<div class="feat rev"><div class="ft reveal"><h3 style="font-size:26px">Medições automáticas</h3><p class="sub" style="margin-top:10px">Informe as medidas do ambiente e veja piso, teto, paredes, perímetro e volume na hora.</p>
-<ul><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Portas e janelas descontadas das paredes</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Alerta quando uma medida não cabe</li></ul></div><img class="reveal" src="img/ambientes-3d.jpg" loading="lazy" width="640" height="380" alt="Ambiente em 3D"></div>
-<div class="feat"><div class="ft reveal"><h3 style="font-size:26px">Orçamento e PDF profissional</h3><p class="sub" style="margin-top:10px">Chapas, perdas, mão de obra, margem e impostos calculados, com PDF pronto para enviar pelo WhatsApp.</p>
-<ul><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Imagem 3D, condições e forma de pagamento</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Orçamento fechado fica congelado</li></ul></div><img class="tp reveal" src="img/pdf-orcamento.jpg" loading="lazy" width="760" height="1075" alt="PDF do orçamento"></div>
-<div class="feat rev"><div class="ft reveal"><h3 style="font-size:26px">Biblioteca de materiais</h3><p class="sub" style="margin-top:10px">Catálogo de pedras com foto para escolher em poucos toques, direto no celular.</p>
-<ul><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>46 pedras no catálogo</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Preço e chapa do jeito da sua empresa</li></ul></div><img class="tp reveal" src="img/celular-material.jpg" loading="lazy" width="560" height="1120" alt="Escolha de material no celular"></div>
-<p class="sub" style="margin-top:48px">Em desenvolvimento: plantas baixas inteligentes, catálogo de móveis, áreas externas e projetos comerciais.</p></div></section>
-<section class="alt" id="planos"><div class="w"><div class="eyebrow">Planos</div><h2>Planos em definição.</h2><p class="sub" style="margin:10px 0 36px">Ainda não há cobrança. Os planos abaixo são a direção, sem preços definidos.</p>
-<div class="grid g3 plans"><div class="card plan"><span class="tag">Em breve</span><h3>Starter</h3><p>Para quem trabalha sozinho.</p><ul><li>1 usuário</li><li>Orçamentos e PDF</li></ul></div>
-<div class="card plan hot"><span class="tag">Em breve</span><h3>Profissional</h3><p>Para pequenas empresas.</p><ul><li>Equipe</li><li>Sincronização em nuvem</li><li>Módulos por segmento</li></ul></div>
-<div class="card plan"><span class="tag">Em breve</span><h3>Enterprise</h3><p>Para redes e construtoras.</p><ul><li>Permissões e várias empresas</li><li>Suporte dedicado</li></ul></div></div></div></section>
-<section id="contato"><div class="w"><div class="final reveal"><h2>Comece a criar projetos incríveis hoje.</h2>
-<p class="sub">Transforme medições, ideias e ambientes em projetos profissionais com visualização 3D e orçamento automático.</p>
-<div class="row"><a class="btn p" href="../">Abrir o app</a><a class="btn" href="#lead-box">Quero acompanhar a evolução</a></div></div>
-<div id="lead-box" style="margin-top:48px"><h3>Quer acompanhar a evolução?</h3>
-<div id="formOff" hidden style="margin-top:12px"><b>Cadastro de interessados em breve.</b><p style="margin:6px 0 14px;color:var(--mut)">Enquanto isso, abra o app e teste com um orçamento seu.</p><a class="btn p" href="../">Abrir o app</a></div>
-<form id="lead" hidden novalidate>
-<label>Seu nome<input name="nome" autocomplete="name" required></label>
-<label>Empresa<input name="empresa" autocomplete="organization"></label>
-<label>WhatsApp com DDD<input name="whats" type="tel" inputmode="tel" autocomplete="tel" required></label>
-<label>Segmento<select name="segmento"><option>Marmoraria</option><option>Vidraçaria</option><option>Marcenaria</option><option>Esquadrias</option><option>Arquitetura / projetos</option><option>Outro</option></select></label>
-<label>Mensagem (opcional)<textarea name="msg"></textarea></label>
-<button class="btn p" type="submit">Quero acompanhar</button><p class="nota" id="msgLead" role="status">Usamos seus dados só para falar sobre o Projetta.</p></form></div></div></section>
+<section class="hero"><div class="w"><div class="g">
+ <div><h1>Meça, veja em 3D e entregue o orçamento na própria visita</h1>
+  <p class="lead">App para marmorarias: o vendedor mede com o celular, vê a bancada em 3D, calcula chapas e preço e envia um PDF profissional pelo WhatsApp.</p>
+  <div class="cta"><a class="btn p" href="../">Abrir o app grátis</a><a class="btn" href="#como">Ver como funciona</a></div>
+  <ul class="ticks"><li>Funciona no celular, tablet e computador</li><li>Instala como aplicativo</li><li>Funciona sem internet, depois de aberto uma vez</li><li>Orçamento profissional em PDF</li><li>3D da bancada em tempo real</li></ul>
+  <p class="nota">Hoje o app é gratuito para testar e não pede cadastro. Os dados ficam no seu aparelho.</p></div>
+ <img class="shot" src="img/editor-3d.jpg" width="1400" height="787" alt="Editor 3D do Marmofácil mostrando uma bancada em L com cuba, cotas e o valor do orçamento" fetchpriority="high">
+</div></div></section>
+
+<section class="alt"><div class="w"><h2>Feito para quem vende pedra na visita</h2>
+ <p class="sub">Orçamento feito à mão ou em planilha toma tempo, dá erro de conta e deixa o cliente sem enxergar o que está comprando.</p>
+ <div class="cols">
+  <div class="card"><h3>O cliente vê o que compra</h3><p>A bancada aparece em 3D, com a foto da pedra escolhida e as medidas escritas.</p></div>
+  <div class="card"><h3>A conta fecha sozinha</h3><p>Área, chapas, material, mão de obra, instalação, frete, margem e imposto calculados juntos, com o preço sempre visível.</p></div>
+  <div class="card"><h3>Sai pronto para mandar</h3><p>PDF com a imagem 3D, material, condições e espaço de aprovação, para enviar pelo WhatsApp.</p></div>
+ </div></div></section>
+
+<section id="como"><div class="w"><h2>Do cliente ao PDF, em seis passos</h2>
+ <p class="sub">O app leva o vendedor de uma etapa para a outra. Um botão grande de “Próximo”, sem se perder em menus.</p>
+ <ol class="steps">
+  <li>Cliente<span>Escolha ou cadastre ali mesmo, sem sair do orçamento.</span></li>
+  <li>Medir<span>Reta, L, U, ilha, escada, nicho, lavatório ou medidas livres, em centímetros.</span></li>
+  <li>Material<span>Toque na foto da pedra. O catálogo tem 46 opções para começar.</span></li>
+  <li>Serviços<span>Recortes, furos, acabamentos e o que mais você cobra.</span></li>
+  <li>Preço<span>Margem e impostos sobre o preço de venda, com o lucro à vista.</span></li>
+  <li>Enviar<span>Gere o PDF e compartilhe pelo WhatsApp.</span></li>
+ </ol></div></section>
+
+<section id="recursos" class="alt"><div class="w"><h2>O que o app faz hoje</h2>
+ <div class="feat"><div class="tx"><h3>3D técnico da bancada</h3><p>Sólido com espessura real, emendas do plano de corte, recortes de cuba e cooktop e cotas em centímetros.</p>
+   <ul><li>Arraste a ponta da cota ou digite a medida: o preço atualiza na hora</li><li>Várias peças na mesma cena</li><li>Desfazer e refazer</li><li>Foto da pedra como textura e brilho de pedra polida</li></ul></div>
+  <img class="shot" src="img/editor-3d.jpg" loading="lazy" width="1400" height="787" alt="Bancada em 3D com cotas e recorte de cuba"></div>
+ <div class="feat inv"><div class="tx"><h3>PDF que ajuda a fechar</h3><p>Imagem 3D da bancada, tabela técnica, valor em destaque, condições de pagamento e prazo, e espaço para a aprovação do cliente.</p>
+   <ul><li>Logo e CNPJ da sua marmoraria</li><li>Parcelas e desconto no PIX, se você configurar</li><li>Compartilha o arquivo pelo WhatsApp (Android)</li></ul></div>
+  <img class="shot" src="img/pdf-orcamento.jpg" loading="lazy" width="760" height="1075" alt="Primeira página do PDF de orçamento com imagem 3D e valor total" style="max-width:min(420px,100%);margin:auto"></div>
+ <div class="feat"><div class="tx"><h3>Feito para o celular, na obra</h3><p>Botões grandes, catálogo de pedras em fotos e funcionamento sem internet depois da primeira abertura.</p>
+   <ul><li>Instala como aplicativo no Android</li><li>Catálogo de materiais com tamanho de chapa, espessura e preço</li><li>Orçamento fechado fica congelado: preço novo não altera o antigo</li></ul></div>
+  <img class="shot" src="img/celular-material.jpg" loading="lazy" width="560" height="1120" alt="Tela de escolha de material no celular, com fotos das pedras" style="max-width:min(300px,100%);margin:auto"></div>
+ <p class="nota">As imagens desta página usam dados de exemplo.</p></div></section>
+
+<section id="roadmap"><div class="w"><h2>O que existe e o que vem depois</h2>
+ <p class="sub">Sem promessa maior que o produto. Esta é a situação de hoje.</p>
+ <div class="duas">
+  <div class="card hoje"><h3>Hoje, para marmorarias</h3><ul><li>Peças e medidas em 3D</li><li>Plano de corte e estimativa de chapas</li><li>Preço com margem e impostos</li><li>Catálogo de pedras com foto</li><li>Funil de orçamentos (rascunho, enviado, negociação, fechado, perdido)</li><li>PDF profissional e envio pelo WhatsApp</li><li>Funcionamento offline</li></ul></div>
+  <div class="card breve"><h3>Em breve</h3><ul><li>Backup em nuvem e login</li><li>Equipe e permissões</li><li>CRM e captação de contatos</li><li>Link do orçamento em 3D para o cliente aprovar</li><li>Outros segmentos: vidraçarias, marcenarias e esquadrias</li><li>Relatórios</li></ul></div>
+ </div>
+ <div class="aviso"><b>Importante:</b> por enquanto os dados ficam só no aparelho, sem backup automático. Baixe um backup em Ajustes de vez em quando. O plano de corte é uma estimativa: confira com o seu cortador.</div></div></section>
+
+<section id="contato" class="alt"><div class="w"><h2>Quer acompanhar a evolução?</h2>
+ <p class="sub">Deixe seu contato para saber quando chegarem a nuvem, o CRM e os outros segmentos.</p>
+ <div id="formOff" hidden><b>Cadastro de interessados em breve.</b><p style="margin:6px 0 14px">Enquanto isso, abra o app e teste com um orçamento seu.</p><a class="btn p" href="../">Abrir o app</a></div>
+ <form id="lead" hidden novalidate>
+  <label>Seu nome<input name="nome" autocomplete="name" required></label>
+  <label>Empresa<input name="empresa" autocomplete="organization"></label>
+  <label>WhatsApp com DDD<input name="whats" type="tel" inputmode="tel" autocomplete="tel" required></label>
+  <label>Segmento<select name="segmento"><option>Marmoraria</option><option>Vidraçaria</option><option>Marcenaria</option><option>Esquadrias</option><option>Arquitetura / projetos</option><option>Outro</option></select></label>
+  <label>Mensagem (opcional)<textarea name="msg"></textarea></label>
+  <button class="btn p" type="submit">Quero acompanhar</button>
+  <p class="nota" id="msgLead" role="status">Usamos seus dados só para falar sobre o Marmofácil.</p>
+ </form></div></section>
 </main>
-<footer><div class="w"><div class="fg"><div><b>Projetta</b>Projetos, medições e orçamentos 3D.</div>
-<div><b>Produto</b><a href="#produto">Produto</a><a href="#funcionalidades">Funcionalidades</a><a href="#segmentos">Segmentos</a></div>
-<div><b>Começar</b><a href="../">Abrir o app</a><a href="#planos">Planos</a><a href="#contato">Contato</a></div></div>
-<p class="copy">© 2026 Projetta. Imagens do app com dados de exemplo.</p></div></footer>
+<footer><div class="w"><b>Marmofácil</b><br>Orçamento em 3D para marmorarias.<br>© 2026 Marmofácil. Imagens com dados de exemplo.</div></footer>
 <script>
 /* Para onde vão os contatos. Deixe vazio o que não usar: sem nenhum dos dois, o formulário fica escondido.
    whatsapp: só números com DDI e DDD, ex.: "5511999990000" (abre o WhatsApp com a mensagem pronta)
    endpoint: endereço que recebe um POST em JSON (ex.: Formspree ou função do Supabase) */
 const CONFIG={whatsapp:"",endpoint:""};
 (function(){
-  const io='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12}):null;
-  document.querySelectorAll('.reveal').forEach(el=>io?io.observe(el):el.classList.add('in'));
   const f=document.getElementById('lead'),off=document.getElementById('formOff'),msg=document.getElementById('msgLead');
   if(!CONFIG.whatsapp&&!CONFIG.endpoint){off.hidden=false;return}
   f.hidden=false;
@@ -129,7 +130,7 @@ const CONFIG={whatsapp:"",endpoint:""};
     if(!d.nome.trim()||!d.whats.trim()){msg.textContent='Preencha nome e WhatsApp.';return}
     let ok=false;
     if(CONFIG.endpoint){try{const r=await fetch(CONFIG.endpoint,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(d)});ok=r.ok}catch(x){}}
-    if(CONFIG.whatsapp){const t=`Olá! Quero acompanhar o Projetta.\nNome: ${d.nome}\nEmpresa: ${d.empresa||'-'}\nWhatsApp: ${d.whats}\nSegmento: ${d.segmento}${d.msg?'\nMensagem: '+d.msg:''}`;window.open('https://wa.me/'+CONFIG.whatsapp+'?text='+encodeURIComponent(t),'_blank','noopener');ok=true}
+    if(CONFIG.whatsapp){const t=`Olá! Quero acompanhar o Marmofácil.\nNome: ${d.nome}\nEmpresa: ${d.empresa||'-'}\nWhatsApp: ${d.whats}\nSegmento: ${d.segmento}${d.msg?'\nMensagem: '+d.msg:''}`;window.open('https://wa.me/'+CONFIG.whatsapp+'?text='+encodeURIComponent(t),'_blank','noopener');ok=true}
     msg.textContent=ok?'Recebido! Obrigado.':'Não foi possível enviar agora. Tente de novo em instantes.';if(ok)f.reset();
   });
 })();
