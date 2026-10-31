@@ -287,15 +287,17 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=37"></script>
-<script src="catalogo.js?v=37"></script>
-<script src="model3d.js?v=37"></script>
-<script src="motor/ambiente.js?v=37"></script>
-<script src="motor/planta.js?v=37"></script>
-<script src="nucleo/registro-modulos.js?v=37"></script>
-<script src="nucleo/orcamento.js?v=37"></script>
-<script src="motor/vidro.js?v=37"></script>
-<script src="telas/vidracaria.js?v=37"></script>
+<script src="calc.js?v=38"></script>
+<script src="catalogo.js?v=38"></script>
+<script src="model3d.js?v=38"></script>
+<script src="motor/ambiente.js?v=38"></script>
+<script src="motor/planta.js?v=38"></script>
+<script src="nucleo/registro-modulos.js?v=38"></script>
+<script src="nucleo/orcamento.js?v=38"></script>
+<script src="motor/vidro.js?v=38"></script>
+<script src="telas/vidracaria.js?v=38"></script>
+<script src="motor/esquadria.js?v=38"></script>
+<script src="telas/esquadrias.js?v=38"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -308,7 +310,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=37;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=38;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -460,13 +462,15 @@ function render(){
   else if(nav.tab==='cad')h=viewCad();
   else if(nav.tab==='amb')h=viewAmb();
   else if(nav.tab==='vid')h=viewVid();
+  else if(nav.tab==='esq')h=viewEsq();
   else if(nav.tab==='cfg')h=viewCfg();
-  $('#app').innerHTML=h;nav.animar=false;$('#app').dataset.view=q&&nav.tab!=='cad'?'editor':nav.tab==='amb'&&nav.amb||nav.tab==='vid'&&nav.vid?'amb-edit':nav.tab;
+  $('#app').innerHTML=h;nav.animar=false;$('#app').dataset.view=q&&nav.tab!=='cad'?'editor':nav.tab==='amb'&&nav.amb||nav.tab==='vid'&&nav.vid||nav.tab==='esq'&&nav.esq&&!nav.esqModelos?'amb-edit':nav.tab;
   if(q&&nav.tab!=='cad')aplicarTrava(q);
   if(q&&nav.tab!=='cad'&&(desk3()||(nav.show3d&&nav.sec==='med')))montar3d();
   if(nav.ed3d)renderEd3d();
   if(nav.tab==='amb'&&nav.amb){travarFormatoAmb();aplicarTravaAmb()}
   if(nav.tab==='vid'&&nav.vid)aplicarTravaVid();
+  if(nav.tab==='esq'&&nav.esq)aplicarTravaEsq();
   if(nav.tab==='amb'&&nav.amb&&nav.amb3d)montarAmb();
   if(nav.tab==='cfg'&&!q)mostrarVersao();
 }
@@ -532,6 +536,7 @@ function abrirModulo(id){
   if(m.estado!=='disponivel'){toast(m.nome+' ainda não está disponível. Chega em breve.');return}
   if(m.destino==='aba-ambientes')goTab('amb');
   else if(m.destino==='aba-vidracaria')goTab('vid');
+  else if(m.destino==='aba-esquadrias')goTab('esq');
   else if(m.destino==='novo-orcamento'){const n=newQuote();openQuote(n.id,'cli')}
 }
 function viewHome(){
@@ -601,10 +606,15 @@ function todosOrcamentos(){
     Q.push({q:{id:a.id,num:a.num,status:a.status||'Rascunho',clientId:a.clientId||'',kind:'vidracaria',nome:a.nome,createdAt:a.createdAt||0,closedAt:a.closedAt||null},
       c:{price:sn?sn.preco:(r&&r.res.ok?r.res.preco:0),profit:sn?sn.lucro:(r&&r.res.ok?r.res.lucro:0),area:m.ok?m.areaTotal:0,m:null}});
   });
-  return (S.ambientes||[]).length||(S.vidracaria||[]).length?Q.sort((x,y)=>(y.q.createdAt||0)-(x.q.createdAt||0)):Q;      // sem ambientes, a ordem é exatamente a de antes
+  (S.esquadrias||[]).forEach(a=>{
+    const r=esqOrc(a),sn=fechadoEsq(a)?a.snap:null,m=medidasEsquadrias(a,modelosEsq());
+    Q.push({q:{id:a.id,num:a.num,status:a.status||'Rascunho',clientId:a.clientId||'',kind:'esquadrias',nome:a.nome,createdAt:a.createdAt||0,closedAt:a.closedAt||null},
+      c:{price:sn?sn.preco:(r&&r.res.ok?r.res.preco:0),profit:sn?sn.lucro:(r&&r.res.ok?r.res.lucro:0),area:m.ok?m.areaVao:0,m:null}});
+  });
+  return (S.ambientes||[]).length||(S.vidracaria||[]).length||(S.esquadrias||[]).length?Q.sort((x,y)=>(y.q.createdAt||0)-(x.q.createdAt||0)):Q;      // sem ambientes, a ordem é exatamente a de antes
 }
-const dataAct=q=>q.kind==='ambiente'?'open-amb':q.kind==='vidracaria'?'vid-abrir':'open';
-const KIND_ROT={ambiente:'Ambiente',vidracaria:'Vidraçaria'};
+const dataAct=q=>q.kind==='ambiente'?'open-amb':q.kind==='vidracaria'?'vid-abrir':q.kind==='esquadrias'?'esq-abrir':'open';
+const KIND_ROT={ambiente:'Ambiente',vidracaria:'Vidraçaria',esquadrias:'Esquadrias'};
 function viewQuotes(){
   const Q=todosOrcamentos();
   let body='';
@@ -1043,7 +1053,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=37');
+    const mod=await import('./viewer3d.js?v=38');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1066,7 +1076,7 @@ async function imagens3dPdf(q){
 async function imagem3dAmbiente(a){
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=37');
+    const mod=await import('./viewer3d.js?v=38');
     if(!mod.webglModo())return null;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1261,7 +1271,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=37');
+    const m=await import('./viewer3d.js?v=38');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1772,6 +1782,7 @@ document.addEventListener('click',async e=>{
   const a=b.dataset.act,v=b.dataset.v,q=curQ();
   if(fechado(q)&&EDITA.has(a)){toast('Orçamento fechado. Toque em Reabrir para editar.');return}
   if(a.indexOf('vid-')===0){await acaoVid(a,b,v,e);return}
+  if(a.indexOf('esq-')===0){await acaoEsq(a,b,v,e);return}
   switch(a){
     case 'reopen':confirmTap(b,()=>{setStatus(q,'Negociação');render();toast('Reaberto. O preço agora usa os valores atuais do cadastro.')});break;
     case 'atualizar':location.reload();break;
@@ -1820,7 +1831,7 @@ document.addEventListener('click',async e=>{
     case 'close':nav.qid=null;render();break;
     case 'sec':if(nav.sec!==v){nav.sec=v;nav.animar=true;render();scrollTo(0,0)}break;
     case 'qmode':nav.qmode=v;render();break;
-    case 'move':{const xv=vids().find(o=>o.id===v);if(xv){const j=STATUS.indexOf(xv.status||'Rascunho')+(+b.dataset.d);if(STATUS[j]&&setStatusVid(xv,STATUS[j]))render();break}const xa=ambs().find(o=>o.id===v);if(xa){const j=STATUS.indexOf(xa.status||'Rascunho')+(+b.dataset.d);if(STATUS[j]&&setStatusAmb(xa,STATUS[j]))render();break}const x=S.quotes.find(o=>o.id===v);const i=STATUS.indexOf(x.status)+(+b.dataset.d);if(STATUS[i]){setStatus(x,STATUS[i]);render()}break}
+    case 'move':{const xe=esqs().find(o=>o.id===v);if(xe){const j=STATUS.indexOf(xe.status||'Rascunho')+(+b.dataset.d);if(STATUS[j]&&setStatusEsq(xe,STATUS[j]))render();break}const xv=vids().find(o=>o.id===v);if(xv){const j=STATUS.indexOf(xv.status||'Rascunho')+(+b.dataset.d);if(STATUS[j]&&setStatusVid(xv,STATUS[j]))render();break}const xa=ambs().find(o=>o.id===v);if(xa){const j=STATUS.indexOf(xa.status||'Rascunho')+(+b.dataset.d);if(STATUS[j]&&setStatusAmb(xa,STATUS[j]))render();break}const x=S.quotes.find(o=>o.id===v);const i=STATUS.indexOf(x.status)+(+b.dataset.d);if(STATUS[i]){setStatus(x,STATUS[i]);render()}break}
     case 'piece':nav.pi=+v;nav.showTypes=false;render();break;
     case 'showtypes':nav.showTypes=!nav.showTypes;render();break;
     case 'toggle3d':nav.show3d=!nav.show3d;nav.rolar3d=nav.show3d;render();{const t=$('[data-act="toggle3d"]');if(t)t.focus({preventScroll:true})}break;   // render() refaz o HTML: devolve o foco ao botão
@@ -1917,6 +1928,7 @@ document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.tar
 function live(){
   if(nav.tab==='amb'&&nav.amb){liveAmb();return}
   if(nav.tab==='vid'&&nav.vid){liveVid();return}
+  if(nav.tab==='esq'&&(nav.esq||nav.esqModelos)){liveEsq();return}
   const q=curQ();if(!q)return;
   const sb=$('#sumbar');if(sb)sb.outerHTML=sumBar(q);
   if(desk3()){const rc=$('#rcol');if(rc)rc.innerHTML=resumoQ(q)}
@@ -1959,6 +1971,7 @@ document.addEventListener('change',e=>{
   if(el.id==='tex3d'){nav.tex3d=el.value;atualizar3d();return}                 // só visual: vale também em orçamento fechado
   if(fechado(curQ())&&el.closest('#secbody,#e3panel'))return;
   if(el.id==='addSvc'){const q=curQ();if(el.value){const f=q.lines.find(l=>l.svcId===el.value);if(f)f.qty+=1;else q.lines.push({svcId:el.value,qty:1});save();render()}return}
+  if(el.matches('select[data-b]')&&/^esquadrias\..+\.status$/.test(el.dataset.b)){const a=esqs().find(x=>x.id===el.dataset.b.split('.')[1]);if(a)setStatusEsq(a,el.value);render();return}
   if(el.matches('select[data-b]')&&/^vidracaria\..+\.status$/.test(el.dataset.b)){const a=vids().find(x=>x.id===el.dataset.b.split('.')[1]);if(a)setStatusVid(a,el.value);render();return}
   if(el.matches('select[data-b]')&&/^ambientes\..+\.status$/.test(el.dataset.b)){const a=ambs().find(x=>x.id===el.dataset.b.split('.')[1]);if(a)setStatusAmb(a,el.value);render();return}
   if(el.matches('select[data-b]')&&el.dataset.b.endsWith('.status')){const q2=curQ();if(q2)setStatus(q2,el.value);render();return}
@@ -1969,12 +1982,12 @@ document.addEventListener('change',e=>{
   if(el.id==='fileLogo'&&el.files[0]){readImg(el.files[0],360).then(u=>{S.settings.logo=u;save();render();toast('Logo salvo.')}).catch(()=>toast('Não foi possível ler a imagem.'));el.value='';return}
   if(el.id==='fileMat'&&el.files[0]&&pendingMat){const m=S.materials.find(x=>x.id===pendingMat);readImg(el.files[0],600).then(u=>{m.photo=u;save();render()}).catch(()=>toast('Não foi possível ler a foto.'));el.value='';return}
   if(el.id==='fileImport'&&el.files[0]){
-    el.files[0].text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.quotes)||!Array.isArray(d.materials))throw 0;S=d;garantirSnapshots();garantirAmbientes();garantirVid();save();applyTheme();nav.qid=null;nav.edit=null;render();toast('Backup restaurado.')}catch(x){toast('Arquivo de backup inválido.')}});el.value='';
+    el.files[0].text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.quotes)||!Array.isArray(d.materials))throw 0;S=d;garantirSnapshots();garantirAmbientes();garantirVid();garantirEsq();save();applyTheme();nav.qid=null;nav.edit=null;render();toast('Backup restaurado.')}catch(x){toast('Arquivo de backup inválido.')}});el.value='';
   }
 });
 
 /* ===== Início ===== */
-load();garantirSnapshots();garantirAmbientes();garantirVid();applyTheme();aplicarLayout();render();
+load();garantirSnapshots();garantirAmbientes();garantirVid();garantirEsq();applyTheme();aplicarLayout();render();
 if(window.pfAbriu)window.pfAbriu();
 
 /* Aviso de nova versão: o app abre da cópia guardada; quando uma versão nova assume, oferece recarregar. */
