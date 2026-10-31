@@ -24,7 +24,7 @@ Evoluir o protótipo Marmofácil para uma ferramenta mobile-first para marmorari
 
 ## Arquitetura recomendada
 - Curto prazo: manter o protótipo funcional, corrigir riscos e testar os cálculos.
-- Próxima etapa: seguir `ROADMAP.md` e `docs/ARQUITETURA.md` (módulos em JS puro, sem Vite, React ou TypeScript).
+- Próximas etapas: ver `ROADMAP.md` (JavaScript puro, sem Vite, React ou TypeScript).
 - 3D: avaliar Three.js para visualização/editor, com geometria parametrizada para peças (reta, L, U, ilha, lavatório, nicho, escada e peças livres).
 - Câmera: separar captura de imagem, calibração/medidas, reconhecimento assistido e rastreamento espacial. Detectar suporte a APIs e oferecer modo manual quando indisponíveis.
 - Medição: exigir pelo menos uma referência dimensional conhecida ou calibração/AR compatível; nunca prometer precisão sem validação.

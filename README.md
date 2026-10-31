@@ -141,11 +141,3 @@ O orçamento agora tem **uma tela por etapa**: Cliente → Medir → Material �
 
 ### Página de vendas (versão 26)
 `vendas/index.html` (https://danielhsantos1.github.io/Marmofacil/vendas/): página estática, só para marmorarias, com texto que descreve o que o app faz hoje (e uma seção "em breve" para nuvem, CRM, link 3D do cliente e outros segmentos). Imagens reais do app em `vendas/img/` (dados de exemplo). **Contatos:** o bloco `CONFIG` no fim do arquivo define para onde vai o formulário (`whatsapp` = DDI+DDD+número só dígitos; `endpoint` = https que recebe POST em JSON). Com os dois vazios (estado atual) o formulário fica escondido e a página mostra "cadastro em breve". `tests/vendas.test.js` barra frases que o app não sustenta (clientes, e-mail, "horas para minutos"...). O service worker ignora `/vendas/` para não sobrescrever a cópia guardada do app.
-
-
-## Ambientes (v27)
-Aba **Ambientes**: informe largura, comprimento e pé-direito (cm), adicione portas e janelas por parede e veja piso, teto, paredes líquidas, perímetro, volume e o 3D com cotas automáticas. O cálculo fica em `motor/ambiente.js` (testes em `tests/motor-ambiente.test.js`). Ainda não entra em orçamento.
-
-
-## Layout por tamanho de tela (v28)
-Celular e tablet: barra inferior. Notebook (1024 px) e acima: sidebar lateral com a marca Projetta; painel inicial em grade. O app continua sendo um só código; só a casca muda por largura (`aplicarLayout()` e as regras `@media` em `index.html`).

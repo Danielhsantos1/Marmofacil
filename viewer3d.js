@@ -10,8 +10,8 @@ const CM=0.01;
 const TILE=0.5;
 const TILE_FOTO=[1.2,0.7];                       // foto de pedra: metros por repetição (largura, altura); a escala real da chapa não é conhecida                                   // metros por repetição da textura
 /* cor do material liso e tinta (multiplica a textura) por tipo de sólido */
-const LISO={tampo:0xd8dfdc,degrau:0xd8dfdc,saia:0xa3b3ae,roda:0xc3cfcb,espelho:0xb6c3bf,painel:0xcbd5d1,parede:0xe6e2da,piso:0xc9c2b4,teto:0xf2f2f2,vidro:0x8fc4e6};   // parede, piso, teto e vidro: ambientes (motor/ambiente.js)
-const TINTA={tampo:0xffffff,degrau:0xffffff,saia:0xb4bdba,roda:0xdde3e0,espelho:0xc9d0cd,painel:0xeef1ef,parede:0xffffff,piso:0xffffff,teto:0xffffff,vidro:0xffffff};
+const LISO={tampo:0xd8dfdc,degrau:0xd8dfdc,saia:0xa3b3ae,roda:0xc3cfcb,espelho:0xb6c3bf,painel:0xcbd5d1};
+const TINTA={tampo:0xffffff,degrau:0xffffff,saia:0xb4bdba,roda:0xdde3e0,espelho:0xc9d0cd,painel:0xeef1ef};
 
 /* 'gpu' (aceleração de hardware), 'software' (funciona, mas pode ficar lento) ou null (sem WebGL) */
 export function webglModo(){
@@ -368,13 +368,7 @@ export function criarVisualizador(deps={}){
     es.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()});
     return ambiente;
   }
-  /* teto e vidro são translúcidos (não escondem o interior do ambiente nem a janela) */
   function material(kind){
-    const m=material0(kind);
-    if(kind==='teto'||kind==='vidro'){m.transparent=true;m.opacity=kind==='teto'?0.14:0.38;m.depthWrite=false}
-    return m;
-  }
-  function material0(kind){
     const nome=opt.textura;
     if(opt.foto){                                                                           // foto da pedra (catálogo ou da marmoraria); enquanto carrega, vale o tom
       const tf=texFoto(opt.foto),k=({tampo:1,degrau:1,saia:0.85,roda:0.95,espelho:0.9,painel:1})[kind]||1;
@@ -443,7 +437,7 @@ export function criarVisualizador(deps={}){
     const emenda=cssVar('--emenda','#d9480f'),dimCor=new THREE.Color(0x60a5fa);
     modelo.solids.forEach(s=>{
       const {g,extrudado}=geometria(s);
-      const m=new THREE.Mesh(g,material(s.kind));m.castShadow=m.receiveShadow=!!opt.brilho&&s.kind!=='teto'&&s.kind!=='vidro';
+      const m=new THREE.Mesh(g,material(s.kind));m.castShadow=m.receiveShadow=!!opt.brilho;
       if(!extrudado)m.position.set((s.x+s.sx/2)*CM,(s.y+s.sy/2)*CM,(s.z+s.sz/2)*CM);
       m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g,25),new THREE.LineBasicMaterial({color:borda,transparent:true,opacity:0.62})));
       grupo.add(m);

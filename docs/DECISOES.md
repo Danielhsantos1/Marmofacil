@@ -2,34 +2,17 @@
 
 Formato: data, decisão, motivo, quando rever. Mais recente primeiro.
 
-## 2026-10-30: seguir sem conversas, sem banco e sem login; vidraçaria como próximo módulo
+## 2026-10-31: o produto é só para marmoraria; voltar à versão que era só marmoraria
 
-Decisão da fundadora: não fazer as conversas com empresas por falta de tempo, e continuar o desenvolvimento sem banco de dados e sem login por enquanto. Escolhido o módulo de vidraçaria. Risco aceito e registrado: sem validação com clientes e sem nuvem, não há prova de demanda nem proteção contra perda do aparelho; o backup manual em Ajustes é a única proteção dos dados. Rever quando houver o primeiro piloto ou a necessidade de cobrar assinatura.
+Decisão da fundadora: manter a ferramenta somente para marmoraria e desfazer a ampliação para outros segmentos. O app volta ao conteúdo da v26 (só marmoraria, nome Marmofácil, página de vendas só de marmoraria), publicado como v39 para o número de versão nunca andar para trás. Saíram: Ambientes, planta baixa, Vidraçaria, Esquadrias, tela "O que deseja projetar?", registro de módulos, orçamento genérico, layout com barra lateral e editor em 3 painéis, e a marca Projetta.
+Motivo: a ampliação foi construída sem nenhum cliente validando a dor e deixou o produto confuso. Um produto só, para quem já tem cliente em potencial, é mais fácil de validar e de vender.
+Como recuperar algo: tudo continua no histórico do GitHub (commits v27 a v38), e nada precisa ser refeito do zero. Se o nome Projetta ou outros módulos voltarem, voltam por decisão nova.
+Rever: depois dos primeiros pilotos com marmorarias.
 
-## 2026-10-31: continuar o mesmo app, sem banco, com módulo de esquadrias
+## 2026-10-30: Missão 001 (resumo do que continua valendo)
 
-A fundadora confirmou que "o novo" é continuar o app atual com novos módulos, sem banco de dados por falta de recursos. Escolhido Esquadrias (v38), por reaproveitar o fluxo da vidraçaria. Decisão de projeto: o app não traz fórmulas de perfil; a pessoa cadastra os modelos e as regras, para não inventar dado técnico de fabricante. Rever com o primeiro usuário real de esquadrias.
-
-## 2026-10-30: Missão 001 aprovada (fundação e primeiro produto)
-
-1. **Porta de entrada: marmoraria.** Produto: medição, 3D e orçamento na visita, por assinatura mensal. Vidraçaria e esquadrias são o segundo módulo a testar. Marcenaria, arquitetura e engenharia ficam para depois.
-   Motivo: é o produto que já existe, com menor custo e prazo até a primeira cobrança. A vantagem sobre a vidraçaria vem mais de o produto já existir do que de o mercado ser melhor; por isso os dois serão validados.
-   Rever: dia 90 do roteiro.
-2. **Pausa de funcionalidades novas por 3 a 4 semanas.** Só correção de defeitos. Tempo dedicado a 15 conversas de descoberta com donos de marmoraria.
-   Motivo: o produto cresceu sem nenhum cliente validando a dor.
-   Rever: fim da semana 4.
-3. **Tecnologia mantida** (JavaScript puro, Three.js, PWA). Acrescentar somente o que a cobrança exige: login, nuvem e isolamento por empresa, com planejamento aprovado antes de qualquer mudança de banco.
-   Motivo: reescrever em outro framework custaria meses sem trazer um cliente.
-   Rever: ao contratar desenvolvedor ou se o código ficar inviável de manter.
-4. **Nome da marca ainda não definido.** "Projetta" e "Marmofácil" são nomes de trabalho. Escolher 5 finalistas e verificar domínios, redes e busca no INPI (com apoio profissional) antes de gastar com identidade visual.
-5. **Regra de crescimento:** nenhuma contratação nem funcionalidade nova sem pedido de cliente pagante ou piloto; nenhum número ou depoimento inventado em material de venda.
-
-## Roteiro de 90 dias (resumo)
-
-| Fase | Semanas | Entrega | Critério de aceitação |
-| --- | --- | --- | --- |
-| Descobrir | 1 a 4 | 15 conversas e lista de 100 marmorarias | 5 dores ordenadas; ao menos 5 donos aceitam piloto |
-| Tornar cobrável | 5 a 8 | Login, nuvem, isolamento por empresa, plano de corte comparado com serviços reais | Teste de isolamento passando; 5 pilotos ativos |
-| Vender e medir | 9 a 12 | Pilotos convertidos em assinantes, medição de uso e cancelamento | Ao menos 5 assinantes pagando; decisão escrita no dia 90 |
-
-Decisão no dia 90: 5 ou mais assinantes e pelo menos 60% dos pilotos usando toda semana = continuar; 2 a 4 assinantes = ajustar e repetir 4 semanas; menos de 2 após 25 conversas de venda = parar e investigar.
+1. **Porta de entrada: marmoraria**, por assinatura mensal. Ficou como único foco (ver decisão acima).
+2. **Validar antes de construir:** 15 conversas com donos de marmoraria e pilotos de 30 dias. A fundadora decidiu não fazer as conversas por falta de tempo; o risco foi aceito e registrado.
+3. **Tecnologia mantida** (JavaScript puro, Three.js, PWA). Nuvem, login e banco de dados só quando houver recursos e piloto real; o plano técnico existe (Supabase, seguro por empresa) e está parado.
+4. **Nome da marca:** Marmofácil é o nome de trabalho; não foi verificado domínio nem INPI.
+5. **Regra:** nenhuma funcionalidade nova sem pedido de cliente pagante ou piloto; nenhum número ou depoimento inventado em material de venda.

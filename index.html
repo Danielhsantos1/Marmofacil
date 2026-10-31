@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <style>html{color-scheme:light;padding-top:env(safe-area-inset-top,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>Projetta</title>
+<title>Marmofácil</title>
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
@@ -114,48 +114,6 @@ input[type=file]{display:none}
 .doc{background:#fff;color:#111;border:1px solid var(--line);border-radius:6px;padding:18px;font-size:13.5px}
 .doc h2{color:#111}.doc table{width:100%;border-collapse:collapse}.doc td,.doc th{padding:6px 4px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}
 .doc td:last-child,.doc th:last-child{text-align:right;white-space:nowrap}
-/* Tela "O que deseja projetar?" (v29) */
-.mods{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}@media(min-width:768px){.mods{grid-template-columns:repeat(3,1fr)}}@media(min-width:1024px){.mods{grid-template-columns:repeat(4,1fr)}}
-.mod{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;min-height:116px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--fg)}
-.mod .mi{width:38px;height:38px;border-radius:11px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);display:grid;place-items:center}.mod .mi svg{width:22px;height:22px}
-.mod b{font-size:15px}.mod .small{line-height:1.3}.mod .selo{position:absolute;top:10px;right:10px;font-size:10.5px;font-weight:650;padding:2px 8px;border-radius:99px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
-.mod.on:hover{border-color:var(--accent)}.mod[aria-disabled=true]{opacity:.78}
-/* Editor de Ambiente em 3 painéis (v34): no notebook e acima, dados à esquerda, desenho 2D e 3D ao centro, medidas e orçamento à direita. No celular continua uma coluna, na ordem de sempre. */
-.edcol{display:contents}.o1{order:1}.o2{order:2}.o3{order:3}.o4{order:4}.o5{order:5}.o6{order:6}.o7{order:7}.o8{order:8}.o9{order:9}.o10{order:10}
-@media (min-width:1024px){
-  #app[data-view=amb-edit],#app[data-view=editor]{max-width:none}
-  .ed3p{display:grid;grid-template-columns:minmax(300px,1fr) minmax(0,2fr) minmax(320px,1.1fr);gap:16px;align-items:start}
-  .ed3p .edcol{display:flex;flex-direction:column;gap:12px;min-width:0}
-  .ed3p .ed-c{position:sticky;top:76px;height:calc(100vh - 92px);min-height:560px}
-  .ed3p .ed-c #plsvg{max-height:230px!important}.ed3p .ed-c>p{display:none}
-  .ed3p .ed-c #ambbox,.ed3p .ed-c #v3dbox{flex:1 1 auto;height:auto!important;min-height:240px}
-  .ed3p .sum{position:static}.ed3p .ed-r .sum{margin-bottom:0}
-  .amb3d-btn{display:none}
-}
-@media (min-width:1024px) and (max-height:800px){.ed3p .ed-c #plsvg{max-height:185px!important}}
-@media (min-width:1920px){.ed3p{grid-template-columns:minmax(340px,1fr) minmax(0,2.4fr) minmax(380px,1.1fr)}}
-/* ===== Layout responsivo (v28): mobile < 768 | tablet 768 | notebook 1024 | desktop 1440 | ultrawide 1920.
-   Mobile continua com a barra inferior; a partir de 1024 px ela vira sidebar. O conteúdo é o mesmo em todos os tamanhos. ===== */
-.brand{display:none}
-@media (min-width:768px){#app{max-width:860px}}
-@media (min-width:1024px){
-  :root{--side:84px}
-  body{padding-left:calc(var(--side) + 28px);padding-right:28px}
-  .tabs{top:0;right:auto;bottom:0;width:var(--side);flex-direction:column;align-items:stretch;gap:4px;border-top:0;border-right:1px solid var(--line);padding:12px 8px;overflow-y:auto}
-  .brand{display:flex;align-items:center;gap:10px;padding:6px 6px 14px;font-weight:800;font-size:17px;letter-spacing:-.02em}
-  .brand i{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),#7AA0FF);flex:none}.brand span{display:none}
-  .tabs button{flex:none;min-height:60px;border-radius:10px}.tabs button:hover{background:var(--bg)}.tabs button[aria-current=page]{background:var(--bg)}
-  #app{max-width:1180px;margin:0 auto;padding-bottom:40px}#app[data-view=home]{max-width:1400px}
-  [data-view=home] .grid2{grid-template-columns:repeat(4,1fr)}.dash2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
-  .sum{bottom:16px}.toast{bottom:32px;left:calc(50% + var(--side)/2)}
-}
-@media (min-width:1440px){
-  :root{--side:232px}
-  .brand span{display:inline}
-  .tabs button{flex-direction:row;justify-content:flex-start;gap:12px;font-size:14px;padding:0 14px;min-height:46px}
-  #app{max-width:1280px}#app[data-view=home]{max-width:1520px}
-}
-@media (min-width:1920px){#app{max-width:1440px}#app[data-view=home]{max-width:1640px}}
 @media (prefers-reduced-motion:no-preference){.toast{animation:up .18s ease-out}@keyframes up{from{opacity:0;transform:translate(-50%,8px)}}}
 
 /* Editor 3D em tela cheia: celular = 3D em cima e menu embaixo; computador/celular deitado = menu lateral */
@@ -287,17 +245,9 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=38"></script>
-<script src="catalogo.js?v=38"></script>
-<script src="model3d.js?v=38"></script>
-<script src="motor/ambiente.js?v=38"></script>
-<script src="motor/planta.js?v=38"></script>
-<script src="nucleo/registro-modulos.js?v=38"></script>
-<script src="nucleo/orcamento.js?v=38"></script>
-<script src="motor/vidro.js?v=38"></script>
-<script src="telas/vidracaria.js?v=38"></script>
-<script src="motor/esquadria.js?v=38"></script>
-<script src="telas/esquadrias.js?v=38"></script>
+<script src="calc.js?v=39"></script>
+<script src="catalogo.js?v=39"></script>
+<script src="model3d.js?v=39"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -310,7 +260,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=38;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=39;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -431,8 +381,8 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={ambParede:0,amb:null,amb3d:false,tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',brilho3d:true,pdf:null,novoCli:false,animar:false,e3mq:'',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
-const IC={amb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V6l8-3 8 3v14z"/><path d="M9 20v-6h6v6"/></svg>',
+const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',brilho3d:true,pdf:null,novoCli:false,animar:false,e3mq:'',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
+const IC={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
   plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>',
@@ -442,15 +392,10 @@ const IC={amb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
   cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg>',
   back:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 5l-7 7 7 7"/></svg>'
 };
-/* faixa de tela atual, para o JS e os testes saberem em que layout estão */
-function aplicarLayout(){
-  const w=innerWidth;document.body.dataset.layout=w>=1920?'ultrawide':w>=1440?'desktop':w>=1024?'notebook':w>=768?'tablet':'mobile';
-}
-let _desk=null;addEventListener('resize',()=>{aplicarLayout();const d=innerWidth>=1024;if(_desk!==null&&d!==_desk&&nav.qid)render();_desk=d});
 function goTab(t){nav.catAberto=false;nav.tab=t;nav.qid=null;nav.edit=null;render();scrollTo(0,0)}
 function renderTabs(){
-  const T=[['home','Início',IC.home],['quotes','Orçamentos',IC.list],['new','Novo',IC.plus],['amb','Ambientes',IC.amb],['cad','Cadastros',IC.box],['cfg','Ajustes',IC.gear]];
-  $('#tabs').innerHTML='<div class="brand"><i></i><span>Projetta</span></div>'+T.map(([k,l,i])=>`<button data-act="tab" data-v="${k}" ${nav.tab===k&&!(k!=='new'&&nav.qid&&k==='quotes'&&false)?'aria-current="page"':''}>${i}<span>${l}</span></button>`).join('');
+  const T=[['home','Início',IC.home],['quotes','Orçamentos',IC.list],['new','Novo',IC.plus],['cad','Cadastros',IC.box],['cfg','Ajustes',IC.gear]];
+  $('#tabs').innerHTML=T.map(([k,l,i])=>`<button data-act="tab" data-v="${k}" ${nav.tab===k&&!(k!=='new'&&nav.qid&&k==='quotes'&&false)?'aria-current="page"':''}>${i}<span>${l}</span></button>`).join('');
 }
 function render(){
   renderTabs();
@@ -460,18 +405,11 @@ function render(){
   else if(nav.tab==='home')h=viewHome();
   else if(nav.tab==='quotes')h=viewQuotes();
   else if(nav.tab==='cad')h=viewCad();
-  else if(nav.tab==='amb')h=viewAmb();
-  else if(nav.tab==='vid')h=viewVid();
-  else if(nav.tab==='esq')h=viewEsq();
   else if(nav.tab==='cfg')h=viewCfg();
-  $('#app').innerHTML=h;nav.animar=false;$('#app').dataset.view=q&&nav.tab!=='cad'?'editor':nav.tab==='amb'&&nav.amb||nav.tab==='vid'&&nav.vid||nav.tab==='esq'&&nav.esq&&!nav.esqModelos?'amb-edit':nav.tab;
+  $('#app').innerHTML=h;nav.animar=false;
   if(q&&nav.tab!=='cad')aplicarTrava(q);
-  if(q&&nav.tab!=='cad'&&(desk3()||(nav.show3d&&nav.sec==='med')))montar3d();
+  if(nav.show3d&&nav.sec==='med'&&q&&nav.tab!=='cad')montar3d();
   if(nav.ed3d)renderEd3d();
-  if(nav.tab==='amb'&&nav.amb){travarFormatoAmb();aplicarTravaAmb()}
-  if(nav.tab==='vid'&&nav.vid)aplicarTravaVid();
-  if(nav.tab==='esq'&&nav.esq)aplicarTravaEsq();
-  if(nav.tab==='amb'&&nav.amb&&nav.amb3d)montarAmb();
   if(nav.tab==='cfg'&&!q)mostrarVersao();
 }
 /* Orçamento fechado é só para ver: campos e botões de edição ficam desligados (o 3D e o PDF continuam). */
@@ -525,22 +463,8 @@ function garantirSnapshots(){
 }
 
 /* ===== Início / painel ===== */
-const ICM={casa:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-5h4v5"/></svg>',pedra:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 15l4-8h10l4 8-9 5z"/><path d="M7 7l5 13M17 7l-5 13" opacity=".6"/></svg>',madeira:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M12 3v18M9 9v2M15 9v2"/></svg>',vidro:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 8l6-3M9 14l6-3" opacity=".7"/></svg>',porta:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 21V4l10-1v18M6 21h12"/><circle cx="13" cy="12.5" r=".8"/></svg>',ext:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3 0 3-2 6-2s3 2 6 2 3-2 6-2M3 21c3 0 3-2 6-2s3 2 6 2 3-2 6-2"/><path d="M8 4v7M5 7l3-3 3 3"/></svg>',livre:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 18l3-9 6 3 5-7 0 13z"/></svg>'};
-function secModulos(){
-  return `<section aria-labelledby="oqp"><h2 id="oqp" style="margin-bottom:10px">O que deseja projetar?</h2><div class="mods">${listarModulos().map(m=>{
-    const on=m.estado==='disponivel';
-    return `<button class="mod ${on?'on':''}" data-act="modulo" data-v="${m.id}" ${on?'':'aria-disabled="true"'}><span class="mi">${ICM[m.icone]||''}</span>${on?'':'<span class="selo">Em breve</span>'}<b>${esc(m.nome)}</b><span class="small muted">${esc(m.descricao)}</span></button>`}).join('')}</div></section>`;
-}
-function abrirModulo(id){
-  const m=moduloPorId(id);if(!m)return;
-  if(m.estado!=='disponivel'){toast(m.nome+' ainda não está disponível. Chega em breve.');return}
-  if(m.destino==='aba-ambientes')goTab('amb');
-  else if(m.destino==='aba-vidracaria')goTab('vid');
-  else if(m.destino==='aba-esquadrias')goTab('esq');
-  else if(m.destino==='novo-orcamento'){const n=newQuote();openQuote(n.id,'cli')}
-}
 function viewHome(){
-  const Q=todosOrcamentos();
+  const Q=S.quotes.map(q=>({q,c:calc(q)}));
   const by=st=>Q.filter(x=>x.q.status===st);
   const fech=by('Fechado'),aberto=[...by('Enviado'),...by('Negociação')];
   const fat=fech.reduce((t,x)=>t+x.c.price,0),luc=fech.reduce((t,x)=>t+x.c.profit,0);
@@ -555,7 +479,6 @@ function viewHome(){
   const ex=S.quotes.some(q=>q.ex);
   return `<header class="top"><h1>${esc(S.settings.empresa)}</h1><button class="pri" data-act="newq">${IC.plus.replace('<svg','<svg width="18" height="18"')} Novo orçamento</button></header>
   <div class="stack">
-   ${secModulos()}
    ${ex?'<div class="note"><span class="ex">DADOS DE EXEMPLO</span> Os números abaixo vêm de orçamentos fictícios. Remova em Ajustes quando começar a usar.</div>':''}
    <div class="grid2">
     <div class="card kpi"><span class="lbl">Faturamento fechado</span><b>${brl(fat)}</b></div>
@@ -563,7 +486,7 @@ function viewHome(){
     <div class="card kpi"><span class="lbl">Conversão</span><b>${pct(conv)}</b><span class="small muted">${fech.length} de ${enviados} propostas</span></div>
     <div class="card kpi"><span class="lbl">Em aberto</span><b>${brl(abertoV)}</b><span class="small muted">${aberto.length} orçamentos</span></div>
    </div>
-   <div class="dash2"><div class="card"><div class="row between"><h3>Faturamento por mês</h3><span class="small muted">fechados</span></div>
+   <div class="card"><div class="row between"><h3>Faturamento por mês</h3><span class="small muted">fechados</span></div>
     <div class="row" style="align-items:flex-end;height:110px;margin-top:10px;gap:12px">
      ${meses.map(m=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end">
       <span class="mono small muted">${m.v?nf(m.v/1000,1)+'k':''}</span>
@@ -573,7 +496,6 @@ function viewHome(){
    <div class="card"><h3 style="margin-bottom:10px">Funil de vendas</h3>
     ${STATUS.map(st=>{const n=by(st).length,v=by(st).reduce((t,x)=>t+x.c.price,0);return `<div style="margin-bottom:10px"><div class="row between small"><span class="chip c-${st}">${st}</span><span class="mono">${n} · ${brl(v)}</span></div><div class="bar" style="margin-top:5px"><i style="width:${Q.length?n/Q.length*100:0}%"></i></div></div>`}).join('')}
    </div>
-   </div>
    <div class="row between"><h3>Últimos orçamentos</h3><button class="ghost sm" data-act="tab" data-v="quotes">Ver todos</button></div>
    ${quoteList(Q.slice(0,3))}
   </div>`;
@@ -581,49 +503,21 @@ function viewHome(){
 
 function quoteList(Q){
   if(!Q.length)return '<div class="card muted" style="text-align:center">Nenhum orçamento ainda. Toque em Novo.</div>';
-  return `<div class="sheet">${Q.map(({q,c})=>{const cl=clientOf(q);return `<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="${dataAct(q)}" data-v="${q.id}">
-   <div class="grow"><div class="row wrap" style="gap:6px"><b>${esc(cl?.name||'Sem cliente')}</b>${q.ex?'<span class="ex">EXEMPLO</span>':''}${q.kind?`<span class="chip">${KIND_ROT[q.kind]}</span>`:''}</div>
-   <div class="small muted">#${q.num} · ${q.kind?esc(q.nome||KIND_ROT[q.kind]):esc(c.m?.name||'sem material')} · ${nf(c.area)} m²</div></div>
+  return `<div class="sheet">${Q.map(({q,c})=>{const cl=clientOf(q);return `<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="open" data-v="${q.id}">
+   <div class="grow"><div class="row wrap" style="gap:6px"><b>${esc(cl?.name||'Sem cliente')}</b>${q.ex?'<span class="ex">EXEMPLO</span>':''}</div>
+   <div class="small muted">#${q.num} · ${esc(c.m?.name||'sem material')} · ${nf(c.area)} m²</div></div>
    <div style="text-align:right"><div class="num"><b>${brl(c.price)}</b></div><span class="chip c-${q.status}">${q.status}</span></div></div>`}).join('')}</div>`;
 }
 
-/* Orçamentos de Ambiente entram no funil junto com os de marmoraria: o adaptador devolve o mesmo formato {q,c} que o painel e a lista já usam. */
-function garantirAmbientes(){
-  let mudou=false;
-  (S.ambientes||[]).forEach(a=>{if(a.num==null){a.num=S.settings.nextNum++;a.status=a.status||'Rascunho';a.createdAt=a.createdAt||Date.now();a.clientId=a.clientId||'';mudou=true}});
-  if(mudou)save();
-}
-const fechadoAmb=a=>!!a&&a.status==='Fechado'&&!!a.snap;
-function todosOrcamentos(){
-  const Q=S.quotes.map(q=>({q,c:calc(q)}));
-  (S.ambientes||[]).forEach(a=>{
-    const r=ambOrc(a),sn=fechadoAmb(a)?a.snap:null,m=r&&medidasDe(a);
-    Q.push({q:{id:a.id,num:a.num,status:a.status||'Rascunho',clientId:a.clientId||'',kind:'ambiente',nome:a.nome,createdAt:a.createdAt||0,closedAt:a.closedAt||null},
-      c:{price:sn?sn.preco:(r&&r.res.ok?r.res.preco:0),profit:sn?sn.lucro:(r&&r.res.ok?r.res.lucro:0),area:m&&m.ok?m.areaPiso:0,m:null}});
-  });
-  (S.vidracaria||[]).forEach(a=>{
-    const r=vidOrc(a),sn=fechadoVid(a)?a.snap:null,m=medidasVidro(a);
-    Q.push({q:{id:a.id,num:a.num,status:a.status||'Rascunho',clientId:a.clientId||'',kind:'vidracaria',nome:a.nome,createdAt:a.createdAt||0,closedAt:a.closedAt||null},
-      c:{price:sn?sn.preco:(r&&r.res.ok?r.res.preco:0),profit:sn?sn.lucro:(r&&r.res.ok?r.res.lucro:0),area:m.ok?m.areaTotal:0,m:null}});
-  });
-  (S.esquadrias||[]).forEach(a=>{
-    const r=esqOrc(a),sn=fechadoEsq(a)?a.snap:null,m=medidasEsquadrias(a,modelosEsq());
-    Q.push({q:{id:a.id,num:a.num,status:a.status||'Rascunho',clientId:a.clientId||'',kind:'esquadrias',nome:a.nome,createdAt:a.createdAt||0,closedAt:a.closedAt||null},
-      c:{price:sn?sn.preco:(r&&r.res.ok?r.res.preco:0),profit:sn?sn.lucro:(r&&r.res.ok?r.res.lucro:0),area:m.ok?m.areaVao:0,m:null}});
-  });
-  return (S.ambientes||[]).length||(S.vidracaria||[]).length||(S.esquadrias||[]).length?Q.sort((x,y)=>(y.q.createdAt||0)-(x.q.createdAt||0)):Q;      // sem ambientes, a ordem é exatamente a de antes
-}
-const dataAct=q=>q.kind==='ambiente'?'open-amb':q.kind==='vidracaria'?'vid-abrir':q.kind==='esquadrias'?'esq-abrir':'open';
-const KIND_ROT={ambiente:'Ambiente',vidracaria:'Vidraçaria',esquadrias:'Esquadrias'};
 function viewQuotes(){
-  const Q=todosOrcamentos();
+  const Q=S.quotes.map(q=>({q,c:calc(q)}));
   let body='';
   if(nav.qmode==='list')body=quoteList(Q);
   else{
     body=`<div class="board">${STATUS.map((st,i)=>{
       const col=Q.filter(x=>x.q.status===st);const tot=col.reduce((t,x)=>t+x.c.price,0);
       return `<div class="col"><div class="row between"><span class="chip c-${st}">${st} · ${col.length}</span><span class="mono small muted">${brl(tot)}</span></div>
-      ${col.map(({q,c})=>{const cl=clientOf(q);return `<div class="card"><div class="tap" tabindex="0" data-act="${dataAct(q)}" data-v="${q.id}"><b>${esc(cl?.name||'Sem cliente')}</b><div class="small muted">#${q.num}${q.kind?' · '+KIND_ROT[q.kind]+' '+esc(q.nome||''):''} · ${nf(c.area)} m²</div><div class="num"><b>${brl(c.price)}</b></div></div>
+      ${col.map(({q,c})=>{const cl=clientOf(q);return `<div class="card"><div class="tap" tabindex="0" data-act="open" data-v="${q.id}"><b>${esc(cl?.name||'Sem cliente')}</b><div class="small muted">#${q.num} · ${nf(c.area)} m²</div><div class="num"><b>${brl(c.price)}</b></div></div>
        <div class="row between" style="margin-top:8px">${i>0?`<button class="sm" data-act="move" data-v="${q.id}" data-d="-1" aria-label="Mover para ${STATUS[i-1]}">◀</button>`:'<span></span>'}${i<STATUS.length-1?`<button class="sm" data-act="move" data-v="${q.id}" data-d="1" aria-label="Mover para ${STATUS[i+1]}">▶</button>`:'<span></span>'}</div></div>`}).join('')||'<div class="small muted" style="padding:6px">Vazio</div>'}
       </div>`}).join('')}</div>`;
   }
@@ -655,13 +549,6 @@ function passoVizinho(dir){
   let i=STEPS.findIndex(x=>x[0]===nav.sec);const fora=i<0;if(fora)i=1;                  // Fotos e IA: conta como depois de Medir
   const j=dir==='next'?i+1:(fora?i:i-1);return STEPS[j]||null;
 }
-/* notebook e acima (>= 1024 px), fora do editor 3D em tela cheia: o editor de orçamento vira 3 painéis */
-const desk3=()=>innerWidth>=1024&&!nav.ed3d;
-function resumoQ(q){
-  const t=document.createElement('template');t.innerHTML=secCal(q);
-  const cb=t.content.querySelector('#calcbox'),ap=t.content.querySelector('#aprov');cb.id='rcalc';ap.id='raprov';
-  return sumBar(q)+cb.outerHTML+ap.outerHTML;
-}
 function stepper(){
   const at=Math.max(0,STEPS.findIndex(x=>x[0]===nav.sec));
   return `<nav class="steps" aria-label="Etapas do orçamento">${STEPS.map(([k,l],i)=>`<button data-act="sec" data-v="${k}" ${nav.sec===k?'aria-current="step"':''} class="${i<at&&STEPS.findIndex(x=>x[0]===nav.sec)>=0?'feito':''}"><span class="dot">${i<at&&STEPS.findIndex(x=>x[0]===nav.sec)>=0?'✓':i+1}</span><span>${l}</span></button>`).join('')}
@@ -685,21 +572,13 @@ function viewEditor(q){
   else body=secOrc(q);
   return `<header class="top"><button class="ghost" data-act="close" aria-label="Voltar">${IC.back}</button>
    <h1>#${q.num} ${esc(cl?.name||'Novo orçamento')}</h1><span class="chip c-${q.status}">${q.status}</span></header>
-  ${desk3()?viewEditor3p(q,body):`<div class="stack">
+  <div class="stack">
    ${stepper()}
    ${fechado(q)?`<div class="card lock" role="status"><b>Orçamento fechado.</b> Valores congelados em ${dateBR(q.snap.em)}${q.snap.migrado?' (guardados na primeira abertura desta versão)':''}. Mudar preços no cadastro não altera este orçamento.
     <button class="sm" style="margin-top:8px" data-act="reopen">Reabrir para editar</button></div>`:''}
    <div id="secbody" class="stack${nav.animar?' stepin':''}" style="padding-top:0">${body}</div>
    ${sumBar(q)}
-  </div>`}`;
-}
-function viewEditor3p(q,body){
-  const p=q.pieces[Math.min(nav.pi,q.pieces.length-1)];
-  return `<div class="stack ed3p"><div class="edcol ed-l">${stepper()}
-   ${fechado(q)?`<div class="card lock" role="status"><b>Orçamento fechado.</b> Valores congelados em ${dateBR(q.snap.em)}. <button class="sm" style="margin-top:8px" data-act="reopen">Reabrir para editar</button></div>`:''}
-   <div id="secbody" class="stack" style="padding-top:0">${body}</div></div>
-   <div class="edcol ed-c">${p?`<button class="pri" data-act="ed3d-abrir">Abrir editor 3D (tela cheia)</button>${painel3d(p)}`:'<div class="card muted">Adicione uma peça na etapa Medir para ver o 3D.</div>'}</div>
-   <div class="edcol ed-r" id="rcol">${resumoQ(q)}</div></div>`;
+  </div>`;
 }
 
 function secCli(q){
@@ -728,15 +607,6 @@ function secMat(q){
     <input type="search" id="e3matq" value="${esc(nav.e3mq)}" placeholder="Buscar pedra por nome ou cor" aria-label="Buscar pedra" autocomplete="off" style="min-height:48px">
     <div id="e3matgrid" class="stack grande" style="padding-top:0">${e3MatGrade(q)}</div></div>`;
 }
-/* Painel do 3D da peça selecionada: caixa, vistas, cotas, aparência e nota. No celular fica dentro da etapa Medir; no notebook e acima fica ao centro, sempre aberto. */
-function toggle3dHtml(p){return `   <button data-act="toggle3d" aria-pressed="${nav.show3d}">${nav.show3d?'Esconder o 3D':'Ver em 3D'}</button>
-   ${nav.show3d?painel3d(p):''}`}
-function painel3d(p){return `<div class="draw" id="v3dbox" style="padding:0;height:min(68vw,340px);min-height:260px;position:relative"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
-   <div class="bar3d" role="group" aria-label="Vistas do 3D"><button class="k3d" data-act="view3d" data-v="persp" aria-pressed="true">Perspectiva</button><button class="k3d" data-act="view3d" data-v="topo" aria-pressed="false">De cima</button><button class="k3d" data-act="view3d" data-v="frente" aria-pressed="false">De frente</button><button class="k3d" data-act="enquadrar3d">Enquadrar</button></div>
-   <div class="row3d"><button class="k3d" data-act="cotas3d" aria-pressed="${nav.cotas3d}">Cotas</button>
-    <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['material','Do material (nome e cor do cadastro)'],['liso','Lisa'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label>
-    ${(p.recortes||[]).length?`<button class="k3d" data-act="equip3d" aria-pressed="${nav.equip3d}" style="grid-column:1/-1">Cuba, torneira e cooktop (ilustrativos)</button>`:''}</div>
-   <div class="note" id="n3d">Arraste para girar e use dois dedos para aproximar.</div>`}
 function secMed(q){
   if(nav.ed3d)return '<div class="card muted" role="status">O editor 3D está aberto em tela cheia.</div>';
   if(nav.pi>=q.pieces.length)nav.pi=Math.max(0,q.pieces.length-1);
@@ -750,8 +620,14 @@ function secMed(q){
   const sh=shape(p),area=partsArea(sh.parts);
   h+=`<div class="draw" id="pdraw">${drawPiece(p)}</div>
    <div class="row between"><span class="small muted">${TYPES[p.type].nome} · área da peça</span><b class="num" id="parea">${nf(area)} m²</b></div>
-   ${desk3()?'':`<button class="pri" data-act="ed3d-abrir">Abrir editor 3D (tela cheia)</button>
-   ${toggle3dHtml(p)}`}
+   <button class="pri" data-act="ed3d-abrir">Abrir editor 3D (tela cheia)</button>
+   <button data-act="toggle3d" aria-pressed="${nav.show3d}">${nav.show3d?'Esconder o 3D':'Ver em 3D'}</button>
+   ${nav.show3d?`<div class="draw" id="v3dbox" style="padding:0;height:min(68vw,340px);min-height:260px;position:relative"><div id="v3dmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
+   <div class="bar3d" role="group" aria-label="Vistas do 3D"><button class="k3d" data-act="view3d" data-v="persp" aria-pressed="true">Perspectiva</button><button class="k3d" data-act="view3d" data-v="topo" aria-pressed="false">De cima</button><button class="k3d" data-act="view3d" data-v="frente" aria-pressed="false">De frente</button><button class="k3d" data-act="enquadrar3d">Enquadrar</button></div>
+   <div class="row3d"><button class="k3d" data-act="cotas3d" aria-pressed="${nav.cotas3d}">Cotas</button>
+    <label class="f">Aparência (só visual)<select class="k3d" id="tex3d">${[['material','Do material (nome e cor do cadastro)'],['liso','Lisa'],['granito','Granito'],['marmore','Mármore'],['quartzo','Quartzo']].map(([k,l])=>`<option value="${k}"${nav.tex3d===k?' selected':''}>${l}</option>`).join('')}</select></label>
+    ${(p.recortes||[]).length?`<button class="k3d" data-act="equip3d" aria-pressed="${nav.equip3d}" style="grid-column:1/-1">Cuba, torneira e cooktop (ilustrativos)</button>`:''}</div>
+   <div class="note" id="n3d">Arraste para girar e use dois dedos para aproximar.</div>`:''}
    <div class="card stack" style="padding-top:14px">
     ${fld('Nome da peça',PP+'.name')}
     <div class="grid2">${TYPES[p.type].campos.map(([k,l])=>fld(l,PP+'.d.'+k,'n',{unit:k==='N'?'un':'cm'})).join('')}</div>
@@ -1053,7 +929,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=38');
+    const mod=await import('./viewer3d.js?v=39');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1071,60 +947,6 @@ async function imagens3dPdf(q){
   }catch(e){console.warn('PDF sem imagem 3D',e)}
   finally{try{v&&v.destruir()}catch(e){}if(box)box.remove()}
   return sai;
-}
-/* imagem 3D do ambiente para o PDF (visualizador próprio fora da tela; sem WebGL, o PDF sai sem imagem) */
-async function imagem3dAmbiente(a){
-  let box=null,v=null;
-  try{
-    const mod=await import('./viewer3d.js?v=38');
-    if(!mod.webglModo())return null;
-    box=document.createElement('div');box.setAttribute('aria-hidden','true');
-    box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
-    v=mod.criarVisualizador({brilho:mod.webglModo()==='gpu',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):[]});v.anexar(box);
-    v.atualizar(modeloDe(a),false,{cotas:true,textura:'liso',cor:null,foto:null,equip:false});v.vista('iso');
-    return await v.capturar({semGrade:true,escala:2.4});
-  }catch(e){console.warn('PDF sem imagem 3D',e);return null}
-  finally{try{v&&v.destruir()}catch(e){}if(box)box.remove()}
-}
-/* PDF do orçamento de um Ambiente: o cliente vê medidas, quantitativo e o valor final (custo e margem não aparecem) */
-async function buildPdfAmbiente(a){
-  const r=ambOrc(a);if(!r||!r.res.ok)throw new Error('orcamento-invalido');
-  const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'}),s=S.settings,W=210,M=14,CW=W-2*M,ACC=[14,106,91],INK=[17,24,39];
-  const [img,logo]=await Promise.all([imagem3dAmbiente(a),urlParaDataUrl(s.logo)]);
-  const m=medidasDe(a);let y=0;
-  const rodape=()=>{const n=doc.getNumberOfPages();for(let i=1;i<=n;i++){doc.setPage(i);doc.setDrawColor(200);doc.setLineWidth(0.2);doc.line(M,286,W-M,286);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(120);
-    doc.text('Valores sujeitos a conferência das medidas no local. A imagem 3D é ilustrativa.',M,290.5,{maxWidth:CW-18});doc.text(i+' / '+n,W-M,290.5,{align:'right'})}doc.setTextColor(0)};
-  const need=h=>{if(y+h>282){doc.addPage();y=16}};
-  const titulo=t=>{need(12);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...ACC);doc.text(t.toUpperCase(),M,y);doc.setTextColor(0);y+=5.5};
-  doc.setFillColor(...ACC);doc.rect(0,0,W,30,'F');let xt=M;
-  if(logo){try{const p=doc.getImageProperties(logo),h=18,w=Math.min(46,h*p.width/p.height);doc.setFillColor(255,255,255);doc.roundedRect(M,6,w+4,h,2,2,'F');doc.addImage(logo,'JPEG',M+2,6,w,h);xt=M+w+9}catch(e){}}
-  doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text(s.empresa||'Empresa',xt,14.5,{maxWidth:100});
-  doc.setFont('helvetica','normal');doc.setFontSize(9);const l2=[s.cnpj?'CNPJ '+s.cnpj:'',s.telefone].filter(Boolean).join('   ·   ');if(l2)doc.text(l2,xt,21.5,{maxWidth:105});
-  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('ORÇAMENTO #'+(a.num||''),W-M,13,{align:'right'});
-  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.text(dateBR(Date.now()),W-M,19,{align:'right'});doc.text('Validade: '+(s.validade||15)+' dias',W-M,24,{align:'right'});
-  doc.setTextColor(0);y=38;
-  doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text(a.nome||'Ambiente',M,y);y+=6;
-  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(90);doc.text(ehPlanta(a)?descAmb(a):`${nf(a.largura,0)} × ${nf(a.comprimento,0)} cm · pé-direito ${nf(a.altura,0)} cm`,M,y);doc.setTextColor(0);y+=6;
-  const cli=S.clients.find(c=>c.id===a.clientId);if(cli){doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('Cliente: '+cli.name,M,y);doc.setFont('helvetica','normal');doc.setTextColor(90);const ct=[cli.phone,cli.email,cli.address].filter(Boolean).join('   ·   ');if(ct)doc.text(ct,M,y+5,{maxWidth:CW});doc.setTextColor(0);y+=ct?11:6}
-  if(img){const hh=CW*430/700;try{doc.setFillColor(255,255,255);doc.roundedRect(M,y,CW,hh,2,2,'F');doc.addImage(img,'JPEG',M,y,CW,hh);doc.setDrawColor(225);doc.setLineWidth(0.2);doc.roundedRect(M,y,CW,hh,2,2);y+=hh+3;
-    doc.setFontSize(7.5);doc.setTextColor(120);doc.text('Simulação 3D ilustrativa. Medidas em centímetros.',M,y+1);doc.setTextColor(0);y+=7}catch(e){}}
-  titulo('Medidas');
-  [['Piso',nf(m.areaPiso)+' m²'],['Teto',nf(m.areaTeto)+' m²'],['Paredes (líquida)',nf(m.areaParedesLiquida)+' m²'],['Perímetro',nf(m.perimetro)+' m'],['Volume',nf(m.volume)+' m³'],['Portas / janelas',m.portas+' / '+m.janelas]].forEach(([k,v],i)=>{
-    const x=M+(i%2)*(CW/2);if(i%2===0)need(7);doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(90);doc.text(k,x,y);doc.setTextColor(0);doc.setFont('helvetica','bold');doc.text(v,x+42,y);if(i%2===1)y+=6});y+=4;
-  titulo('Quantitativo');
-  doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(120);doc.text('ITEM',M,y);doc.text('QUANTIDADE',W-M,y,{align:'right'});doc.setTextColor(0);y+=2;doc.setDrawColor(40);doc.setLineWidth(0.4);doc.line(M,y,W-M,y);y+=4.5;
-  r.q.itens.forEach(i=>{need(8);doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.text(i.descricao,M,y,{maxWidth:CW-40});
-    doc.setFont('helvetica','bold');doc.text(nf(i.quantidadeComPerda)+' '+i.unidade,W-M,y,{align:'right'});y+=1.5;doc.setDrawColor(225);doc.setLineWidth(0.2);doc.line(M,y,W-M,y);y+=4.8});
-  y+=3;need(36);doc.setFillColor(...INK);doc.roundedRect(M,y,CW,30,2.5,2.5,'F');
-  doc.setTextColor(190,200,210);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('VALOR TOTAL',M+7,y+9);
-  doc.setTextColor(255);doc.setFontSize(32);doc.text(brl(r.res.preco),M+7,y+23.5);
-  const pa=+s.parcelas||0,pd=+s.pixDesc||0;doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(210,218,226);
-  if(pa>1)doc.text('Em até '+pa+'x',W-M-7,y+11,{align:'right'});
-  if(pd>0){doc.text('PIX com '+nf(pd,pd%1?1:0)+'% de desconto:',W-M-7,y+16.2,{align:'right'});doc.setFont('helvetica','bold');doc.setFontSize(15);doc.setTextColor(255);doc.text(brl(Math.round(r.res.preco*(1-pd/100)*100)/100),W-M-7,y+24,{align:'right'})}
-  doc.setTextColor(0);y+=38;
-  const cond=[['Pagamento',s.pagamento],['Prazo de entrega',s.prazo],['Garantia',s.garantia]].filter(([,v])=>v&&String(v).trim());
-  if(cond.length){titulo('Condições');cond.forEach(([k,v])=>{const t=doc.splitTextToSize(String(v),CW-40);need(t.length*4.6+2);doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.text(k,M+2,y);doc.setFont('helvetica','normal');doc.text(t,M+40,y);y+=t.length*4.6+1.5})}
-  rodape();return doc.output('blob');
 }
 /* nome do arquivo: Orcamento-1034-Bancada-Cinza-Absoluto.pdf */
 function nomeArquivoPdf(q){
@@ -1271,7 +1093,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=38');
+    const m=await import('./viewer3d.js?v=39');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1305,7 +1127,7 @@ async function montar3d(){
   const q=curQ();if(!q||!$('#v3dbox'))return;
   if(nav.rolar3d){nav.rolar3d=false;$('#v3dbox').scrollIntoView({block:'start'})}   // ao abrir, leva o 3D para a vista (a barra de preço não o esconde)
   try{await carregar3d()}catch(e){falha3d();return}
-  const box=$('#v3dbox');if(!(nav.show3d||desk3())||!box||curQ()!==q)return;      // a tela mudou enquanto carregava
+  const box=$('#v3dbox');if(!nav.show3d||!box||curQ()!==q)return;      // a tela mudou enquanto carregava
   v3.anexar(box);const m=$('#v3dmsg');if(m)m.remove();
   box.addEventListener('pointerup',marcarVista);box.addEventListener('wheel',marcarVista,{passive:true});
   atualizar3d();
@@ -1345,226 +1167,13 @@ function nota3d(m){
   el.textContent=partes.join(' ');
 }
 function atualizar3d(){
-  if(!v3||!(nav.show3d||desk3())||!$('#v3dbox'))return;
+  if(!v3||!nav.show3d||!$('#v3dbox'))return;
   const q=curQ(),p=q&&q.pieces[nav.pi];if(!p)return;
   const chave=q.id+':'+q.pieces.length,mantem=v3Peca===chave;v3Peca=chave;   // mesmo orçamento e mesmas peças: não reenquadra a câmera (trocar a peça selecionada não mexe na cena)
   const lay=layout3d(q),m=Model3D.comporCena(lay.itens,nav.pi);
   v3.editar(nav.ed3d&&nav.alcas3d&&!fechado(q),aoEditar3d);                // alças só no editor e fora de orçamento fechado
   v3.atualizar(m,mantem,{cotas:nav.cotas3d,textura:texDe(q),cor:corDe(q),foto:fotoDe(q),brilho:nav.brilho3d&&v3Modo!=='software',equip:nav.equip3d});
   nota3d(lay.itens[nav.pi].modelo);marcarVista();
-}
-
-
-/* ===== Ambientes (v27): sala/cozinha/quarto com paredes, piso, teto, portas e janelas. Medidas em cm; o cálculo está em motor/ambiente.js ===== */
-const ambs=()=>S.ambientes||(S.ambientes=[]);
-const AMB_PAREDE_OPC=AMB_PAREDES.map(p=>[p,AMB_NOME_PAREDE[p]]);
-/* Ambiente de planta (formato livre ortogonal: L, U, T): mesmos itens, orçamento, PDF e 3D do retangular, com a geometria de motor/planta.js */
-const ehPlanta=a=>!!a&&a.formato==='planta';
-const medidasDe=a=>ehPlanta(a)?medidasPlanta(a):medidasAmbiente(a);
-const quantitativoDe=a=>ehPlanta(a)?quantitativoPlanta(a):quantitativoAmbiente(a);
-const modeloDe=(a,op)=>ehPlanta(a)?modeloPlanta(a,op):modeloAmbiente(a,op);
-const FORMAS={L:{nome:'Em L',A:'Largura total',B:'Comprimento total',a:'Recorte: largura',b:'Recorte: profundidade',ini:{A:500,B:400,a:200,b:150}},
-  U:{nome:'Em U',A:'Largura total',B:'Comprimento total',a:'Vão do U: largura',b:'Vão do U: profundidade',ini:{A:600,B:400,a:200,b:150}},
-  T:{nome:'Em T',A:'Largura da barra',B:'Comprimento total',a:'Largura do braço',b:'Profundidade da barra',ini:{A:600,B:400,a:200,b:150}}};
-function plantaSync(a){if(!ehPlanta(a)||a.editada)return;const f=a.forma||{};a.pontos=plantaFormato(f.tipo,num(f.A),num(f.B),num(f.a),num(f.b))}
-const arestasOpc=a=>(a.pontos||[]).map((_,i)=>[String(i),'Parede '+(i+1)]);
-const descAmb=a=>a&&a.desenhando?'Planta livre · desenhando…':ehPlanta(a)&&a.forma&&a.forma.tipo==='livre'?`Planta livre · altura ${nf(a.altura,0)} cm`:ehPlanta(a)?`Planta ${(FORMAS[a.forma&&a.forma.tipo]||{nome:'livre'}).nome.replace(/^Em /,'em ')} · altura ${nf(a.altura,0)} cm`:`${nf(a.largura,0)} × ${nf(a.comprimento,0)} × ${nf(a.altura,0)} cm`;
-/* desenho 2D da planta: paredes, aberturas, medidas e números das paredes (toque no número escolhe a parede; arraste a parede escolhida para movê-la) */
-function ambPlantaSvg(a){
-  const pts=(a.pontos||[]).map(p=>({x:+p.x,y:+p.y}));
-  if(pts.length<4||pts.some(p=>!isFinite(p.x)||!isFinite(p.y)))return '<div class="card muted small">Preencha as medidas do formato para ver a planta.</div>';
-  const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),w=x1-x0||1,h=y1-y0||1,m=Math.max(w,h),fs=m*0.04,pad=m*0.14;
-  const sg=plArea2(pts)>0?1:-1,n=pts.length,sel=Math.min(nav.ambParede||0,n-1);
-  const E=pts.map((p,i)=>{const q=pts[(i+1)%n],dx=q.x-p.x,dy=q.y-p.y,L=Math.abs(dx)+Math.abs(dy)||1,ux=dx/L,uy=dy/L;return {i,p,q,L,ux,uy,ox:sg>0?uy:-uy,oy:sg>0?-ux:ux}});
-  const wall=E.map(e=>`<line x1="${e.p.x}" y1="${e.p.y}" x2="${e.q.x}" y2="${e.q.y}" stroke="${e.i===sel?'var(--accent)':'var(--fg)'}" stroke-width="${m*0.016}" stroke-linecap="square"/>`).join('');
-  const ab=(a.aberturas||[]).map(o=>{const e=E[+o.aresta];if(!e||!(+o.largura>0))return '';const s0=+o.x||0,s1=s0+(+o.largura);
-    return `<line x1="${e.p.x+e.ux*s0}" y1="${e.p.y+e.uy*s0}" x2="${e.p.x+e.ux*s1}" y2="${e.p.y+e.uy*s1}" stroke="${o.tipo==='janela'?'var(--dim)':'#B5651D'}" stroke-width="${m*0.024}"/>`}).join('');
-  const lab=E.map(e=>{const mx=(e.p.x+e.q.x)/2,my=(e.p.y+e.q.y)/2;
-    return `<text x="${mx+e.ox*fs*1.9}" y="${my+e.oy*fs*1.9+fs*.35}" text-anchor="middle" font-size="${fs}" fill="var(--muted)" font-family="var(--mono)">${nf(e.L,0)}</text>
-     <g data-act="amb-parede-sel" data-v="${e.i}" style="cursor:pointer" role="button" aria-label="Parede ${e.i+1}"><circle cx="${mx-e.ox*fs*1.5}" cy="${my-e.oy*fs*1.5}" r="${fs*.85}" fill="${e.i===sel?'var(--accent)':'var(--surface)'}" stroke="var(--line)"/>
-     <text x="${mx-e.ox*fs*1.5}" y="${my-e.oy*fs*1.5+fs*.33}" text-anchor="middle" font-size="${fs*.95}" font-weight="700" fill="${e.i===sel?'#fff':'var(--fg)'}">${e.i+1}</text></g>`}).join('');
-  const hit=E.map(e=>`<line data-wall="${e.i}" x1="${e.p.x}" y1="${e.p.y}" x2="${e.q.x}" y2="${e.q.y}" stroke="transparent" stroke-width="${m*0.07}" style="cursor:${e.p.y===e.q.y?'ns-resize':'ew-resize'}"/>`).join('');
-  const dots=E.map(e=>`<circle cx="${e.p.x}" cy="${e.p.y}" r="${m*0.011}" fill="var(--bg)" stroke="var(--fg)" stroke-width="${m*0.004}"/>`).join('');
-  return `<svg id="plsvg" viewBox="${x0-pad} ${y0-pad} ${w+2*pad} ${h+2*pad}" width="100%" style="max-height:340px;touch-action:none;background:var(--surface);border:1px solid var(--line);border-radius:10px" role="img" aria-label="Planta baixa do ambiente">
-   <polygon points="${pts.map(p=>p.x+','+p.y).join(' ')}" fill="color-mix(in srgb,var(--accent) 9%,transparent)"/><g id="plg">${wall}${ab}${dots}${lab}</g>${hit}</svg>`;
-}
-function ambParedeCtl(a){
-  const pts=a.pontos||[],n=pts.length;if(n<4)return '';
-  const i=Math.min(nav.ambParede||0,n-1),p=pts[i],q=pts[(i+1)%n],horiz=+p.y===+q.y,L=Math.abs(q.x-p.x)+Math.abs(q.y-p.y);
-  const bt=(d)=>`<button class="sm" data-act="amb-mover" data-d="${d}" aria-label="Mover a parede ${i+1} ${Math.abs(d)} cm ${horiz?(d<0?'para cima':'para baixo'):(d<0?'para a esquerda':'para a direita')}">${horiz?(d<0?'↑':'↓'):(d<0?'←':'→')} ${Math.abs(d)}</button>`;
-  return `<div class="card stack" style="gap:8px"><div class="row between"><b>Parede ${i+1}</b><span class="num small">${nf(L,0)} cm</span></div>
-   <div class="small muted">Arraste a parede no desenho ou use os botões. Os cantos ligados a ela acompanham.</div>
-   <div class="row wrap" style="gap:6px">${[-50,-10,-5,5,10,50].map(bt).join('')}</div></div>`;
-}
-function ambNovo(tipo){
-  const base={id:uid(),nome:'Ambiente '+(ambs().length+1),num:S.settings.nextNum++,status:'Rascunho',clientId:'',createdAt:Date.now(),closedAt:null,aberturas:[]};
-  if(tipo==='livre'){const a={...base,formato:'planta',altura:270,forma:{tipo:'livre'},editada:true,desenhando:true,pontos:[{x:0,y:0}]};ambs().push(a);save();nav.amb=a.id;nav.amb3d=false;nav.ambSinal=1;render();scrollTo(0,0);return}
-  const f=FORMAS[tipo],a=f?{...base,formato:'planta',altura:270,forma:{tipo,...f.ini},editada:false,pontos:plantaFormato(tipo,f.ini.A,f.ini.B,f.ini.a,f.ini.b)}:{...base,largura:400,comprimento:500,altura:270};
-  ambs().push(a);save();nav.amb=a.id;nav.amb3d=matchMedia('(min-width:1024px)').matches;render();scrollTo(0,0);
-}
-function ambMedHtml(a){
-  const m=medidasDe(a);
-  if(!m.ok)return `<div class="card" role="alert" style="color:var(--bad)"><b>Confira as medidas</b><ul style="margin:6px 0 0;padding-left:18px">${m.erros.map(e=>`<li>${esc(e)}</li>`).join('')}</ul></div>`;
-  const c=(t,v)=>`<div class="card" style="padding:10px"><div class="small muted">${t}</div><b class="num">${v}</b></div>`;
-  return `<div class="grid2">${c('Piso',nf(m.areaPiso)+' m²')}${c('Teto',nf(m.areaTeto)+' m²')}${c('Perímetro',nf(m.perimetro)+' m')}${c('Volume',nf(m.volume)+' m³')}
-   ${c('Paredes (líquida)',nf(m.areaParedesLiquida)+' m²')}${c('Aberturas',nf(m.areaAberturas)+' m² · '+m.portas+' porta(s) · '+m.janelas+' janela(s)')}</div>
-   <div class="sheet" style="margin-top:8px">${m.paredes.map(p=>`<div class="li" style="display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-top:1px solid var(--line)"><span>${p.nome} · ${nf(p.comprimento,0)} cm</span><span class="num">${nf(p.areaLiquida)} m² <span class="muted small">(bruta ${nf(p.areaBruta)})</span></span></div>`).join('')}</div>`;
-}
-const nomePdfAmb=a=>'Orcamento-'+(a.num||'')+'-Ambiente-'+String(a.nome||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-+|-+$/g,'')+'.pdf';
-function waTextoAmb(a,r){
-  const cl=S.clients.find(c=>c.id===a.clientId)||{},s=S.settings,m=medidasDe(a);
-  return `Olá${cl.name?', '+cl.name.split(' ')[0]:''}! Segue o orçamento #${a.num} da ${s.empresa}.\n\nAmbiente: ${a.nome} (${nf(m.areaPiso)} m² de piso)\nTotal: ${brl(r.res.preco)}\nValidade: ${s.validade||15} dias.`;
-}
-/* Fechar congela o preço (a.snap); qualquer outra etapa descongela. Só fecha com medidas válidas e todos os preços preenchidos. */
-function setStatusAmb(a,st){
-  if(st==='Fechado'){
-    if(a.status!=='Fechado'||!a.snap){
-      const r=ambOrc(a);
-      if(!r||!r.res.ok){toast('Corrija as medidas e os valores antes de fechar.');return false}
-      if(!r.res.completo){toast('Preencha todos os preços antes de fechar o orçamento.');return false}
-      a.snap={preco:r.res.preco,lucro:r.res.lucro,custo:r.res.custo,cfg:{margem:r.cfg.margem,impostos:r.cfg.impostos},em:Date.now()};
-    }
-    if(a.status!=='Fechado')a.closedAt=Date.now();
-  }else{delete a.snap;a.closedAt=null}
-  a.status=st;save();return true;
-}
-/* Orçamento do Ambiente: preços por unidade informados pela pessoa; margem e impostos em branco usam os do Ajustes. */
-function ambOrc(a){
-  const o=a.orc||{},q=quantitativoDe(a);if(!q.ok)return null;
-  const itens=q.itens.map(i=>({...i,precoUnit:(o.precos&&o.precos[i.codigo]||{}).preco,maoObraUnit:(o.precos&&o.precos[i.codigo]||{}).mo}));
-  const cfg={margem:o.margem===''||o.margem==null?S.settings.margin:o.margem,impostos:o.impostos===''||o.impostos==null?S.settings.tax:o.impostos,frete:o.frete,instalacao:o.instalacao};
-  if(fechadoAmb(a)){cfg.margem=a.snap.cfg.margem;cfg.impostos=a.snap.cfg.impostos}      // fechado: a margem e os impostos do fechamento, não os do Ajustes de hoje
-  return {q,res:orcarItens(itens,cfg),cfg};
-}
-function ambOrcHtml(a){
-  const r=ambOrc(a);if(!r)return '<p class="small muted">Corrija as medidas para orçar.</p>';
-  const {res}=r;
-  if(!res.ok)return `<div role="alert" style="color:var(--bad)"><b>Confira os valores</b><ul style="margin:6px 0 0;padding-left:18px">${res.erros.map(e=>`<li>${esc(e)}</li>`).join('')}</ul></div>`;
-  return `<div class="card" style="background:var(--fg);color:var(--bg);padding:14px"><div class="small" style="opacity:.8">PREÇO FINAL${res.completo?'':' (incompleto)'}</div><b class="num" style="font-size:26px">${brl(res.preco)}</b>
-   <div class="small" style="opacity:.8;margin-top:4px">Custo ${brl(res.custo)} · lucro ${brl(res.lucro)} · impostos ${brl(res.impostosValor)}</div></div>
-   ${res.pendentes.length?`<p class="small" style="color:var(--warn)">Faltam preços em: ${res.pendentes.map(c=>esc((r.q.itens.find(i=>i.codigo===c)||{}).descricao||c)).join(', ')}. Eles entram como R$ 0,00 até você preencher.</p>`:''}`;
-}
-function ambQtdHtml(a){
-  const q=quantitativoDe(a);if(!q.ok)return '';
-  return `<div class="sheet">${q.itens.map(i=>`<div class="li" style="display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-top:1px solid var(--line)"><span>${esc(i.descricao)}</span><span class="num"><b>${nf(i.quantidade)} ${i.unidade}</b>${i.perdaPct>0?`<span class="muted small"> · com ${nf(i.perdaPct,0)}% de perda ${nf(i.quantidadeComPerda)}</span>`:''}</span></div>`).join('')}</div>`;
-}
-function viewAmb(){
-  const L=ambs();
-  if(nav.amb){const a=L.find(x=>x.id===nav.amb);if(a)return viewAmbEdit(a);nav.amb=null}
-  const lista=L.map(a=>{const m=medidasDe(a);
-    return `<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="amb-abrir" data-v="${a.id}"><div class="grow"><b>${esc(a.nome)}</b>
-     <div class="small muted">${descAmb(a)}</div></div>
-     <div class="num">${m.ok?`<b>${nf(m.areaPiso)} m²</b><div class="small muted">paredes ${nf(m.areaParedesLiquida)} m²</div>`:a.desenhando?'<span class="small muted">desenhando…</span>':'<span class="small" style="color:var(--bad)">medidas inválidas</span>'}</div></div>`}).join('');
-  return `<header class="top"><h1>Ambientes</h1><button class="pri" data-act="amb-novo">Novo</button></header>
-   <div class="stack"><div class="row wrap" style="gap:6px"><span class="small muted">Formato livre:</span>${Object.entries(FORMAS).map(([k,f])=>`<button class="sm" data-act="amb-novo" data-v="${k}">${f.nome}</button>`).join('')}<button class="sm" data-act="amb-novo" data-v="livre">Desenhar planta</button></div>${lista?`<div class="sheet">${lista}</div>`:'<div class="card muted" style="text-align:center">Nenhum ambiente ainda. Toque em Novo para medir uma sala, cozinha ou quarto: o app calcula piso, paredes, perímetro e aberturas na hora.</div>'}</div>`;
-}
-function campoPlanta(a,P){
-  if(a.forma&&a.forma.tipo==='livre')return `<div class="grid2">${fld('Altura (pé-direito)',P+'.altura','n',{unit:'cm'})}</div><div class="note">Planta desenhada por você. Para ajustar uma medida, toque no número da parede e mova-a.</div>`;
-  const f=FORMAS[a.forma&&a.forma.tipo]||FORMAS.L,F=P+'.forma',off=a.editada;
-  return `<div class="grid2">${fld(f.A,F+'.A','n',{unit:'cm'})}${fld(f.B,F+'.B','n',{unit:'cm'})}${fld(f.a,F+'.a','n',{unit:'cm'})}${fld(f.b,F+'.b','n',{unit:'cm'})}${fld('Altura (pé-direito)',P+'.altura','n',{unit:'cm'})}</div>
-   ${off?'<div class="note">Você moveu paredes: as medidas do formato estão travadas. <button class="sm" data-act="amb-refazer">Refazer o formato</button></div>':''}`;
-}
-/* Desenhar a planta ponto a ponto: a pessoa escolhe o sentido e o comprimento de cada parede (ou toca no desenho); as direções alternam e todo canto sai reto. */
-function ambDesenhoSvg(a){
-  const pts=(a.pontos||[]).map(p=>({x:+p.x,y:+p.y}));
-  const xs=pts.map(p=>p.x).concat([0,800]),ys=pts.map(p=>p.y).concat([0,600]);
-  const x0=Math.min(...xs)-100,x1=Math.max(...xs)+100,y0=Math.min(...ys)-100,y1=Math.max(...ys)+100,w=x1-x0,h=y1-y0,m=Math.max(w,h),fs=m*0.032;
-  const g0=Math.floor(x0/100)*100,gy0=Math.floor(y0/100)*100,grade=[];
-  for(let x=g0;x<=x1;x+=100)grade.push(`<line x1="${x}" y1="${y0}" x2="${x}" y2="${y1}" stroke="var(--line)" stroke-width="${m*0.0015}"/>`);
-  for(let y=gy0;y<=y1;y+=100)grade.push(`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="var(--line)" stroke-width="${m*0.0015}"/>`);
-  const seg=pts.slice(1).map((q,i)=>{const p=pts[i],L=Math.abs(q.x-p.x)+Math.abs(q.y-p.y),mx=(p.x+q.x)/2,my=(p.y+q.y)/2;
-    return `<line x1="${p.x}" y1="${p.y}" x2="${q.x}" y2="${q.y}" stroke="var(--fg)" stroke-width="${m*0.014}" stroke-linecap="square"/>
-     <text x="${mx}" y="${my-fs*.6}" text-anchor="middle" font-size="${fs}" fill="var(--muted)" font-family="var(--mono)">${nf(L,0)}</text>`}).join('');
-  const pontos=pts.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="${m*(i===pts.length-1?0.014:0.01)}" fill="${i===0?'var(--accent)':i===pts.length-1?'var(--dim)':'var(--bg)'}" stroke="var(--fg)" stroke-width="${m*0.003}"/>`).join('');
-  return `<svg id="desvg" viewBox="${x0} ${y0} ${w} ${h}" width="100%" style="max-height:360px;touch-action:manipulation;background:var(--surface);border:1px solid var(--line);border-radius:10px" role="img" aria-label="Área de desenho da planta (grade de 1 metro)">
-   ${grade.join('')}<rect data-act="amb-toque" x="${x0}" y="${y0}" width="${w}" height="${h}" fill="transparent" style="cursor:crosshair"/>${seg}${pontos}
-   <text x="${x0+fs*.6}" y="${y0+fs*1.4}" font-size="${fs}" fill="var(--muted)">grade: 1 m</text></svg>`;
-}
-function viewAmbDesenho(a){
-  const n=a.pontos.length,h=plantaProximaDirecao(a.pontos)==='H',sg=nav.ambSinal===-1?-1:1;
-  const lab=h?['← Esquerda','Direita →']:['↑ Cima','Baixo ↓'];
-  return `<header class="top"><button class="ghost" data-act="amb-voltar" aria-label="Voltar">${IC.back}</button><h1>${esc(a.nome||'Ambiente')}</h1><span class="small muted">#${a.num||''}</span></header>
-   <div class="stack"><div class="card stack" style="gap:6px"><b>Desenhe a planta</b>
-    <div class="small muted">Comece no ponto azul. Escolha o sentido, digite o comprimento e toque em Adicionar parede (ou toque direto no desenho). Os cantos saem sempre retos. Com 3 paredes ou mais, toque em Fechar planta.</div></div>
-    <div id="amdes">${ambDesenhoSvg(a)}</div>
-    <div class="card stack"><div class="row between"><b>Parede ${n} <span class="muted">(${h?'horizontal':'vertical'})</span></b><span class="small muted">${n-1} desenhada${n-1===1?'':'s'}</span></div>
-     <div class="grid2"><button data-act="amb-dir" data-v="-1" aria-pressed="${sg===-1}">${lab[0]}</button><button data-act="amb-dir" data-v="1" aria-pressed="${sg===1}">${lab[1]}</button></div>
-     <label class="f">Comprimento <span style="font-weight:500">(cm)</span><input id="ambcomp" type="number" inputmode="decimal" min="0" step="any" placeholder="Ex.: 400" autocomplete="off"></label>
-     <button class="pri big" data-act="amb-add-parede">Adicionar parede</button></div>
-    <div class="row wrap"><button class="grow" data-act="amb-desfazer-ponto" ${n<2?'disabled':''}>Desfazer última</button><button class="pri grow" data-act="amb-fechar" ${n<4?'disabled':''}>Fechar planta</button></div>
-    <button class="ghost danger" data-act="amb-del">Excluir ambiente</button></div>`;
-}
-function viewAmbEdit(a){
-  if(a.desenhando)return viewAmbDesenho(a);
-  const P='ambientes.'+a.id;
-  a.perdas=a.perdas||{};a.revestimentos=a.revestimentos||[];a.orc=a.orc||{};a.orc.precos=a.orc.precos||{};
-  plantaSync(a);
-  const qq=quantitativoDe(a);
-  qq.itens.forEach(i=>{a.orc.precos[i.codigo]=a.orc.precos[i.codigo]||{preco:'',mo:''}});
-  const linhasPreco=qq.itens.map(i=>{const R=P+'.orc.precos.'+i.codigo;
-    return `<div class="stack" style="gap:6px;padding:10px 0;border-top:1px solid var(--line)"><div class="row between"><b>${esc(i.descricao)}</b><span class="num small">${nf(i.quantidadeComPerda)} ${i.unidade}</span></div>
-     <div class="grid2">${fld('Preço por '+i.unidade,R+'.preco','n',{unit:'R$'})}${fld('Mão de obra por '+i.unidade,R+'.mo','n',{unit:'R$'})}</div></div>`}).join('');
-  const rv=a.revestimentos.map(r=>{const R=P+'.revestimentos.'+r.id;
-    return `<div class="row" style="align-items:flex-end"><div class="grow">${sel('Parede',R+(ehPlanta(a)?'.aresta':'.parede'),ehPlanta(a)?arestasOpc(a):AMB_PAREDE_OPC,{blank:'Escolha…'})}</div><div class="grow">${fld('Até a altura',R+'.altura','n',{unit:'cm'})}</div><button class="ghost danger sm" data-act="amb-del-rev" data-v="${r.id}" aria-label="Remover revestimento">Remover</button></div>`}).join('');
-  const ab=a.aberturas.map(o=>{const Q=P+'.aberturas.'+o.id;
-    return `<div class="card stack" style="padding:12px"><div class="row between"><b>${o.tipo==='janela'?'Janela':'Porta'}</b><button class="ghost danger sm" data-act="amb-del-ab" data-v="${o.id}">Remover</button></div>
-     <div class="grid2">${sel('Parede',Q+(ehPlanta(a)?'.aresta':'.parede'),ehPlanta(a)?arestasOpc(a):AMB_PAREDE_OPC,{blank:'Escolha…'})}${fld(ehPlanta(a)?'Distância do início da parede':'Distância do canto esquerdo',Q+'.x','n',{unit:'cm'})}
-     ${fld('Largura',Q+'.largura','n',{unit:'cm'})}${fld('Altura',Q+'.altura','n',{unit:'cm'})}${o.tipo==='janela'?fld('Altura do peitoril',Q+'.peitoril','n',{unit:'cm'}):''}</div></div>`}).join('');
-  return `<header class="top"><button class="ghost" data-act="amb-voltar" aria-label="Voltar">${IC.back}</button><h1>${esc(a.nome||'Ambiente')}</h1><span class="small muted">#${a.num||''}</span></header>
-   <div class="stack ed3p"><div class="edcol ed-l"><div class="card stack o1" style="padding-top:14px">
-    <div class="grid2">${sel('Cliente',P+'.clientId',S.clients.map(c=>[c.id,c.name]),{blank:'Sem cliente'})}${sel('Status',P+'.status',STATUS.map(x=>[x,x]))}</div>
-    ${fechadoAmb(a)?'<div class="note">Orçamento fechado: os valores estão congelados. Mude o status para reabrir e editar.</div>':''}${fld('Nome',P+'.nome')}
-    ${ehPlanta(a)?campoPlanta(a,P):`<div class="grid2">${fld('Largura',P+'.largura','n',{unit:'cm'})}${fld('Comprimento',P+'.comprimento','n',{unit:'cm'})}${fld('Altura (pé-direito)',P+'.altura','n',{unit:'cm'})}</div>`}</div>
-    <div class="row o8"><button data-act="amb-add" data-v="porta">+ Porta</button><button data-act="amb-add" data-v="janela">+ Janela</button></div>
-    <div class="stack o9">${ab}</div>
-    <button class="danger o10" data-act="amb-del">Excluir ambiente</button></div>
-   <div class="edcol ed-c">${ehPlanta(a)?`<div class="stack o2"><div id="ambplanta">${ambPlantaSvg(a)}</div><div id="ambparede">${ambParedeCtl(a)}</div></div>`:''}
-    <button class="o6 amb3d-btn" data-act="amb-3d" aria-pressed="${nav.amb3d}">${nav.amb3d?'Esconder o 3D':'Ver em 3D'}</button>
-    ${nav.amb3d?`<div class="draw o7" id="ambbox" style="padding:0;height:min(80vw,380px);min-height:260px;position:relative"><div id="ambmsg" class="muted small" style="padding:24px;text-align:center">Carregando o 3D…</div></div>
-     <p class="small muted o7">Cotas em cm. Para conferência visual: não é desenho de fabricação.</p>`:''}
-   </div>
-   <div class="edcol ed-r"><div id="ambmed" class="stack o3">${ambMedHtml(a)}</div>
-    <div class="card stack o4"><div class="row between"><h3>Quantitativo</h3><span class="small muted">sem preço: vem no orçamento</span></div>
-     <div id="ambqtd">${ambQtdHtml(a)}</div>
-     <div class="grid2">${fld('Perda do piso',P+'.perdas.piso','n',{unit:'%',ph:'0'})}${fld('Perda do rodapé',P+'.perdas.rodape','n',{unit:'%'})}${fld('Perda do revestimento',P+'.perdas.revestimento','n',{unit:'%'})}</div>
-     <p class="small muted">A perda só entra se você preencher. O app não assume percentual.</p>
-     ${rv}<button data-act="amb-add-rev">+ Revestimento de parede</button></div>
-    <div class="card stack o5"><h3>Orçamento</h3><p class="small muted">Informe o preço por unidade de cada item (material) e, se quiser, a mão de obra por unidade. O app não sugere preços.</p>
-     ${linhasPreco}
-     <div class="grid2">${fld('Margem',P+'.orc.margem','n',{unit:'% (vazio = Ajustes: '+nf(S.settings.margin,0)+'%)'})}${fld('Impostos',P+'.orc.impostos','n',{unit:'% (vazio = Ajustes: '+nf(S.settings.tax,0)+'%)'})}
-     ${fld('Instalação',P+'.orc.instalacao','n',{unit:'R$'})}${fld('Frete',P+'.orc.frete','n',{unit:'R$'})}</div>
-     <div id="ambpreco">${ambOrcHtml(a)}</div>
-     <div class="row"><button class="pri grow" data-act="amb-pdf">Gerar PDF</button><button class="grow" data-act="amb-wa">Enviar por WhatsApp</button></div></div>
-   </div></div>`;
-}
-/* Orçamento de Ambiente fechado: só ver (3D, PDF, WhatsApp, voltar e o status para reabrir). */
-function travarFormatoAmb(){const a=ambs().find(x=>x.id===nav.amb);if(ehPlanta(a)&&a.editada)$$('input[data-b*=".forma."]').forEach(el=>el.disabled=true)}
-function aplicarTravaAmb(){
-  const a=ambs().find(x=>x.id===nav.amb);if(!fechadoAmb(a))return;
-  $$('#app input,#app select,#app textarea,#app button').forEach(el=>{
-    if(!el.matches('[data-act="amb-voltar"],[data-act="amb-3d"],[data-act="amb-pdf"],[data-act="amb-wa"],select[data-b$=".status"]'))el.disabled=true;
-  });
-}
-function liveAmb(){
-  const a=ambs().find(x=>x.id===nav.amb);if(!a)return;
-  plantaSync(a);const pl=$('#ambplanta');if(pl&&ehPlanta(a)&&!arrastoParede){pl.innerHTML=ambPlantaSvg(a);const pc=$('#ambparede');if(pc)pc.innerHTML=ambParedeCtl(a)}
-  const el=$('#ambmed');if(el)el.innerHTML=ambMedHtml(a);const qd=$('#ambqtd');if(qd)qd.innerHTML=ambQtdHtml(a);const pr=$('#ambpreco');if(pr)pr.innerHTML=ambOrcHtml(a);
-  const t=$('.top h1');if(t)t.textContent=a.nome||'Ambiente';
-  atualizarAmb();
-}
-async function montarAmb(){
-  const id=nav.amb;if(!$('#ambbox'))return;
-  try{await carregar3d()}catch(e){const m=$('#ambmsg');if(m)m.textContent=v3Falha;return}
-  const box=$('#ambbox');if(!nav.amb3d||!box||nav.amb!==id)return;
-  v3.anexar(box);const m=$('#ambmsg');if(m)m.remove();
-  v3.editar(false,aoEditar3d);v3Peca='';atualizarAmb(false);
-}
-function atualizarAmb(mantem=true){
-  if(!v3||!nav.amb3d||!$('#ambbox'))return;
-  const a=ambs().find(x=>x.id===nav.amb);if(!a)return;
-  const m=modeloDe(a);
-  v3.atualizar(m,mantem&&v3Peca==='amb:'+a.id,{cotas:true,textura:'liso',cor:null,foto:null,brilho:nav.brilho3d&&v3Modo!=='software',equip:false});
-  v3Peca='amb:'+a.id;
 }
 
 /* ===== Editor 3D em tela cheia: mesmos campos, mesma peça, mesmo cálculo. Só muda onde a pessoa mexe. ===== */
@@ -1781,57 +1390,16 @@ document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
   const a=b.dataset.act,v=b.dataset.v,q=curQ();
   if(fechado(q)&&EDITA.has(a)){toast('Orçamento fechado. Toque em Reabrir para editar.');return}
-  if(a.indexOf('vid-')===0){await acaoVid(a,b,v,e);return}
-  if(a.indexOf('esq-')===0){await acaoEsq(a,b,v,e);return}
   switch(a){
     case 'reopen':confirmTap(b,()=>{setStatus(q,'Negociação');render();toast('Reaberto. O preço agora usa os valores atuais do cadastro.')});break;
     case 'atualizar':location.reload();break;
-    case 'modulo':abrirModulo(v);break;
-    case 'open-amb':nav.tab='amb';nav.amb=v;nav.qid=null;nav.amb3d=matchMedia('(min-width:1024px)').matches;render();scrollTo(0,0);break;
-    case 'amb-wa':{const a=ambs().find(x=>x.id===nav.amb);if(!a)break;
-      const r=ambOrc(a);if(!r||!r.res.ok){toast('Corrija as medidas e os valores antes de enviar.');break}
-      b.disabled=true;toast('Gerando o PDF…');
-      try{const bl=await buildPdfAmbiente(a),nome=nomePdfAmb(a),arq=new File([bl],nome,{type:'application/pdf'}),texto=waTextoAmb(a,r);
-        if(navigator.canShare&&navigator.canShare({files:[arq]})){try{await navigator.share({files:[arq],text:texto,title:'Orçamento #'+a.num});b.disabled=false;break}catch(err){if(err&&err.name==='AbortError'){b.disabled=false;break}}}
-        await saveFile(nome,bl);let d=((S.clients.find(c=>c.id===a.clientId)||{}).phone||'').replace(/\D/g,'');if(d.length===10||d.length===11)d='55'+d;
-        window.open(`https://wa.me/${d}?text=${encodeURIComponent(texto)}`,'_blank','noopener');toast('PDF baixado. Anexe na conversa do WhatsApp.');
-      }catch(e){toast('Não foi possível gerar o PDF.')}
-      b.disabled=false;break}
-    case 'amb-novo':ambNovo(v);break;
-    case 'amb-abrir':nav.amb=v;nav.amb3d=matchMedia('(min-width:1024px)').matches;render();scrollTo(0,0);break;
-    case 'amb-voltar':nav.amb=null;render();break;
-    case 'amb-dir':nav.ambSinal=+v===-1?-1:1;render();break;
-    case 'amb-toque':{const a=ambs().find(x=>x.id===nav.amb);if(!a||!a.desenhando)break;const pt=ptSvg(b.ownerSVGElement,e),t=plantaDoToque(a.pontos,pt.x,pt.y);if(!t)break;
-      const r=plantaAdicionarParede(a.pontos,t.sinal,t.comprimento);if(!r.ok){toast(r.erro);break}a.pontos=r.pontos;save();render();break}
-    case 'amb-add-parede':{const a=ambs().find(x=>x.id===nav.amb);if(!a||!a.desenhando)break;const inp=$('#ambcomp'),L=num(inp&&inp.value);
-      if(!(L>0)){toast('Digite o comprimento da parede em cm.');break}
-      const r=plantaAdicionarParede(a.pontos,nav.ambSinal===-1?-1:1,L);if(!r.ok){toast(r.erro);break}a.pontos=r.pontos;save();render();break}
-    case 'amb-desfazer-ponto':{const a=ambs().find(x=>x.id===nav.amb);if(a&&a.desenhando&&a.pontos.length>1){a.pontos=a.pontos.slice(0,-1);save();render()}break}
-    case 'amb-fechar':{const a=ambs().find(x=>x.id===nav.amb);if(!a||!a.desenhando)break;const r=plantaFechar(a.pontos,a.altura);if(!r.ok){toast(r.erro);break}
-      a.pontos=r.pontos;a.desenhando=false;a.editada=true;nav.ambParede=0;save();render();toast('Planta fechada. Toque no número de uma parede para ajustá-la.');break}
-    case 'amb-parede-sel':nav.ambParede=+v;{const a=ambs().find(x=>x.id===nav.amb);if(a){const pl=$('#ambplanta');if(pl){pl.innerHTML=ambPlantaSvg(a);$('#ambparede').innerHTML=ambParedeCtl(a)}}}break;
-    case 'amb-mover':{const a=ambs().find(x=>x.id===nav.amb);if(!a||fechadoAmb(a))break;const r=plantaMoverParede(a,nav.ambParede||0,+b.dataset.d);
-      if(!r.ok){toast(r.erro);break}a.pontos=r.pontos;a.editada=true;save();render();break}
-    case 'amb-refazer':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.editada=false;plantaSync(a);save();render()}break}
-    case 'amb-3d':nav.amb3d=!nav.amb3d;render();if(nav.amb3d){const bx=$('#ambbox');if(bx)bx.scrollIntoView({block:'center'})}break;
-    case 'amb-add':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.aberturas.push(v==='janela'?{id:uid(),tipo:'janela',parede:'',aresta:'',x:100,largura:120,altura:100,peitoril:100}:{id:uid(),tipo:'porta',parede:'',aresta:'',x:50,largura:80,altura:210,peitoril:0});save();render()}break}
-    case 'amb-pdf':{const a=ambs().find(x=>x.id===nav.amb);if(!a)break;
-      const r=ambOrc(a);if(!r||!r.res.ok){toast('Corrija as medidas e os valores antes de gerar o PDF.');break}
-      if(!r.res.completo&&!confirm('Há itens sem preço. Eles entram como R$ 0,00. Gerar o PDF mesmo assim?'))break;
-      b.disabled=true;toast('Gerando o PDF…');
-      try{const bl=await buildPdfAmbiente(a);await saveFile(nomePdfAmb(a),bl)}catch(e){toast('Não foi possível gerar o PDF.')}
-      b.disabled=false;break}
-    case 'amb-add-rev':{const a=ambs().find(x=>x.id===nav.amb);if(a){(a.revestimentos=a.revestimentos||[]).push({id:uid(),parede:'',aresta:'',altura:a.altura});save();render()}break}
-    case 'amb-del-rev':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.revestimentos=(a.revestimentos||[]).filter(r=>r.id!==v);save();render()}break}
-    case 'amb-del-ab':{const a=ambs().find(x=>x.id===nav.amb);if(a){a.aberturas=a.aberturas.filter(o=>o.id!==v);save();render()}break}
-    case 'amb-del':confirmTap(b,()=>{S.ambientes=ambs().filter(x=>x.id!==nav.amb);nav.amb=null;save();render()});break;
     case 'tab':if(v==='new'){const n=newQuote();openQuote(n.id,'cli')}else goTab(v);break;
     case 'newq':{const n=newQuote();openQuote(n.id,'cli');break}
     case 'open':openQuote(v);break;
     case 'close':nav.qid=null;render();break;
     case 'sec':if(nav.sec!==v){nav.sec=v;nav.animar=true;render();scrollTo(0,0)}break;
     case 'qmode':nav.qmode=v;render();break;
-    case 'move':{const xe=esqs().find(o=>o.id===v);if(xe){const j=STATUS.indexOf(xe.status||'Rascunho')+(+b.dataset.d);if(STATUS[j]&&setStatusEsq(xe,STATUS[j]))render();break}const xv=vids().find(o=>o.id===v);if(xv){const j=STATUS.indexOf(xv.status||'Rascunho')+(+b.dataset.d);if(STATUS[j]&&setStatusVid(xv,STATUS[j]))render();break}const xa=ambs().find(o=>o.id===v);if(xa){const j=STATUS.indexOf(xa.status||'Rascunho')+(+b.dataset.d);if(STATUS[j]&&setStatusAmb(xa,STATUS[j]))render();break}const x=S.quotes.find(o=>o.id===v);const i=STATUS.indexOf(x.status)+(+b.dataset.d);if(STATUS[i]){setStatus(x,STATUS[i]);render()}break}
+    case 'move':{const x=S.quotes.find(o=>o.id===v);const i=STATUS.indexOf(x.status)+(+b.dataset.d);if(STATUS[i]){setStatus(x,STATUS[i]);render()}break}
     case 'piece':nav.pi=+v;nav.showTypes=false;render();break;
     case 'showtypes':nav.showTypes=!nav.showTypes;render();break;
     case 'toggle3d':nav.show3d=!nav.show3d;nav.rolar3d=nav.show3d;render();{const t=$('[data-act="toggle3d"]');if(t)t.focus({preventScroll:true})}break;   // render() refaz o HTML: devolve o foco ao botão
@@ -1926,36 +1494,13 @@ document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.tar
 
 /* Atualização ao vivo: não recria os campos para não perder o foco */
 function live(){
-  if(nav.tab==='amb'&&nav.amb){liveAmb();return}
-  if(nav.tab==='vid'&&nav.vid){liveVid();return}
-  if(nav.tab==='esq'&&(nav.esq||nav.esqModelos)){liveEsq();return}
   const q=curQ();if(!q)return;
   const sb=$('#sumbar');if(sb)sb.outerHTML=sumBar(q);
-  if(desk3()){const rc=$('#rcol');if(rc)rc.innerHTML=resumoQ(q)}
   if(nav.sec==='med'){const p=q.pieces[nav.pi];if(p&&$('#pdraw')){$('#pdraw').innerHTML=drawPiece(p);$('#parea').textContent=nf(partsArea(shape(p).parts))+' m²'}const ri=$('#rcinfo');if(ri&&p){ri.innerHTML=rcInfo(q,p);const mr=rcModelo(q,p);(p.recortes||[]).forEach((r,i)=>{const e=$('#rcs'+i);if(e)e.innerHTML=rcStatus(mr.statusRecortes[i])})}atualizar3d();if(nav.ed3d)e3resumo(q)}
   if(nav.sec==='svc'){q.lines.forEach((l,i)=>{const s=S.services.find(x=>x.id===l.svcId),el=$('#ls'+i);if(el&&s)el.textContent=brl(s.price*l.qty)});const c=calc(q);$('#svcsub').textContent=brl(c.svc)}
   if(nav.sec==='cal'){const t=document.createElement('template');t.innerHTML=secCal(q);
     ['#calcbox','#aprov','#plano'].forEach(id=>{const n=t.content.querySelector(id),o=$(id);if(n&&o)o.innerHTML=n.innerHTML})}
 }
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='ambcomp'){e.preventDefault();const b=$('[data-act="amb-add-parede"]');if(b)b.click()}});
-/* arrastar uma parede da planta: ela anda de 5 em 5 cm no sentido perpendicular; o que invalidar a planta é recusado */
-let arrastoParede=null;
-const ptSvg=(svg,e)=>{const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse())};
-document.addEventListener('pointerdown',e=>{
-  const h=e.target.closest&&e.target.closest('[data-wall]');if(!h||nav.tab!=='amb')return;
-  const a=ambs().find(x=>x.id===nav.amb);if(!ehPlanta(a)||fechadoAmb(a))return;
-  const svg=h.ownerSVGElement,i=+h.dataset.wall;nav.ambParede=i;
-  arrastoParede={a,i,svg,base:a.pontos.map(p=>({...p})),ini:ptSvg(svg,e),moveu:false};e.preventDefault();
-});
-document.addEventListener('pointermove',e=>{
-  if(!arrastoParede)return;const d=arrastoParede,pts=d.base,n=pts.length,p=pts[d.i],q=pts[(d.i+1)%n],pt=ptSvg(d.svg,e);
-  const delta=Math.round(((p.y===q.y?pt.y-d.ini.y:pt.x-d.ini.x))/5)*5;
-  const r=plantaMoverParede({...d.a,pontos:d.base},d.i,delta);
-  if(r.ok&&delta!==0){d.a.pontos=r.pontos;d.a.editada=true;d.moveu=true;liveAmb()}
-  const g=$('#plg');if(g&&d.moveu){const t=document.createElement('div');t.innerHTML=ambPlantaSvg(d.a);const ng=t.querySelector('#plg'),np=t.querySelector('polygon'),sv=$('#plsvg');if(ng){g.innerHTML=ng.innerHTML;sv.querySelector('polygon').setAttribute('points',np.getAttribute('points'));sv.setAttribute('viewBox',t.querySelector('svg').getAttribute('viewBox'))}}
-});
-const fimArrasto=()=>{if(!arrastoParede)return;const d=arrastoParede;arrastoParede=null;if(d.moveu){save();render()}else{const pl=$('#ambplanta');if(pl){pl.innerHTML=ambPlantaSvg(d.a);$('#ambparede').innerHTML=ambParedeCtl(d.a)}}};
-document.addEventListener('pointerup',fimArrasto);document.addEventListener('pointercancel',fimArrasto);
 document.addEventListener('input',e=>{
   const el=e.target.closest('[data-b]');if(!el||el.tagName==='SELECT')return;
   if(fechado(curQ())&&el.closest('#secbody,#e3panel'))return;
@@ -1971,9 +1516,6 @@ document.addEventListener('change',e=>{
   if(el.id==='tex3d'){nav.tex3d=el.value;atualizar3d();return}                 // só visual: vale também em orçamento fechado
   if(fechado(curQ())&&el.closest('#secbody,#e3panel'))return;
   if(el.id==='addSvc'){const q=curQ();if(el.value){const f=q.lines.find(l=>l.svcId===el.value);if(f)f.qty+=1;else q.lines.push({svcId:el.value,qty:1});save();render()}return}
-  if(el.matches('select[data-b]')&&/^esquadrias\..+\.status$/.test(el.dataset.b)){const a=esqs().find(x=>x.id===el.dataset.b.split('.')[1]);if(a)setStatusEsq(a,el.value);render();return}
-  if(el.matches('select[data-b]')&&/^vidracaria\..+\.status$/.test(el.dataset.b)){const a=vids().find(x=>x.id===el.dataset.b.split('.')[1]);if(a)setStatusVid(a,el.value);render();return}
-  if(el.matches('select[data-b]')&&/^ambientes\..+\.status$/.test(el.dataset.b)){const a=ambs().find(x=>x.id===el.dataset.b.split('.')[1]);if(a)setStatusAmb(a,el.value);render();return}
   if(el.matches('select[data-b]')&&el.dataset.b.endsWith('.status')){const q2=curQ();if(q2)setStatus(q2,el.value);render();return}
   if(el.matches('select[data-b]')){setPath(el.dataset.b,el.dataset.t==='n'?num(el.value):el.value);
     const q=curQ();if(q&&/\.materialId$/.test(el.dataset.b)){const m=matOf(q);if(m)q.params.charge=m.priceSlab>0?'chapa':'m2'}
@@ -1982,12 +1524,12 @@ document.addEventListener('change',e=>{
   if(el.id==='fileLogo'&&el.files[0]){readImg(el.files[0],360).then(u=>{S.settings.logo=u;save();render();toast('Logo salvo.')}).catch(()=>toast('Não foi possível ler a imagem.'));el.value='';return}
   if(el.id==='fileMat'&&el.files[0]&&pendingMat){const m=S.materials.find(x=>x.id===pendingMat);readImg(el.files[0],600).then(u=>{m.photo=u;save();render()}).catch(()=>toast('Não foi possível ler a foto.'));el.value='';return}
   if(el.id==='fileImport'&&el.files[0]){
-    el.files[0].text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.quotes)||!Array.isArray(d.materials))throw 0;S=d;garantirSnapshots();garantirAmbientes();garantirVid();garantirEsq();save();applyTheme();nav.qid=null;nav.edit=null;render();toast('Backup restaurado.')}catch(x){toast('Arquivo de backup inválido.')}});el.value='';
+    el.files[0].text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.quotes)||!Array.isArray(d.materials))throw 0;S=d;garantirSnapshots();save();applyTheme();nav.qid=null;nav.edit=null;render();toast('Backup restaurado.')}catch(x){toast('Arquivo de backup inválido.')}});el.value='';
   }
 });
 
 /* ===== Início ===== */
-load();garantirSnapshots();garantirAmbientes();garantirVid();garantirEsq();applyTheme();aplicarLayout();render();
+load();garantirSnapshots();applyTheme();render();
 if(window.pfAbriu)window.pfAbriu();
 
 /* Aviso de nova versão: o app abre da cópia guardada; quando uma versão nova assume, oferece recarregar. */
