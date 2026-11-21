@@ -7,7 +7,7 @@ Peças e cálculo de chapas e preço, plano de corte (estimativa), 3D com cotas 
 
 ## Referências do concorrente marmoristapro3d (vídeo de 2026-11-21), em ordem
 1. Ficha do projeto com abas e números, plano de corte numerado e sobras úteis (feito, v40).
-2. Estoque de sobras: guardar os retalhos e usá-los em outros serviços.
+2. Estoque de sobras: guardar os retalhos e ver quais peças caberiam neles (feito, v41; ainda não abate o retalho do plano nem do preço).
 3. Ordem de produção em PDF: desenho e medidas, plano de corte, tabela de peças e desenho técnico de cada peça.
 4. DXF do plano de corte para a máquina (só faz sentido depois de validar o plano de corte com serviços reais).
 

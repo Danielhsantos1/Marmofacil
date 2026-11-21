@@ -93,3 +93,54 @@ test('propriedade: 400 projetos aleatórios; sobras válidas e sem mudar o núme
     const areaChapas=c.nSlabs*c.slabArea;assert.ok(r.total+c.nest.used<=areaChapas+1e-6,'sobra + peças cabem nas chapas');
   }
 });
+
+/* ===== Estoque de sobras ===== */
+const {retalhosParaGuardar,mesclarEstoque,cabeNoRetalho,sugerirRetalhos}=require('../producao.js');
+const todas=[{x:0,y:0,w:100,h:40,area:0.4,chapa:1},{x:0,y:50,w:30,h:200,area:0.6,chapa:2}];
+
+test('retalhosParaGuardar: normaliza w >= h, guarda origem e material',()=>{
+  const r=retalhosParaGuardar(todas,{materialId:'m1',qid:'q1',num:1001,em:5});
+  assert.equal(r.length,2);assert.deepEqual([r[0].w,r[0].h],[100,40]);assert.deepEqual([r[1].w,r[1].h],[200,30],'a maior medida vira w');
+  assert.ok(r.every(x=>x.materialId==='m1'&&x.origem==='ficha'&&x.qid==='q1'&&x.usada===false&&x.num===1001));assert.equal(new Set(r.map(x=>x.id)).size,2,'ids únicos');
+});
+test('mesclarEstoque: guardar de novo substitui só as não usadas do mesmo orçamento',()=>{
+  const a=retalhosParaGuardar(todas,{materialId:'m1',qid:'q1'}),outro=retalhosParaGuardar(todas,{materialId:'m1',qid:'q2'}),manual={id:'x',materialId:'m1',w:50,h:50,origem:'manual',usada:false};
+  let est=mesclarEstoque([],a,'q1');assert.equal(est.length,2);
+  est=mesclarEstoque(est,a,'q1');assert.equal(est.length,2,'repetir não duplica');
+  est=mesclarEstoque(est.concat(outro,[manual]),a,'q1');assert.equal(est.length,5,'outros orçamentos e o manual ficam');
+  est[0].usada=true;const novo=retalhosParaGuardar([todas[1]],{materialId:'m1',qid:'q1'});
+  const e2=mesclarEstoque(est,novo,'q1');assert.ok(e2.some(r=>r.id===est[0].id&&r.usada),'o retalho já usado continua');
+});
+test('mesclarEstoque não altera o que recebe',()=>{
+  const est=[{id:'a',origem:'ficha',qid:'q1',usada:false}],copia=JSON.stringify(est);mesclarEstoque(est,[],'q1');assert.equal(JSON.stringify(est),copia);
+});
+test('cabeNoRetalho: serve nas duas orientações, no limite e recusa o que passa',()=>{
+  assert.equal(cabeNoRetalho({w:60,h:150},{w:200,h:70}),true);assert.equal(cabeNoRetalho({w:150,h:60},{w:70,h:200}),true);
+  assert.equal(cabeNoRetalho({w:200,h:70},{w:200,h:70}),true,'exato');assert.equal(cabeNoRetalho({w:201,h:70},{w:200,h:70}),false);assert.equal(cabeNoRetalho({w:100,h:71},{w:200,h:70}),false);
+});
+test('sugerirRetalhos: só retalhos livres do mesmo material; cada um serve uma peça; menor retalho em que cabe',()=>{
+  const est=[{id:'g',materialId:'m1',w:200,h:70,usada:false},{id:'p',materialId:'m1',w:80,h:40,usada:false},{id:'u',materialId:'m1',w:300,h:100,usada:true},{id:'o',materialId:'m2',w:300,h:100,usada:false}];
+  const parts=[{w:60,h:30,l:'Prateleira'},{w:150,h:60,l:'Tampo'},{w:150,h:60,l:'Tampo2'}];
+  const r=sugerirRetalhos(parts,est,'m1',SL,SW);
+  assert.equal(r.retalhosLivres,2);assert.equal(r.sugestoes.length,2,'só 2 retalhos livres do material');
+  const por=n=>r.sugestoes.find(x=>x.n===n);assert.equal(por(1).retalhoId,'p','prateleira vai no menor retalho');assert.equal(por(2).retalhoId,'g');
+  assert.equal(r.semRetalho.length,1);assert.equal(r.semRetalho[0].n,3);
+});
+test('sugerirRetalhos: sem material, sem estoque ou peça maior que a chapa não sugere nada',()=>{
+  const est=[{id:'g',materialId:'m1',w:200,h:70,usada:false}];
+  assert.equal(sugerirRetalhos([{w:60,h:30}],est,'',SL,SW).sugestoes.length,0);assert.equal(sugerirRetalhos([{w:60,h:30}],[],'m1',SL,SW).sugestoes.length,0);
+  assert.equal(sugerirRetalhos([{w:500,h:10}],[{id:'g',materialId:'m1',w:600,h:20,usada:false}],'m1',SL,SW).sugestoes.length,0,'peça com emenda não entra');
+  assert.doesNotThrow(()=>sugerirRetalhos(null,null,'m1',SL,SW));
+});
+test('sugerirRetalhos respeita a quantidade q e nunca usa o mesmo retalho duas vezes (200 casos)',()=>{
+  let s=11;const rnd=()=>(s=(s*1664525+1013904223)%4294967296)/4294967296,int=(a,b)=>Math.round(a+rnd()*(b-a));
+  for(let k=0;k<200;k++){
+    const est=Array.from({length:int(0,6)},(_,i)=>({id:'r'+i,materialId:'m',w:int(20,250),h:int(15,150),usada:rnd()<.2}));
+    const parts=Array.from({length:int(1,4)},(_,i)=>({w:int(10,200),h:int(10,120),l:'P'+i,q:int(1,3)}));
+    const r=sugerirRetalhos(parts,est,'m',SL,SW);
+    assert.equal(new Set(r.sugestoes.map(x=>x.retalhoId)).size,r.sugestoes.length,'retalho usado uma vez');
+    r.sugestoes.forEach(x=>{const ret=est.find(e=>e.id===x.retalhoId);assert.ok(!ret.usada&&cabeNoRetalho(x,ret),'cabe e está livre')});
+    const esperadas=parts.reduce((t,a)=>t+((Math.max(a.w,a.h)>SL||Math.min(a.w,a.h)>SW)?0:(a.q||1)),0);
+    assert.equal(r.sugestoes.length+r.semRetalho.length,esperadas,'toda peça elegível ou tem retalho ou está em semRetalho');
+  }
+});
