@@ -114,6 +114,16 @@ input[type=file]{display:none}
 .doc{background:#fff;color:#111;border:1px solid var(--line);border-radius:6px;padding:18px;font-size:13.5px}
 .doc h2{color:#111}.doc table{width:100%;border-collapse:collapse}.doc td,.doc th{padding:6px 4px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}
 .doc td:last-child,.doc th:last-child{text-align:right;white-space:nowrap}
+/* Ficha do projeto (v40): plano de corte numerado, sobras, desenho técnico e todas as medidas */
+#ficha{position:fixed;inset:0;z-index:58;background:var(--bg);overflow:auto;padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) 32px max(16px,env(safe-area-inset-left,0px))}
+#ficha .fw{max-width:920px;margin:0 auto}#ficha .fh{display:flex;align-items:flex-start;gap:10px;padding:14px 0 8px;position:sticky;top:0;background:var(--bg);z-index:2}
+#ficha .fh h1{flex:1;min-width:0}.ftabs{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}.ftabs::-webkit-scrollbar{display:none}
+.ftabs button[aria-selected=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.fkpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.fkpi .card{padding:10px}.fkpi b{font-family:var(--mono);font-size:20px;display:block}
+.fmsg{border-radius:10px;padding:10px 12px;border:1px solid var(--line);border-left-width:4px;margin:10px 0}.fmsg.bom{border-left-color:var(--ok)}.fmsg.aviso{border-left-color:var(--warn)}
+.fav{color:var(--bad);font-size:13px;margin:6px 0}.ftab{width:100%;border-collapse:collapse;font-size:14px}.ftab th{text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 8px;border-bottom:2px solid var(--fg)}
+.ftab td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}.ftab .n{font-weight:700;font-family:var(--mono)}.fsobras{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.fsobras .card{border-style:dashed}
 @media (prefers-reduced-motion:no-preference){.toast{animation:up .18s ease-out}@keyframes up{from{opacity:0;transform:translate(-50%,8px)}}}
 
 /* Editor 3D em tela cheia: celular = 3D em cima e menu embaixo; computador/celular deitado = menu lateral */
@@ -196,6 +206,7 @@ input[type=file]{display:none}
 <div id="app"></div>
 <nav class="tabs" id="tabs" aria-label="Navegação"></nav>
 <div id="ed3d" role="dialog" aria-modal="true" aria-label="Editor 3D" hidden></div>
+<div id="ficha" role="dialog" aria-modal="true" aria-label="Ficha do projeto" hidden></div>
 <input type="file" id="fileImport" accept="application/json">
 <input type="file" id="filePhoto" accept="image/*" capture="environment">
 <input type="file" id="fileMat" accept="image/*">
@@ -245,9 +256,10 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=39"></script>
-<script src="catalogo.js?v=39"></script>
-<script src="model3d.js?v=39"></script>
+<script src="calc.js?v=40"></script>
+<script src="producao.js?v=40"></script>
+<script src="catalogo.js?v=40"></script>
+<script src="model3d.js?v=40"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -260,7 +272,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=39;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=40;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -359,20 +371,25 @@ function drawPiece(p){
 }
 
 /* Plano de corte da chapa */
-function drawSlabs(c){
+function drawSlabs(c,comSobras){
   const {SL,SW,nest}=c;
   if(!nest.slabs.length)return '';
-  const sc=300/SL,gap=14;
+  const sc=300/SL,gap=14,so=comSobras?sobrasUteis(nest,SL,SW):null;
   let out='';
   nest.slabs.forEach((sl,i)=>{
     const used=sl.items.reduce((t,a)=>t+a.w*a.h,0)/1e4;
-    out+=`<div class="draw"><div class="row between small" style="padding:2px 4px 6px"><b>Chapa ${i+1}</b><span class="mono muted">${nf(used/c.slabArea*100,0)}% usada</span></div>`;
-    out+=`<svg viewBox="0 0 ${SL*sc+2} ${SW*sc+2}" role="img" aria-label="Chapa ${i+1}"><rect x="1" y="1" width="${SL*sc}" height="${SW*sc}" fill="var(--slab)" stroke="var(--slab-line)" stroke-width="1.5"/>`;
+    out+=`<div class="draw"><div class="row between small" style="padding:2px 4px 6px"><b>Chapa ${i+1}</b><span class="mono muted">${nf(SL,0)} × ${nf(SW,0)} cm · ${nf(used/c.slabArea*100,0)}% usada</span></div>`;
+    out+=`<svg viewBox="0 0 ${SL*sc+2} ${SW*sc+2}" role="img" aria-label="Chapa ${i+1}"><rect x="1" y="1" width="${SL*sc}" height="${SW*sc}" fill="var(--slab)" stroke="var(--slab-line)" stroke-width="1"/>`;
     sl.items.forEach(a=>{
-      const w=a.w*sc,h=a.h*sc;
+      const w=a.w*sc,h=a.h*sc,rot=rotuloPeca(a.ref),cx=1+a.x*sc+w/2,cy=1+a.y*sc+h/2;
       out+=`<rect x="${1+a.x*sc}" y="${1+a.y*sc}" width="${w}" height="${h}" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1"/>`;
-      if(w>40&&h>12)out+=`<text x="${1+a.x*sc+w/2}" y="${1+a.y*sc+h/2+4}" text-anchor="middle" style="font-size:9px">${nf(a.w,0)}×${nf(a.h,0)}</text>`;
+      if(w>40&&h>26)out+=`<text x="${cx}" y="${cy-1}" text-anchor="middle" style="font-size:11px;font-weight:700">${rot}</text><text x="${cx}" y="${cy+10}" text-anchor="middle" style="font-size:8px">${nf(a.w,0)}×${nf(a.h,0)}</text>`;
+      else if(w>40&&h>12)out+=`<text x="${cx}" y="${cy+4}" text-anchor="middle" style="font-size:9px">${rot} · ${nf(a.w,0)}×${nf(a.h,0)}</text>`;
+      else if(w>14&&h>10)out+=`<text x="${cx}" y="${cy+3}" text-anchor="middle" style="font-size:8px;font-weight:700">${rot}</text>`;
     });
+    if(so)(so.porChapa[i]||[]).forEach(r=>{const w=r.w*sc,h=r.h*sc;
+      out+=`<rect x="${1+r.x*sc}" y="${1+r.y*sc}" width="${w}" height="${h}" fill="none" stroke="var(--ok)" stroke-width="1" stroke-dasharray="4 3"/>`;
+      if(w>56&&h>14)out+=`<text x="${1+r.x*sc+w/2}" y="${1+r.y*sc+h/2+3}" text-anchor="middle" style="font-size:8px;fill:var(--ok)">sobra ${nf(r.w,0)}×${nf(r.h,0)}</text>`});
     out+='</svg></div>';
   });
   return out;
@@ -381,7 +398,7 @@ function drawSlabs(c){
 /* Miniatura da peça para listas */
 function miniPiece(p){return `<div style="width:64px;flex:none" class="draw">${drawPiece(p).replace(/<text[^>]*>.*?<\/text>/g,'')}</div>`}
 /* ===== Navegação e telas principais ===== */
-const nav={tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',brilho3d:true,pdf:null,novoCli:false,animar:false,e3mq:'',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
+const nav={ficha:false,fichaTab:'plano',tab:'home',qid:null,sec:'cli',pi:0,cad:'mat',edit:null,qmode:'list',showTypes:false,show3d:false,cotas3d:true,tex3d:'material',brilho3d:true,pdf:null,novoCli:false,animar:false,e3mq:'',equip3d:true,ed3d:false,catAberto:false,catQ:'',catCat:'todas',catSel:[],alcas3d:true,e3m:'pecas',e3aberto:true};
 const IC={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
@@ -410,13 +427,14 @@ function render(){
   if(q&&nav.tab!=='cad')aplicarTrava(q);
   if(nav.show3d&&nav.sec==='med'&&q&&nav.tab!=='cad')montar3d();
   if(nav.ed3d)renderEd3d();
+  renderFicha();
   if(nav.tab==='cfg'&&!q)mostrarVersao();
 }
 /* Orçamento fechado é só para ver: campos e botões de edição ficam desligados (o 3D e o PDF continuam). */
 function aplicarTrava(q){
   if(!fechado(q)||nav.sec==='orc')return;
   $$('#secbody input,#secbody select,#secbody textarea,#secbody button').forEach(el=>{
-    if(!el.matches('[data-act="toggle3d"],[data-act="ed3d-abrir"],.k3d,[data-act="piece"]'))el.disabled=true;
+    if(!el.matches('[data-act="toggle3d"],[data-act="ed3d-abrir"],[data-act="ficha-abrir"],.k3d,[data-act="piece"]'))el.disabled=true;
   });
 }
 async function versoesEmCache(){
@@ -730,6 +748,7 @@ function secCal(q){
      ${sel('Cobrar material por',P+'.charge',[['chapa','Chapa inteira'],['m2','Metro quadrado']])}
      ${p.charge==='m2'?fld('Perda cobrada',P+'.lossPct','n',{unit:'%'}):''}</div>
     <div class="note">Margem e impostos incidem sobre o preço de venda: preço = custo ÷ (1 − margem − impostos).</div></div>
+   <button class="pri" data-act="ficha-abrir">Abrir a ficha do projeto</button>
    <h3>Plano de corte</h3><div id="plano" class="stack" style="padding-top:0">${drawSlabs(c)||'<div class="muted small">Adicione peças para ver o plano.</div>'}</div>`;
 }
 
@@ -929,7 +948,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=39');
+    const mod=await import('./viewer3d.js?v=40');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1093,7 +1112,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=39');
+    const m=await import('./viewer3d.js?v=40');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1176,6 +1195,48 @@ function atualizar3d(){
   nota3d(lay.itens[nav.pi].modelo);marcarVista();
 }
 
+/* ===== Ficha do projeto (v40): plano de corte numerado, sobras, desenho técnico e todas as medidas. Só leitura. ===== */
+const partesDe=q=>q.pieces.flatMap(p=>shape(p).parts);
+function fichaPlano(q,c){
+  const r=resumoProducao(c,partesDe(q)),so=r.sobras;
+  const kpi=(t,v)=>`<div class="card"><span class="lbl">${t}</span><b>${v}</b></div>`;
+  const linhas=r.pecas.map(p=>`<tr><td class="n">${p.n}</td><td>${esc(p.nome)}</td><td class="num">${nf(p.w,1)} × ${nf(p.h,1)} cm</td><td class="num">${p.q}</td>
+    <td class="small">${[p.girada?'girada':'',p.partes>1?'em '+p.partes+' partes (emenda)':''].filter(Boolean).join(' · ')||'—'}</td></tr>`).join('');
+  return `<div class="fkpi">${kpi('Chapas',c.nSlabs)}${kpi('Aproveitamento',nf(c.util*100,0)+'%')}${kpi('Sobra útil',nf(r.sobraUtil)+' m²')}</div>
+   <div class="fmsg ${r.mensagem.tipo}"><b>${r.mensagem.tipo==='bom'?'Encaixe':r.mensagem.tipo==='aviso'?'Atenção':'Plano de corte'}</b><div class="small">${esc(r.mensagem.texto)}</div></div>
+   ${r.avisos.map(a=>`<div class="fav" role="alert">${esc(a)}</div>`).join('')}
+   <p class="small muted">${c.m?esc(c.m.name)+' é cobrada '+(q.params.charge==='m2'?'por m². O plano mostra quantas chapas comprar e quanto sobra.':'por chapa inteira.'):'Escolha o material para calcular o plano.'} É uma estimativa por faixas: não considera o veio da pedra.</p>
+   <div class="stack" style="padding-top:0">${drawSlabs(c,true)||'<div class="muted small">Adicione peças para ver o plano.</div>'}</div>
+   <h3 style="margin:14px 0 6px">Peças do corte</h3>
+   <div class="card" style="padding:4px 8px;overflow-x:auto"><table class="ftab"><thead><tr><th>Nº</th><th>Peça</th><th>Medida</th><th>Qtd</th><th>Obs.</th></tr></thead><tbody>${linhas||'<tr><td colspan="5" class="muted">Sem peças.</td></tr>'}</tbody></table></div>
+   <h3 style="margin:14px 0 2px">Sobras aproveitáveis</h3><p class="small muted">Retalhos com os dois lados a partir de ${nf(PROD_SOBRA_MIN,0)} cm, lidos do plano acima (estimativa conservadora).</p>
+   ${so.todas.length?`<div class="fsobras">${so.todas.map(x=>`<div class="card"><b class="num">${nf(x.w,1)} × ${nf(x.h,1)} cm</b><div class="small muted">Chapa ${x.chapa} · ${nf(x.area)} m²</div></div>`).join('')}</div>`:'<div class="card muted small">Nenhuma sobra com tamanho aproveitável.</div>'}`;
+}
+function fichaDesenho(q){
+  if(!q.pieces.length)return '<div class="card muted">Adicione peças para ver o desenho técnico.</div>';
+  return `<div class="stack" style="padding-top:0">${q.pieces.map(p=>`<div class="card"><div class="row between"><b>${esc(p.name||TYPES[p.type].nome)}</b><span class="small muted">${TYPES[p.type].nome} · ${nf(partsArea(shape(p).parts))} m²</span></div><div class="draw" style="margin-top:8px">${drawPiece(p)}</div></div>`).join('')}</div>`;
+}
+function fichaMedidas(q,c){
+  const linhas=q.pieces.map(p=>{
+    const rec=(p.recortes||[]).filter(r=>r&&r.w>0&&r.d>0).map(r=>`${({cuba:'Cuba',cooktop:'Cooktop'})[r.tipo]||'Recorte'} ${nf(r.w,0)}×${nf(r.d,0)} cm`).join(', ');
+    const extra=[p.saiaH>0?`saia ${nf(p.saiaH,0)} cm`:'',p.rodaH>0?`rodabanca ${nf(p.rodaH,0)} cm`:'',rec].filter(Boolean).join(' · ');
+    return `<tr><td><b>${esc(p.name||TYPES[p.type].nome)}</b><div class="small muted">${TYPES[p.type].nome}</div></td><td class="small">${esc(descPiece(p))}${extra?'<div class="muted">'+esc(extra)+'</div>':''}</td><td class="num">${nf(partsArea(shape(p).parts))} m²</td></tr>`}).join('');
+  return `<div class="card" style="padding:4px 8px;overflow-x:auto"><table class="ftab"><thead><tr><th>Peça</th><th>Medidas</th><th>Área</th></tr></thead><tbody>${linhas||'<tr><td colspan="3" class="muted">Sem peças.</td></tr>'}</tbody>
+   <tfoot><tr><td colspan="2"><b>Total de pedra</b></td><td class="num"><b>${nf(c.area)} m²</b></td></tr></tfoot></table></div>
+   <p class="small muted">Chapa de ${nf(c.SL,0)} × ${nf(c.SW,0)} cm (${nf(c.slabArea)} m²). Os recortes (cuba, cooktop) não mudam área nem preço.</p>`;
+}
+function renderFicha(){
+  const el=$('#ficha');if(!el)return;
+  const q=curQ();
+  if(!nav.ficha||!q){el.hidden=true;el.innerHTML='';return}
+  const c=calc(q),cl=clientOf(q),tab=nav.fichaTab;
+  const aba=(k,l)=>`<button data-act="ficha-aba" data-v="${k}" role="tab" aria-selected="${tab===k}">${l}</button>`;
+  el.hidden=false;
+  el.innerHTML=`<div class="fw"><div class="fh"><div style="flex:1;min-width:0"><h1>Ficha do projeto</h1><div class="small muted">#${q.num} · ${esc(cl?.name||'Sem cliente')} · ${nf(c.area)} m² de pedra${c.m?' · '+esc(c.m.name):''}</div></div>
+   <button class="ghost" data-act="ficha-fechar" aria-label="Fechar a ficha">${IC.close||'Fechar'}</button></div>
+   <div class="ftabs" role="tablist">${aba('plano','Plano de corte')}${aba('desenho','Desenho técnico')}${aba('medidas','Todas as medidas')}</div>
+   ${tab==='desenho'?fichaDesenho(q):tab==='medidas'?fichaMedidas(q,c):fichaPlano(q,c)}</div>`;
+}
 /* ===== Editor 3D em tela cheia: mesmos campos, mesma peça, mesmo cálculo. Só muda onde a pessoa mexe. ===== */
 const LADO3D=()=>matchMedia('(min-width:820px),(max-height:500px) and (orientation:landscape)').matches;
 const CURTA3D=()=>matchMedia('(max-height:500px) and (orientation:landscape)').matches;      // celular deitado: abre com o painel recolhido
@@ -1386,6 +1447,7 @@ function confirmTap(btn,fn){
 }
 let pendingMat=null;
 const EDITA=new Set(['cli-salvar','cli-novo','e3mat','e3cat','add-recorte','del-recorte','addpiece','dup-piece','del-piece','add-rect','del-rect','del-line','quick-client','del-quote','addphoto','del-photo','ai','ai-apply','mark-sent']);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&nav.ficha){nav.ficha=false;renderFicha()}});
 document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
   const a=b.dataset.act,v=b.dataset.v,q=curQ();
@@ -1414,6 +1476,9 @@ document.addEventListener('click',async e=>{
     case 'ed-opcoes':{const m=$('#e3opcoes'),abre=m.hidden;m.hidden=!abre;b.setAttribute('aria-expanded',String(abre));break}
     case 'ed-enviar':fecharOpcoes();nav.sec='orc';fecharEd3d();scrollTo(0,0);break;
     case 'ed3d-abrir':abrirEd3d();break;
+    case 'ficha-abrir':nav.ficha=true;nav.fichaTab='plano';renderFicha();{const f=$('#ficha');if(f)f.scrollTop=0}break;
+    case 'ficha-fechar':nav.ficha=false;renderFicha();break;
+    case 'ficha-aba':nav.fichaTab=v;renderFicha();{const f=$('#ficha');if(f)f.scrollTop=0}break;
     case 'ed3d-sair':fecharEd3d();break;
     case 'e3menu':if(v===nav.e3m)nav.e3aberto=!nav.e3aberto;else{nav.e3m=v;nav.e3aberto=true}renderEd3d();if(v3&&nav.e3m==='mat')nota3d(modelo3d(q,q.pieces[nav.pi]));break;
     case 'retry3d':v3Promise=null;v3Falha='';render();break;

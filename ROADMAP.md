@@ -5,6 +5,12 @@ Decisão de 2026-10-31 (ver `docs/DECISOES.md`): um produto só, para marmoraria
 ## Já feito
 Peças e cálculo de chapas e preço, plano de corte (estimativa), 3D com cotas e editor em tela cheia, catálogo de 46 pedras com foto, PDF profissional, WhatsApp, funil e painel, orçamento fechado congelado, página de vendas só de marmoraria.
 
+## Referências do concorrente marmoristapro3d (vídeo de 2026-11-21), em ordem
+1. Ficha do projeto com abas e números, plano de corte numerado e sobras úteis (feito, v40).
+2. Estoque de sobras: guardar os retalhos e usá-los em outros serviços.
+3. Ordem de produção em PDF: desenho e medidas, plano de corte, tabela de peças e desenho técnico de cada peça.
+4. DXF do plano de corte para a máquina (só faz sentido depois de validar o plano de corte com serviços reais).
+
 ## Próximos passos (em ordem)
 1. **Validar o plano de corte** com 3 a 5 serviços reais, comparando com o que o cortador usou. Sem isso o cálculo é estimativa.
 2. **Backup seguro no aparelho:** lembrete, exportar e importar com um toque, conferir os valores ao restaurar. Hoje os dados só ficam no celular.

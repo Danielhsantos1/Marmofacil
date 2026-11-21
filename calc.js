@@ -56,20 +56,20 @@ function divisoes(w,h,SL,SW){
 }
 function nestParts(parts,SL,SW){
   const kerf=0.4;let items=[],emendas=0;
-  parts.forEach(a=>{for(let i=0;i<(a.q||1);i++){
+  parts.forEach((a,idx)=>{for(let i=0;i<(a.q||1);i++){
     const {L,W,k,m}=divisoes(a.w,a.h,SL,SW);
     emendas+=k*m-1;
-    for(let a1=0;a1<k;a1++)for(let b1=0;b1<m;b1++)items.push({w:L/k,h:W/m,l:a.l})}});
+    for(let a1=0;a1<k;a1++)for(let b1=0;b1<m;b1++)items.push({w:L/k,h:W/m,l:a.l,ref:{n:idx+1,sub:k*m>1?a1*m+b1+1:0,de:k*m}})}});   // ref: número da peça e da parte (só identificação; não entra em nenhuma conta)
   items.sort((x,y)=>y.h-x.h||y.w-x.w);
   const slabs=[];
   const place=it=>{
     for(const s of slabs){
-      for(const sh of s.shelves){if(sh.h>=it.h-1e-6&&SL-sh.x>=it.w){s.items.push({x:sh.x,y:sh.y,w:it.w,h:it.h,l:it.l});sh.x+=it.w+kerf;return}}
+      for(const sh of s.shelves){if(sh.h>=it.h-1e-6&&SL-sh.x>=it.w){s.items.push({x:sh.x,y:sh.y,w:it.w,h:it.h,l:it.l,ref:it.ref});sh.x+=it.w+kerf;return}}
       const used=s.shelves.reduce((t,sh)=>t+sh.h+kerf,0);
-      if(SW-used>=it.h){const sh={y:used,h:it.h,x:0};s.shelves.push(sh);s.items.push({x:0,y:sh.y,w:it.w,h:it.h,l:it.l});sh.x=it.w+kerf;return}
+      if(SW-used>=it.h){const sh={y:used,h:it.h,x:0};s.shelves.push(sh);s.items.push({x:0,y:sh.y,w:it.w,h:it.h,l:it.l,ref:it.ref});sh.x=it.w+kerf;return}
     }
     const s={items:[],shelves:[]};slabs.push(s);
-    const sh={y:0,h:it.h,x:it.w+kerf};s.shelves.push(sh);s.items.push({x:0,y:0,w:it.w,h:it.h,l:it.l});
+    const sh={y:0,h:it.h,x:it.w+kerf};s.shelves.push(sh);s.items.push({x:0,y:0,w:it.w,h:it.h,l:it.l,ref:it.ref});
   };
   items.forEach(place);
   const used=items.reduce((t,a)=>t+a.w*a.h,0)/1e4;
