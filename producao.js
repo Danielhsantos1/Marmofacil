@@ -103,4 +103,30 @@ function sugerirRetalhos(parts,estoque,materialId,SL,SW){
   return {sugestoes,semRetalho,retalhosLivres:livres.length};
 }
 
-if(typeof module!=='undefined')module.exports={retalhosParaGuardar,mesclarEstoque,cabeNoRetalho,sugerirRetalhos,PROD_SOBRA_MIN,rotuloPeca,listaPecas,minimoChapas,sobrasUteis,resumoProducao};
+/* ===== Ordem de produção (PDF para a oficina) ===== */
+
+/* Escala para caber um desenho de w × h (cm) numa caixa bw × bh (mm no papel): devolve o fator mm por cm e o tamanho final. Nunca amplia além de maxK. */
+function ajustarCaixa(w,h,bw,bh,maxK=Infinity){
+  if(!(w>0)||!(h>0)||!(bw>0)||!(bh>0))return {k:0,w:0,h:0};
+  const k=Math.min(bw/w,bh/h,maxK);
+  return {k,w:w*k,h:h*k};
+}
+
+/* Em qual peça do projeto cada peça numerada do plano nasceu. `listaPartes[i]` = lista de peças (shape(p).parts) da i-ésima peça do orçamento;
+   a numeração é a mesma da ficha: 1, 2, 3... percorrendo as peças do orçamento em ordem. */
+function mapaPecas(listaPartes){
+  const out=[];let n=0;
+  (listaPartes||[]).forEach((partes,pi)=>{(partes||[]).forEach(()=>{n++;out.push({n,pecaIndice:pi})})});
+  return out;
+}
+
+/* Linhas da tabela de peças da ordem de produção (sem preço): número, peça do projeto, nome, medida, quantidade e observação. */
+function linhasOrdem(pecas,mapa,nomesPecas){
+  return (pecas||[]).map(p=>{
+    const m=(mapa||[]).find(x=>x.n===p.n);
+    return {n:p.n,projeto:m?(nomesPecas||[])[m.pecaIndice]||'':'',nome:p.nome,medida:prodNum(p.w)+' × '+prodNum(p.h)+' cm',q:p.q,
+      obs:[p.girada?'girada':'',p.partes>1?'em '+p.partes+' partes (emenda)':''].filter(Boolean).join(' · ')};
+  });
+}
+
+if(typeof module!=='undefined')module.exports={ajustarCaixa,mapaPecas,linhasOrdem,retalhosParaGuardar,mesclarEstoque,cabeNoRetalho,sugerirRetalhos,PROD_SOBRA_MIN,rotuloPeca,listaPecas,minimoChapas,sobrasUteis,resumoProducao};
