@@ -256,10 +256,10 @@ input[type=file]{display:none}
 })();
 </script>
 <script src="vendor/jspdf.umd.min.js"></script>
-<script src="calc.js?v=40"></script>
-<script src="producao.js?v=40"></script>
-<script src="catalogo.js?v=40"></script>
-<script src="model3d.js?v=40"></script>
+<script src="calc.js?v=41"></script>
+<script src="producao.js?v=41"></script>
+<script src="catalogo.js?v=41"></script>
+<script src="model3d.js?v=41"></script>
 <script>
 /* ===== Utilidades ===== */
 const $=(s,r=document)=>r.querySelector(s);
@@ -272,7 +272,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0};
 const STATUS=['Rascunho','Enviado','Negociação','Fechado','Perdido'];
 const KEY='pedrafacil.v1';
-const APP_V=40;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
+const APP_V=41;                                   // igual a V em sw.js e aos ?v= dos scripts (tests/versao.test.js confere)
 
 /* ===== Tipos de peça: campos de medida em cm ===== */
 const TYPES={
@@ -289,6 +289,8 @@ const TYPES={
 /* Geometria, plano de corte e preço vivem em calc.js (funções puras, com testes em tests/). */
 /* ===== Cálculo do orçamento ===== */
 function matOf(q){return S.materials.find(m=>m.id===q.materialId)}
+const sobrasEst=()=>S.sobras||(S.sobras=[]);                 // estoque de retalhos (v41); opcional, dados antigos abrem iguais
+const nomeMat=id=>(S.materials.find(m=>m.id===id)||{}).name||'Material removido';
 function calc(q){return aplicarSnapshot(calcQuote(q,S.materials,S.services),q.snap)}
 const fechado=q=>!!q&&q.status==='Fechado'&&!!q.snap;
 
@@ -814,13 +816,26 @@ function secOrc(q){
 /* ===== Cadastros ===== */
 const CATS=['Granito','Mármore','Quartzo','Quartzito','Porcelanato','Outra'];
 const SVC_CATS=['Acabamentos','Furos','Recortes','Instalação','Frete','Cubas','Saia','Rodabanca','Pingadeira'];
+/* Lista do estoque de retalhos, por material: livres primeiro, usados esmaecidos. */
+function listaSobras(){
+  const L=sobrasEst();if(!L.length)return '';
+  const grupos=[...new Set(L.map(r=>r.materialId))];
+  return grupos.map(mid=>{
+    const itens=L.filter(r=>r.materialId===mid).slice().sort((a,b)=>(a.usada-b.usada)||(b.w*b.h-a.w*a.h)),livre=itens.filter(r=>!r.usada).reduce((t,r)=>t+r.w*r.h/1e4,0);
+    return `<div class="li" style="padding:10px 12px;border-top:1px solid var(--line);background:var(--bg)"><b>${esc(nomeMat(mid))}</b><span class="small muted"> · ${itens.filter(r=>!r.usada).length} livres · ${nf(livre)} m²</span></div>`+
+     itens.map(r=>`<div class="li card" style="border-radius:0;border-width:1px 0 0;${r.usada?'opacity:.55':''}"><div class="grow tap" tabindex="0" data-act="edit" data-k="sobras" data-v="${r.id}"><b class="num">${nf(r.w,1)} × ${nf(r.h,1)} cm</b>${r.usada?' <span class="chip">usado</span>':''}
+       <div class="small muted">${r.origem==='ficha'?'Orçamento #'+(r.num||'')+' · chapa '+(r.chapa||1):'Cadastrado à mão'}${r.em?' · '+dateBR(r.em):''}${r.obs?' · '+esc(r.obs):''}</div></div>
+       <button class="sm" data-act="sob-usada" data-v="${r.id}">${r.usada?'Voltar ao estoque':'Marcar como usado'}</button></div>`).join('');
+  }).join('');
+}
 function viewCad(){
   if(nav.edit)return viewCadEdit();
   if(nav.catAberto&&nav.cad==='mat')return viewCatalogo();
   const k=nav.cad;
   const seg=`<div class="seg"><button data-act="cad" data-v="mat" aria-pressed="${k==='mat'}">Materiais</button>
     <button data-act="cad" data-v="svc" aria-pressed="${k==='svc'}">Serviços</button>
-    <button data-act="cad" data-v="cli" aria-pressed="${k==='cli'}">Clientes</button></div>`;
+    <button data-act="cad" data-v="cli" aria-pressed="${k==='cli'}">Clientes</button>
+    <button data-act="cad" data-v="sob" aria-pressed="${k==='sob'}">Sobras (${sobrasEst().filter(r=>!r.usada).length})</button></div>`;
   let list='';
   const ex=o=>o.ex?' <span class="ex">EXEMPLO</span>':'';
   if(k==='mat')list=S.materials.map(m=>`<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="edit" data-k="materials" data-v="${m.id}">
@@ -831,6 +846,7 @@ function viewCad(){
     <div class="grow"><b>${esc(s.name)}</b>${ex(s)}<div class="small muted">${esc(s.cat)}</div></div><div class="num"><b>${brl(s.price)}</b><span class="small muted"> /${s.unit}</span></div></div>`).join('');
   if(k==='cli')list=S.clients.map(c=>`<div class="li card tap" style="border-radius:0;border-width:1px 0 0" tabindex="0" data-act="edit" data-k="clients" data-v="${c.id}">
     <div class="grow"><b>${esc(c.name)}</b>${ex(c)}<div class="small muted">${esc(c.phone)} ${c.address?'· '+esc(c.address):''}</div></div></div>`).join('');
+  if(k==='sob')list=listaSobras();
   return `<header class="top"><h1>Cadastros</h1><button class="pri" data-act="add-cad">Novo</button></header>
    <div class="stack">${seg}${k==='mat'?'<button data-act="cat-abrir">Escolher pedras do catálogo</button>':''}${list?`<div class="sheet">${list}</div>`:'<div class="card muted" style="text-align:center">Nada cadastrado.</div>'}</div>`;
 }
@@ -881,7 +897,10 @@ function viewCadEdit(){
     ${fld('Preço',P+'.price','n',{unit:'R$ por unidade'})}`;
   if(kind==='clients')f=`${fld('Nome',P+'.name')}<div class="grid2">${fld('Telefone',P+'.phone','t',{kind:'tel'})}${fld('E-mail',P+'.email','t',{kind:'email'})}</div>
     ${fld('Endereço',P+'.address')}${fld('Observações',P+'.notes','area')}`;
-  return `<header class="top"><button class="ghost" data-act="edit-close" aria-label="Voltar">${IC.back}</button><h1>${esc(o.name||'Novo')}</h1></header>
+  if(kind==='sobras')f=`${sel('Material',P+'.materialId',S.materials.map(m=>[m.id,m.name]),{blank:'Escolha…'})}
+    <div class="grid2">${fld('Comprimento',P+'.w','n',{unit:'cm'})}${fld('Largura',P+'.h','n',{unit:'cm'})}</div>${fld('Observação',P+'.obs','t',{ph:'Ex.: com veio marcado, lado liso'})}
+    <p class="small muted">A maior medida é o comprimento. Retalhos que vêm da ficha do projeto guardam o número do orçamento.</p>`;
+  return `<header class="top"><button class="ghost" data-act="edit-close" aria-label="Voltar">${IC.back}</button><h1>${kind==='sobras'?'Retalho':esc(o.name||'Novo')}</h1></header>
    <div class="stack"><div class="card stack" style="padding-top:14px">${f}</div>
    <button class="danger" data-act="del-cad">Excluir</button></div>`;
 }
@@ -948,7 +967,7 @@ async function imagens3dPdf(q){
   if(!q.pieces.length)return sai;
   let box=null,v=null;
   try{
-    const mod=await import('./viewer3d.js?v=40');
+    const mod=await import('./viewer3d.js?v=41');
     if(!mod.webglModo())return sai;
     box=document.createElement('div');box.setAttribute('aria-hidden','true');
     box.style.cssText='position:fixed;left:-10000px;top:0;width:700px;height:430px;pointer-events:none';document.body.appendChild(box);
@@ -1112,7 +1131,7 @@ Responda somente com JSON neste formato, em português do Brasil:
 let v3=null,v3Promise=null,v3Falha='',v3Peca='',v3Modo='';
 function carregar3d(){
   if(!v3Promise)v3Promise=(async()=>{
-    const m=await import('./viewer3d.js?v=40');
+    const m=await import('./viewer3d.js?v=41');
     v3Modo=m.webglModo();
     if(!v3Modo)throw new Error('webgl');
     try{v3=m.criarVisualizador({brilho:nav.brilho3d&&v3Modo!=='software',cotas:(mo,l)=>mo.cotasDe?mo.cotasDe(l):Model3D.cotas(mo,l)})}catch(e){throw new Error('webgl')}   // falha ao iniciar o WebGL não é falha de conexão
@@ -1209,8 +1228,19 @@ function fichaPlano(q,c){
    <div class="stack" style="padding-top:0">${drawSlabs(c,true)||'<div class="muted small">Adicione peças para ver o plano.</div>'}</div>
    <h3 style="margin:14px 0 6px">Peças do corte</h3>
    <div class="card" style="padding:4px 8px;overflow-x:auto"><table class="ftab"><thead><tr><th>Nº</th><th>Peça</th><th>Medida</th><th>Qtd</th><th>Obs.</th></tr></thead><tbody>${linhas||'<tr><td colspan="5" class="muted">Sem peças.</td></tr>'}</tbody></table></div>
+   ${fichaEstoque(q,c,r)}
    <h3 style="margin:14px 0 2px">Sobras aproveitáveis</h3><p class="small muted">Retalhos com os dois lados a partir de ${nf(PROD_SOBRA_MIN,0)} cm, lidos do plano acima (estimativa conservadora).</p>
    ${so.todas.length?`<div class="fsobras">${so.todas.map(x=>`<div class="card"><b class="num">${nf(x.w,1)} × ${nf(x.h,1)} cm</b><div class="small muted">Chapa ${x.chapa} · ${nf(x.area)} m²</div></div>`).join('')}</div>`:'<div class="card muted small">Nenhuma sobra com tamanho aproveitável.</div>'}`;
+}
+/* Estoque: guardar as sobras deste plano e ver quais peças caberiam em retalhos já guardados (só sugestão: não muda plano, chapas nem preço). */
+function fichaEstoque(q,c,r){
+  const guardadas=sobrasEst().filter(x=>x.origem==='ficha'&&x.qid===q.id&&!x.usada).length;
+  const sug=c.m?sugerirRetalhos(partesDe(q),sobrasEst().filter(x=>!(x.origem==='ficha'&&x.qid===q.id)),c.m.id,c.SL,c.SW):null;
+  return `<div class="card stack" style="margin-top:14px"><div class="row between"><h3>Estoque de sobras</h3><span class="small muted">${guardadas?guardadas+' deste orçamento guardadas':'nada guardado deste orçamento'}</span></div>
+   ${r.sobras.todas.length?`<button data-act="sob-guardar">${guardadas?'Atualizar as sobras no estoque':'Guardar as sobras no estoque'}</button>`:'<p class="small muted">Este plano não tem sobras aproveitáveis para guardar.</p>'}
+   ${sug&&sug.sugestoes.length?`<div class="fmsg bom" style="margin:0"><b>Retalhos do estoque que servem</b><div class="small">${sug.sugestoes.map(x=>`Peça ${x.n} (${esc(x.nome)}, ${nf(x.w,1)} × ${nf(x.h,1)} cm) cabe num retalho de ${nf(x.retalho.w,1)} × ${nf(x.retalho.h,1)} cm`).join('<br>')}</div>
+     <div class="small muted" style="margin-top:6px">É só uma sugestão: o plano, as chapas e o preço acima não mudam. Confira a medida e o veio antes de usar.</div></div>`
+    :sug&&sug.retalhosLivres?'<p class="small muted">Há retalhos deste material no estoque, mas nenhuma peça deste orçamento cabe neles.</p>':''}</div>`;
 }
 function fichaDesenho(q){
   if(!q.pieces.length)return '<div class="card muted">Adicione peças para ver o desenho técnico.</div>';
@@ -1539,10 +1569,15 @@ document.addEventListener('click',async e=>{
     case 'add-cad':{const k=nav.cad;let o;
       if(k==='mat'){o={id:uid(),name:'Nova pedra',cat:'Granito',color:'',thick:2,priceSlab:0,priceM2:0,slabL:300,slabW:160,supplier:'',stock:0,photo:''};S.materials.unshift(o);nav.edit={kind:'materials',id:o.id}}
       else if(k==='svc'){o={id:uid(),name:'Novo serviço',cat:'Acabamentos',unit:'un',price:0};S.services.unshift(o);nav.edit={kind:'services',id:o.id}}
+      else if(k==='sob'){o={id:uid(),materialId:(S.materials[0]||{}).id||'',w:100,h:50,origem:'manual',qid:'',num:null,chapa:1,usada:false,em:Date.now(),obs:''};sobrasEst().unshift(o);nav.edit={kind:'sobras',id:o.id}}
       else{o={id:uid(),name:'Novo cliente',phone:'',email:'',address:'',notes:''};S.clients.unshift(o);nav.edit={kind:'clients',id:o.id}}
       save();render();scrollTo(0,0);break}
     case 'edit':nav.edit={kind:b.dataset.k,id:v};render();scrollTo(0,0);break;
     case 'edit-close':nav.edit=null;render();break;
+    case 'sob-usada':{const r=sobrasEst().find(x=>x.id===v);if(r){r.usada=!r.usada;save();render()}break}
+    case 'sob-guardar':{const q2=curQ();if(!q2)break;const c2=calc(q2);if(!c2.m){toast('Escolha o material do orçamento para guardar as sobras.');break}
+      const so=sobrasUteis(c2.nest,c2.SL,c2.SW).todas;if(!so.length){toast('Este plano não tem sobras aproveitáveis.');break}
+      S.sobras=mesclarEstoque(sobrasEst(),retalhosParaGuardar(so,{materialId:c2.m.id,qid:q2.id,num:q2.num,em:Date.now()}),q2.id);save();renderFicha();toast(so.length+' sobra'+(so.length===1?'':'s')+' guardada'+(so.length===1?'':'s')+' no estoque (Cadastros, Sobras).');break}
     case 'del-cad':confirmTap(b,()=>{const {kind,id}=nav.edit;S[kind]=S[kind].filter(x=>x.id!==id);nav.edit=null;save();render()});break;
     case 'logo':$('#fileLogo').click();break;
     case 'logo-del':S.settings.logo='';save();render();break;

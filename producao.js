@@ -67,4 +67,40 @@ function resumoProducao(c,parts,minimo=PROD_SOBRA_MIN){
   return {chapas:c.nSlabs,aproveitamento:c.util,sobraUtil:so.total,minimoChapas:min,mensagem,avisos,pecas,sobras:so};
 }
 
-if(typeof module!=='undefined')module.exports={PROD_SOBRA_MIN,rotuloPeca,listaPecas,minimoChapas,sobrasUteis,resumoProducao};
+/* ===== Estoque de sobras (retalhos) =====
+   Um retalho: {id, materialId, w, h (w >= h, cm), origem:'ficha'|'manual', qid, num, chapa, usada, em, obs}. Tudo puro: devolve listas novas, não mexe no que recebe. */
+
+/* Retalhos novos a guardar, a partir das sobras úteis de um orçamento (sobrasUteis(...).todas). */
+function retalhosParaGuardar(todas,meta){
+  return (todas||[]).map((r,i)=>({id:(meta.prefixoId||'r')+(meta.qid||'')+'-'+(i+1),materialId:meta.materialId||'',w:Math.max(r.w,r.h),h:Math.min(r.w,r.h),
+    origem:'ficha',qid:meta.qid||'',num:meta.num||null,chapa:r.chapa||1,usada:false,em:meta.em||0,obs:''}));
+}
+/* Guardar de novo as sobras do mesmo orçamento substitui as que ainda não foram usadas; as já usadas e as de outros orçamentos ficam. */
+function mesclarEstoque(estoque,novas,qid){
+  const fica=(estoque||[]).filter(r=>!(r.origem==='ficha'&&r.qid===qid&&!r.usada));
+  const usadas=new Set(fica.map(r=>r.id));
+  return fica.concat((novas||[]).filter(r=>!usadas.has(r.id)));
+}
+const cabeNoRetalho=(peca,r)=>Math.max(peca.w,peca.h)<=Math.max(r.w,r.h)+1e-9&&Math.min(peca.w,peca.h)<=Math.min(r.w,r.h)+1e-9;
+
+/* Sugestão (só informativa): quais peças do orçamento caberiam em retalhos do estoque do mesmo material. Cada retalho serve a uma peça só,
+   e a peça vai no menor retalho em que cabe. Peças maiores que a chapa (com emenda) não entram. Não muda plano, chapas nem preço. */
+function sugerirRetalhos(parts,estoque,materialId,SL,SW){
+  const livres=(estoque||[]).filter(r=>!r.usada&&r.materialId===materialId&&materialId).slice().sort((a,b)=>a.w*a.h-b.w*b.h);
+  const pecas=[];
+  (parts||[]).forEach((a,i)=>{
+    const L=Math.max(a.w,a.h),W=Math.min(a.w,a.h);
+    if(L>SL+1e-9||W>SW+1e-9)return;
+    for(let c=0;c<(a.q||1);c++)pecas.push({n:i+1,nome:a.l||'Peça',w:a.w,h:a.h});
+  });
+  pecas.sort((a,b)=>b.w*b.h-a.w*a.h);
+  const usados=new Set(),sugestoes=[],semRetalho=[];
+  pecas.forEach(p=>{
+    const r=livres.find(x=>!usados.has(x.id)&&cabeNoRetalho(p,x));
+    if(r){usados.add(r.id);sugestoes.push({n:p.n,nome:p.nome,w:p.w,h:p.h,retalhoId:r.id,retalho:{w:r.w,h:r.h}})}
+    else semRetalho.push(p);
+  });
+  return {sugestoes,semRetalho,retalhosLivres:livres.length};
+}
+
+if(typeof module!=='undefined')module.exports={retalhosParaGuardar,mesclarEstoque,cabeNoRetalho,sugerirRetalhos,PROD_SOBRA_MIN,rotuloPeca,listaPecas,minimoChapas,sobrasUteis,resumoProducao};
