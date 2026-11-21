@@ -1,7 +1,7 @@
 /* Ao mudar qualquer arquivo do app: suba o número em V, em APP_V (index.html) e nos ?v= dos scripts.
    tests/versao.test.js confere que os números batem. */
-const V='marmofacil-v41';
-const CORE=['./','index.html','calc.js?v=41','producao.js?v=41','catalogo.js?v=41','model3d.js?v=41','viewer3d.js?v=41','vendor/three.module.min.js','manifest.webmanifest','icon-192.png','icon-512.png','vendor/jspdf.umd.min.js'];
+const V='marmofacil-v42';
+const CORE=['./','index.html','calc.js?v=42','producao.js?v=42','ordem.js?v=42','catalogo.js?v=42','model3d.js?v=42','viewer3d.js?v=42','vendor/three.module.min.js','manifest.webmanifest','icon-192.png','icon-512.png','vendor/jspdf.umd.min.js'];
 const MEUS=/^(marmofacil|pedra-facil)-/;
 
 /* Instala tudo de uma vez (sem usar o cache HTTP): uma versão nunca fica pela metade. */

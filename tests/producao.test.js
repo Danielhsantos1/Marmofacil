@@ -144,3 +144,23 @@ test('sugerirRetalhos respeita a quantidade q e nunca usa o mesmo retalho duas v
     assert.equal(r.sugestoes.length+r.semRetalho.length,esperadas,'toda peça elegível ou tem retalho ou está em semRetalho');
   }
 });
+
+/* ===== Ordem de produção ===== */
+const {ajustarCaixa,mapaPecas,linhasOrdem}=require('../producao.js');
+test('ajustarCaixa: cabe na caixa mantendo a proporção; limite de ampliação; entradas inválidas',()=>{
+  const a=ajustarCaixa(300,100,150,150);near(a.k,0.5,'fator');near(a.w,150,'largura');near(a.h,50,'altura');
+  const b=ajustarCaixa(100,300,150,150);near(b.k,0.5,'fator vertical');near(b.h,150,'altura');
+  const c=ajustarCaixa(10,10,150,150,2);near(c.k,2,'não amplia além do limite');near(c.w,20,'largura limitada');
+  for(const x of [[0,1,1,1],[1,0,1,1],[1,1,0,1],[1,1,1,-1],[NaN,1,1,1]])assert.deepEqual(ajustarCaixa(...x),{k:0,w:0,h:0});
+});
+test('mapaPecas: numeração corrida entre as peças do orçamento, igual à da ficha',()=>{
+  const m=mapaPecas([[{l:'A'},{l:'B'}],[],[{l:'C'}]]);
+  assert.deepEqual(m,[{n:1,pecaIndice:0},{n:2,pecaIndice:0},{n:3,pecaIndice:2}]);assert.deepEqual(mapaPecas(null),[]);
+});
+test('linhasOrdem: sem preço, com a peça de origem e as observações',()=>{
+  const parts=[{w:157,h:60,l:'Tampo'},{w:60,h:157,l:'Lado',q:2},{w:500,h:10,l:'Roda'}];
+  const pecas=listaPecas(parts,SL,SW),mapa=mapaPecas([[parts[0],parts[1]],[parts[2]]]),l=linhasOrdem(pecas,mapa,['Bancada','Saia']);
+  assert.equal(l.length,3);assert.equal(l[0].projeto,'Bancada');assert.equal(l[2].projeto,'Saia');assert.equal(l[1].q,2);
+  assert.equal(l[1].obs,'girada');assert.match(l[2].obs,/em 2 partes \(emenda\)/);assert.match(l[0].medida,/^157 × 60 cm$/);
+  assert.ok(!JSON.stringify(l).includes('R$'),'nenhum valor em reais');assert.deepEqual(linhasOrdem(null,null,null),[]);
+});
